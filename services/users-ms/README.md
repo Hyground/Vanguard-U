@@ -1,6 +1,6 @@
-# Users Microservice (Security Core)
+# Microservicio de Usuarios (Núcleo de Seguridad)
 
-This microservice handles authentication, authorization, user management, and system auditing.
+Este microservicio se encarga de la autenticación, autorización, gestión de usuarios y auditoría del sistema.
 
 ## Tech Stack
 - **Java 21**
@@ -44,18 +44,18 @@ CREATE TABLE system_log (
 ## Suggested Endpoints
 
 ### Auth Controller
-- `POST /api/v1/auth/login` - Authenticate user and return JWT.
-- `POST /api/v1/auth/register` - Register a new user (default student or as admin).
-- `POST /api/v1/auth/recover-password` - Initiate password recovery.
-- `PUT /api/v1/auth/reset-password` - Reset password using token.
+- `POST /api/v1/auth/login` - Autenticar usuario y devolver JWT.
+- `POST /api/v1/auth/register` - Registrar un nuevo usuario (estudiante por defecto o como admin).
+- `POST /api/v1/auth/recover-password` - Iniciar recuperación de contraseña.
+- `PUT /api/v1/auth/reset-password` - Restablecer contraseña usando un token.
 
 ### User Controller
-- `GET /api/v1/users` - List all users (Admin only).
-- `GET /api/v1/users/{id}` - Get user details.
-- `PATCH /api/v1/users/{id}/status` - Enable/Disable user.
+- `GET /api/v1/users` - Listar todos los usuarios (Solo Admin).
+- `GET /api/v1/users/{id}` - Obtener detalles del usuario.
+- `PATCH /api/v1/users/{id}/status` - Habilitar/Deshabilitar usuario.
 
 ### Role Controller
-- `GET /api/v1/roles` - List all roles.
+- `GET /api/v1/roles` - Listar todos los roles.
 
 ## Suggested DTOs
 - `AuthRequestDTO` (username, password)
@@ -65,14 +65,14 @@ CREATE TABLE system_log (
 
 ## Suggested Sprints
 
-### Sprint 1: Security Foundation
-- Setup Spring Security and JWT configuration.
-- Implement User and Role entities/repositories.
-- Basic Login and Register endpoints.
+### Sprint 1: Fundamentos de Seguridad
+- Configuración de Spring Security y JWT.
+- Implementar entidades y repositorios de Usuario y Rol.
+- Endpoints básicos de Login y Registro.
 
-### Sprint 2: Password Recovery & Audit
-- Implement Password Recovery logic.
-- Implement System Log (Audit) aspect to intercept and record actions.
+### Sprint 2: Recuperación de Contraseña y Auditoría
+- Implementar lógica de recuperación de contraseña.
+- Implementar aspecto de Log de Sistema (Auditoría) para interceptar y registrar acciones.
 
 ---
-*Developed by Gemini CLI - Expert in Spring Boot & Microservices.*
+*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*

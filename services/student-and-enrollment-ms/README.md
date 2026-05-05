@@ -1,12 +1,12 @@
-# Student & Enrollment Microservice
+# Microservicio de Estudiantes e Inscripciones
 
-This microservice handles student and teacher life cycles, including enrollments, course assignments, scheduling, grading, and attendance.
+Este microservicio gestiona los ciclos de vida de estudiantes y docentes, incluyendo inscripciones, asignaciones de cursos, horarios, calificaciones y asistencia.
 
 ## Tech Stack
 - **Java 21**
 - **Spring Boot 3.x**
 - **PostgreSQL**
-- **Feign Client** (for cross-service communication with `academic-ms` and `users-ms`)
+- **Feign Client** (para comunicación entre servicios con `academic-ms` y `users-ms`)
 
 ## Database Schema (English)
 
@@ -93,19 +93,19 @@ CREATE TABLE attendance (
 ## Suggested Endpoints
 
 ### Student & Guardian Controllers
-- `POST /api/v1/students` - Register a new student.
-- `GET /api/v1/students/{id}` - Get student profile.
-- `POST /api/v1/guardians` - Register a guardian.
+- `POST /api/v1/students` - Registrar un nuevo estudiante.
+- `GET /api/v1/students/{id}` - Obtener perfil del estudiante.
+- `POST /api/v1/guardians` - Registrar un tutor (guardian).
 
 ### Enrollment Controller
-- `POST /api/v1/enrollments` - Enroll a student in a grade/section/cycle.
-- `GET /api/v1/enrollments/student/{studentId}` - Get student's enrollment history.
+- `POST /api/v1/enrollments` - Inscribir a un estudiante en un grado/sección/ciclo.
+- `GET /api/v1/enrollments/student/{studentId}` - Obtener historial de inscripciones del estudiante.
 
-### Academic Management (Teacher Perspective)
-- `POST /api/v1/teacher-assignments` - Assign a teacher to a course/grade/section.
-- `POST /api/v1/activities` - Create a new activity for a course.
-- `POST /api/v1/grades` - Register a score for a student.
-- `POST /api/v1/attendance` - Mark attendance.
+### Gestión Académica (Perspectiva Docente)
+- `POST /api/v1/teacher-assignments` - Asignar un docente a un curso/grado/sección.
+- `POST /api/v1/activities` - Crear una nueva actividad para un curso.
+- `POST /api/v1/grades` - Registrar una nota para un estudiante.
+- `POST /api/v1/attendance` - Marcar asistencia.
 
 ## Suggested DTOs
 - `StudentDTO` (id, personalCode, firstName, lastName, guardianId)
@@ -115,18 +115,18 @@ CREATE TABLE attendance (
 
 ## Suggested Sprints
 
-### Sprint 1: Entities & Actros
-- Implement Students, Guardians, and Teachers CRUD.
-- Integration with `users-ms` to link `user_id`.
+### Sprint 1: Entidades y Actores
+- Implementar CRUD de Estudiantes, Tutores y Docentes.
+- Integración con `users-ms` para vincular `user_id`.
 
-### Sprint 2: Enrollments & Assignments
-- Implement Enrollment logic.
-- Implement Teacher Assignments to courses and sections.
+### Sprint 2: Inscripciones y Asignaciones
+- Implementar lógica de Inscripciones.
+- Implementar Asignaciones de Docentes a cursos y secciones.
 
-### Sprint 3: Academic Operation
-- Implement Schedules.
-- Implement Activities and Grading system.
-- Implement Attendance tracking.
+### Sprint 3: Operación Académica
+- Implementar Horarios (Schedules).
+- Implementar Actividades y sistema de Calificaciones.
+- Implementar seguimiento de Asistencia.
 
 ---
-*Developed by Gemini CLI - Expert in Spring Boot & Microservices.*
+*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*

@@ -1,6 +1,6 @@
-# Academic Microservice (Academic Core)
+# Microservicio Académico (Núcleo Académico)
 
-This microservice manages the foundational academic data such as classrooms, study plans, careers, grades, and courses.
+Este microservicio gestiona los datos fundamentales académicos como salones, planes de estudio, carreras, grados y cursos.
 
 ## Tech Stack
 - **Java 21**
@@ -62,15 +62,15 @@ CREATE TABLE academic_units (
 
 ## Suggested Endpoints
 
-### Master Data Controllers (Generic)
-- `GET /api/v1/careers` - List all careers.
-- `GET /api/v1/grades` - List all grades (optionally filter by career).
-- `GET /api/v1/courses` - List all courses.
-- `GET /api/v1/classrooms` - List all classrooms.
+### Master Data Controllers (Genéricos)
+- `GET /api/v1/careers` - Listar todas las carreras.
+- `GET /api/v1/grades` - Listar todos los grados (opcionalmente filtrar por carrera).
+- `GET /api/v1/courses` - Listar todos los cursos.
+- `GET /api/v1/classrooms` - Listar todos los salones.
 
 ### Academic Cycle Controller
-- `GET /api/v1/academic-cycles/active` - Get the current active school year.
-- `POST /api/v1/academic-cycles` - Create a new cycle.
+- `GET /api/v1/academic-cycles/active` - Obtener el ciclo escolar activo actual.
+- `POST /api/v1/academic-cycles` - Crear un nuevo ciclo.
 
 ## Suggested DTOs
 - `CareerDTO` (id, name)
@@ -80,14 +80,14 @@ CREATE TABLE academic_units (
 
 ## Suggested Sprints
 
-### Sprint 1: Infrastructure Setup
-- Implement Careers, Grades, and Sections CRUD.
-- Implement Study Plans and School Days.
+### Sprint 1: Configuración de Infraestructura
+- Implementar CRUD de Carreras, Grados y Secciones.
+- Implementar Planes de Estudio y Jornadas Escolares.
 
-### Sprint 2: Core Academic Data
-- Implement Courses and Academic Units.
-- Implement Classroom management.
-- Implement Academic Cycle logic (active/inactive states).
+### Sprint 2: Datos Académicos Core
+- Implementar Cursos y Unidades Académicas.
+- Implementar gestión de Salones.
+- Implementar lógica de Ciclos Académicos (estados activo/inactivo).
 
 ---
-*Developed by Gemini CLI - Expert in Spring Boot & Microservices.*
+*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*

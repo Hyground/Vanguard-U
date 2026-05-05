@@ -1,20 +1,20 @@
-# API Gateway Microservice
+# Microservicio API Gateway
 
-This microservice acts as the entry point for all client requests, providing routing, load balancing, and cross-cutting concerns like security and rate limiting.
+Este microservicio actúa como el punto de entrada para todas las solicitudes de los clientes, proporcionando enrutamiento, equilibrio de carga y manejo de aspectos transversales como seguridad y limitación de tasa (rate limiting).
 
 ## Tech Stack
 - **Java 21**
 - **Spring Boot 3.x**
 - **Spring Cloud Gateway**
-- **Spring Cloud Discovery Client** (Eureka/Consul optional)
+- **Spring Cloud Discovery Client** (Eureka/Consul opcional)
 
-## Responsibilities
-- **Routing:** Directing requests to `users-ms`, `academic-ms`, `student-and-enrollment-ms`, and `billing-ms`.
-- **Security:** Validating JWT tokens before forwarding requests to downstream services.
-- **Aggregation:** (Optional) Combining responses from multiple services.
-- **Rate Limiting:** Protecting the system from abuse.
+## Responsabilidades
+- **Enrutamiento (Routing):** Dirigir solicitudes a `users-ms`, `academic-ms`, `student-and-enrollment-ms` y `billing-ms`.
+- **Seguridad:** Validar tokens JWT antes de redirigir las solicitudes a los servicios internos.
+- **Agregación:** (Opcional) Combinar respuestas de múltiples servicios.
+- **Limitación de Tasa (Rate Limiting):** Proteger el sistema contra abusos.
 
-## Suggested Routes
+## Suggested Routes (Rutas sugeridas)
 
 - `/api/v1/auth/**` -> `users-ms`
 - `/api/v1/users/**` -> `users-ms`
@@ -25,10 +25,10 @@ This microservice acts as the entry point for all client requests, providing rou
 
 ## Suggested Sprints
 
-### Sprint 1: Gateway Setup
-- Configure Spring Cloud Gateway.
-- Implement basic routing to existing microservices.
-- Implement Global Filter for JWT validation.
+### Sprint 1: Configuración del Gateway
+- Configurar Spring Cloud Gateway.
+- Implementar enrutamiento básico a los microservicios existentes.
+- Implementar Filtro Global para la validación de JWT.
 
 ---
-*Developed by Gemini CLI - Expert in Spring Boot & Microservices.*
+*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*

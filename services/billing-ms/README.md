@@ -1,6 +1,6 @@
-# Billing Microservice (Finances)
+# Microservicio de Facturación (Finanzas)
 
-This microservice manages payment methods and records financial transactions for student enrollments and tuition.
+Este microservicio gestiona los métodos de pago y registra las transacciones financieras para las inscripciones y colegiaturas de los estudiantes.
 
 ## Tech Stack
 - **Java 21**
@@ -29,13 +29,13 @@ CREATE TABLE payments (
 ## Suggested Endpoints
 
 ### Payment Method Controller
-- `GET /api/v1/payment-methods` - List all available methods.
-- `POST /api/v1/payment-methods` - Add a new method (Admin only).
+- `GET /api/v1/payment-methods` - Listar todos los métodos disponibles.
+- `POST /api/v1/payment-methods` - Agregar un nuevo método (Solo Admin).
 
 ### Payment Controller
-- `POST /api/v1/payments` - Process a new payment.
-- `GET /api/v1/payments/student/{studentId}` - Get payment history for a specific student.
-- `GET /api/v1/payments/{id}` - Get transaction details.
+- `POST /api/v1/payments` - Procesar un nuevo pago.
+- `GET /api/v1/payments/student/{studentId}` - Obtener historial de pagos de un estudiante específico.
+- `GET /api/v1/payments/{id}` - Obtener detalles de una transacción.
 
 ## Suggested DTOs
 - `PaymentMethodDTO` (id, name)
@@ -44,10 +44,10 @@ CREATE TABLE payments (
 
 ## Suggested Sprints
 
-### Sprint 1: Finance Core
-- Implement Payment Methods CRUD.
-- Implement Payment processing logic.
-- Basic reporting endpoints.
+### Sprint 1: Núcleo de Finanzas
+- Implementar CRUD de Métodos de Pago.
+- Implementar lógica de procesamiento de pagos.
+- Endpoints básicos de reporte.
 
 ---
-*Developed by Gemini CLI - Expert in Spring Boot & Microservices.*
+*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*
