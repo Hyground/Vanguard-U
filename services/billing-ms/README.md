@@ -10,17 +10,18 @@ Este microservicio gestiona los métodos de pago y registra las transacciones fi
 ## Database Schema (English)
 
 ```sql
+--- 6. FINANCE
 CREATE TABLE payment_methods (
-    method_id SERIAL PRIMARY KEY,
+    id_method SERIAL PRIMARY KEY,
     method_name VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE payments (
-    payment_id SERIAL PRIMARY KEY,
-    student_id INTEGER, -- References student-and-enrollment-ms.students
-    method_id INTEGER REFERENCES payment_methods(method_id),
-    issuer_user_id INTEGER, -- References users-ms.users (The admin/clerk processing)
-    payer_user_id INTEGER, -- References users-ms.users (The student/guardian paying)
+    id_payment SERIAL PRIMARY KEY,
+    id_student INTEGER REFERENCES students(id_student),
+    id_method INTEGER REFERENCES payment_methods(id_method),
+    id_user_issuer INTEGER REFERENCES users(id_user),
+    id_user_payer INTEGER REFERENCES users(id_user),
     amount DECIMAL(10,2) NOT NULL,
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
