@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: vanguard-db
+    environment:
+      POSTGRES_DB: vanguard_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  billing-ms:
+    build:
+      context: ../services/billing-ms
+      dockerfile: Dockerfile
+    container_name: billing-ms
+    ports:
+      - "8084:8084"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=vanguard_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
