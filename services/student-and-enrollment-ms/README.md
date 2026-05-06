@@ -1,132 +1,345 @@
-# Microservicio de Estudiantes e Inscripciones
+# Student and Enrollment MS
 
-Este microservicio gestiona los ciclos de vida de estudiantes y docentes, incluyendo inscripciones, asignaciones de cursos, horarios, calificaciones y asistencia.
+Microservicio responsable de la gestion de estudiantes, tutores, docentes, inscripciones, asignaciones docentes, horarios, actividades, notas y asistencia.
 
-## Tech Stack
-- **Java 21**
-- **Spring Boot 3.x**
-- **PostgreSQL**
-- **Feign Client** (para comunicación entre servicios con `academic-ms` y `users-ms`)
+Este README toma como fuente principal el archivo `sql.txt` del proyecto. Aunque el sistema usa una sola base de datos compartida, este microservicio solo debe implementar la logica de negocio que corresponde a las tablas indicadas en esta documentacion.
 
-## Database Schema (English)
+## Stack
+
+- Java 21
+- Spring Boot 3.x
+- PostgreSQL
+- Spring Data JPA
+- Spring Validation
+- Spring Web
+- OpenFeign para consultar datos administrados por otros microservicios, si el proyecto decide comunicar servicios por HTTP
+
+## Alcance Del Microservicio
+
+Este microservicio administra directamente estas tablas:
+
+```text
+teachers
+tutor
+students
+enrollments
+teacher_assignments
+schedules
+activities
+grades_records
+attendance
+```
+
+No debe administrar directamente usuarios, roles, catalogos academicos ni pagos. Esas tablas existen en la misma base de datos, pero pertenecen a otros microservicios.
+
+## Mapa De Responsabilidad
+
+```text
+users-ms
+  roles
+  users
+  password_recovery
+  system_log
+
+academic-ms
+  classrooms
+  study_plans
+  shifts
+  school_cycle
+  majors
+  grades
+  sections
+  courses
+  bimonthly_units
+
+student-and-enrollment-ms
+  teachers
+  tutor
+  students
+  enrollments
+  teacher_assignments
+  schedules
+  activities
+  grades_records
+  attendance
+
+billing-ms
+  payment_methods
+  payments
+```
+
+## Tablas Propias Segun `sql.txt`
 
 ```sql
 CREATE TABLE teachers (
-    teacher_id SERIAL PRIMARY KEY,
+    id_teacher SERIAL PRIMARY KEY,
     cui CHAR(13) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100),
-    user_id INTEGER -- References users-ms.users
+    id_user INTEGER REFERENCES users(id_user)
 );
 
-CREATE TABLE guardians (
-    guardian_id SERIAL PRIMARY KEY,
+CREATE TABLE tutor (
+    id_tutor SERIAL PRIMARY KEY,
     cui CHAR(13) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    user_id INTEGER -- References users-ms.users
+    id_user INTEGER REFERENCES users(id_user)
 );
 
 CREATE TABLE students (
-    student_id SERIAL PRIMARY KEY,
+    id_student SERIAL PRIMARY KEY,
     personal_code VARCHAR(20) UNIQUE NOT NULL,
     cui CHAR(13) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    guardian_id INTEGER REFERENCES guardians(guardian_id),
-    user_id INTEGER -- References users-ms.users
+    id_tutor INTEGER REFERENCES tutor(id_tutor),
+    id_user INTEGER REFERENCES users(id_user)
 );
 
 CREATE TABLE enrollments (
-    enrollment_id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES students(student_id),
-    grade_id INTEGER, -- References academic-ms.grades
-    section_id INTEGER, -- References academic-ms.sections
-    plan_id INTEGER, -- References academic-ms.study_plans
-    day_id INTEGER, -- References academic-ms.school_days
-    cycle_id INTEGER, -- References academic-ms.academic_cycles
+    id_enrollment SERIAL PRIMARY KEY,
+    id_student INTEGER REFERENCES students(id_student),
+    id_grade INTEGER REFERENCES grades(id_grade),
+    id_section INTEGER REFERENCES sections(id_section),
+    id_plan INTEGER REFERENCES study_plans(id_plan),
+    id_shift INTEGER REFERENCES shifts(id_shift),
+    id_cycle INTEGER REFERENCES school_cycle(id_cycle),
     enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE teacher_assignments (
-    assignment_id SERIAL PRIMARY KEY,
-    teacher_id INTEGER REFERENCES teachers(teacher_id),
-    course_id INTEGER, -- References academic-ms.courses
-    grade_id INTEGER, -- References academic-ms.grades
-    section_id INTEGER -- References academic-ms.sections
+    id_teacher_assignment SERIAL PRIMARY KEY,
+    id_teacher INTEGER REFERENCES teachers(id_teacher),
+    id_course INTEGER REFERENCES courses(id_course),
+    id_grade INTEGER REFERENCES grades(id_grade),
+    id_section INTEGER REFERENCES sections(id_section)
 );
 
 CREATE TABLE schedules (
-    schedule_id SERIAL PRIMARY KEY,
-    assignment_id INTEGER REFERENCES teacher_assignments(assignment_id),
-    classroom_id INTEGER, -- References academic-ms.classrooms
-    weekday VARCHAR(15),
+    id_schedule SERIAL PRIMARY KEY,
+    id_teacher_assignment INTEGER REFERENCES teacher_assignments(id_teacher_assignment),
+    id_classroom INTEGER REFERENCES classrooms(id_classroom),
+    day_of_week VARCHAR(15),
     start_time TIME,
     end_time TIME
 );
 
 CREATE TABLE activities (
-    activity_id SERIAL PRIMARY KEY,
-    assignment_id INTEGER REFERENCES teacher_assignments(assignment_id),
-    unit_id INTEGER, -- References academic-ms.academic_units
+    id_activity SERIAL PRIMARY KEY,
+    id_teacher_assignment INTEGER REFERENCES teacher_assignments(id_teacher_assignment),
+    id_unit INTEGER REFERENCES bimonthly_units(id_unit),
     activity_name VARCHAR(100),
     weight DECIMAL(5,2)
 );
 
-CREATE TABLE student_grades (
-    grade_record_id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES students(student_id),
-    activity_id INTEGER REFERENCES activities(activity_id),
+CREATE TABLE grades_records (
+    id_grade_record SERIAL PRIMARY KEY,
+    id_student INTEGER REFERENCES students(id_student),
+    id_activity INTEGER REFERENCES activities(id_activity),
     score_obtained DECIMAL(5,2)
 );
 
 CREATE TABLE attendance (
-    attendance_id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES students(student_id),
-    assignment_id INTEGER REFERENCES teacher_assignments(assignment_id),
+    id_attendance SERIAL PRIMARY KEY,
+    id_student INTEGER REFERENCES students(id_student),
+    id_teacher_assignment INTEGER REFERENCES teacher_assignments(id_teacher_assignment),
     attendance_date DATE DEFAULT CURRENT_DATE,
     status VARCHAR(20)
 );
 ```
 
-## Suggested Endpoints
+## Tablas Externas Referenciadas
 
-### Student & Guardian Controllers
-- `POST /api/v1/students` - Registrar un nuevo estudiante.
-- `GET /api/v1/students/{id}` - Obtener perfil del estudiante.
-- `POST /api/v1/guardians` - Registrar un tutor (guardian).
+Estas tablas se consultan o se referencian por ID, pero no son responsabilidad directa de este microservicio:
 
-### Enrollment Controller
-- `POST /api/v1/enrollments` - Inscribir a un estudiante en un grado/sección/ciclo.
-- `GET /api/v1/enrollments/student/{studentId}` - Obtener historial de inscripciones del estudiante.
+```text
+users
+grades
+sections
+study_plans
+shifts
+school_cycle
+courses
+classrooms
+bimonthly_units
+```
 
-### Gestión Académica (Perspectiva Docente)
-- `POST /api/v1/teacher-assignments` - Asignar un docente a un curso/grado/sección.
-- `POST /api/v1/activities` - Crear una nueva actividad para un curso.
-- `POST /api/v1/grades` - Registrar una nota para un estudiante.
-- `POST /api/v1/attendance` - Marcar asistencia.
+Referencias principales:
 
-## Suggested DTOs
-- `StudentDTO` (id, personalCode, firstName, lastName, guardianId)
-- `EnrollmentRequestDTO` (studentId, gradeId, sectionId, cycleId)
-- `GradeSubmissionDTO` (studentId, activityId, score)
-- `TeacherAssignmentDTO` (teacherId, courseId, gradeId, sectionId)
+```text
+teachers.id_user -> users.id_user
+tutor.id_user -> users.id_user
+students.id_user -> users.id_user
+students.id_tutor -> tutor.id_tutor
+enrollments.id_student -> students.id_student
+enrollments.id_grade -> grades.id_grade
+enrollments.id_section -> sections.id_section
+enrollments.id_plan -> study_plans.id_plan
+enrollments.id_shift -> shifts.id_shift
+enrollments.id_cycle -> school_cycle.id_cycle
+teacher_assignments.id_teacher -> teachers.id_teacher
+teacher_assignments.id_course -> courses.id_course
+teacher_assignments.id_grade -> grades.id_grade
+teacher_assignments.id_section -> sections.id_section
+schedules.id_teacher_assignment -> teacher_assignments.id_teacher_assignment
+schedules.id_classroom -> classrooms.id_classroom
+activities.id_teacher_assignment -> teacher_assignments.id_teacher_assignment
+activities.id_unit -> bimonthly_units.id_unit
+grades_records.id_student -> students.id_student
+grades_records.id_activity -> activities.id_activity
+attendance.id_student -> students.id_student
+attendance.id_teacher_assignment -> teacher_assignments.id_teacher_assignment
+```
 
-## Suggested Sprints
+## Mapa Funcional
 
-### Sprint 1: Entidades y Actores
-- Implementar CRUD de Estudiantes, Tutores y Docentes.
-- Integración con `users-ms` para vincular `user_id`.
+```text
+Gestion de actores
+  teachers: docentes
+  tutor: tutores o encargados
+  students: estudiantes
 
-### Sprint 2: Inscripciones y Asignaciones
-- Implementar lógica de Inscripciones.
-- Implementar Asignaciones de Docentes a cursos y secciones.
+Inscripciones
+  enrollments: relaciona estudiante con grado, seccion, plan, jornada y ciclo escolar
 
-### Sprint 3: Operación Académica
-- Implementar Horarios (Schedules).
-- Implementar Actividades y sistema de Calificaciones.
-- Implementar seguimiento de Asistencia.
+Asignacion docente
+  teacher_assignments: relaciona docente con curso, grado y seccion
 
----
-*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*
+Horarios
+  schedules: define dia, hora y salon para una asignacion docente
+
+Evaluacion
+  activities: actividades evaluativas por asignacion docente y unidad
+  grades_records: nota obtenida por estudiante en una actividad
+
+Asistencia
+  attendance: registro de asistencia por estudiante y asignacion docente
+```
+
+## Endpoints Sugeridos
+
+### Teachers
+
+- `POST /api/v1/teachers`
+- `GET /api/v1/teachers`
+- `GET /api/v1/teachers/{id}`
+- `PUT /api/v1/teachers/{id}`
+- `DELETE /api/v1/teachers/{id}`
+
+### Tutors
+
+- `POST /api/v1/tutors`
+- `GET /api/v1/tutors`
+- `GET /api/v1/tutors/{id}`
+- `PUT /api/v1/tutors/{id}`
+- `DELETE /api/v1/tutors/{id}`
+
+### Students
+
+- `POST /api/v1/students`
+- `GET /api/v1/students`
+- `GET /api/v1/students/{id}`
+- `GET /api/v1/students/tutor/{tutorId}`
+- `PUT /api/v1/students/{id}`
+- `DELETE /api/v1/students/{id}`
+
+### Enrollments
+
+- `POST /api/v1/enrollments`
+- `GET /api/v1/enrollments`
+- `GET /api/v1/enrollments/{id}`
+- `GET /api/v1/enrollments/student/{studentId}`
+- `GET /api/v1/enrollments/cycle/{cycleId}`
+
+### Teacher Assignments
+
+- `POST /api/v1/teacher-assignments`
+- `GET /api/v1/teacher-assignments`
+- `GET /api/v1/teacher-assignments/{id}`
+- `GET /api/v1/teacher-assignments/teacher/{teacherId}`
+- `GET /api/v1/teacher-assignments/grade/{gradeId}/section/{sectionId}`
+
+### Schedules
+
+- `POST /api/v1/schedules`
+- `GET /api/v1/schedules`
+- `GET /api/v1/schedules/{id}`
+- `GET /api/v1/schedules/teacher-assignment/{teacherAssignmentId}`
+
+### Activities
+
+- `POST /api/v1/activities`
+- `GET /api/v1/activities`
+- `GET /api/v1/activities/{id}`
+- `GET /api/v1/activities/teacher-assignment/{teacherAssignmentId}`
+
+### Grades Records
+
+- `POST /api/v1/grades-records`
+- `GET /api/v1/grades-records/student/{studentId}`
+- `GET /api/v1/grades-records/activity/{activityId}`
+
+### Attendance
+
+- `POST /api/v1/attendance`
+- `GET /api/v1/attendance/student/{studentId}`
+- `GET /api/v1/attendance/teacher-assignment/{teacherAssignmentId}`
+- `GET /api/v1/attendance/date/{date}`
+
+## DTOs Sugeridos
+
+```text
+TeacherRequest
+TeacherResponse
+TutorRequest
+TutorResponse
+StudentRequest
+StudentResponse
+EnrollmentRequest
+EnrollmentResponse
+TeacherAssignmentRequest
+TeacherAssignmentResponse
+ScheduleRequest
+ScheduleResponse
+ActivityRequest
+ActivityResponse
+GradeRecordRequest
+GradeRecordResponse
+AttendanceRequest
+AttendanceResponse
+```
+
+## Reglas De Negocio Iniciales
+
+- No registrar estudiantes sin tutor valido cuando `id_tutor` sea requerido por el flujo.
+- No registrar estudiante, tutor o docente con CUI duplicado.
+- No registrar estudiante con `personal_code` duplicado.
+- No crear inscripcion si el estudiante no existe.
+- No crear asignacion docente si el docente no existe.
+- No crear horario si la asignacion docente no existe.
+- No registrar nota si el estudiante o la actividad no existen.
+- No registrar asistencia si el estudiante o la asignacion docente no existen.
+- Validar que `start_time` sea menor que `end_time`.
+- Validar que `score_obtained` y `weight` no sean negativos.
+
+## Orden Recomendado De Desarrollo
+
+1. Configurar proyecto Spring Boot del microservicio.
+2. Crear entidades JPA para las 9 tablas propias.
+3. Crear repositorios.
+4. Crear DTOs y mappers.
+5. Crear servicios de dominio con validaciones.
+6. Crear controladores REST.
+7. Agregar manejo global de errores.
+8. Agregar pruebas unitarias de servicios.
+9. Agregar pruebas de endpoints principales.
+
+## Notas De Consistencia
+
+- El codigo debe estar en ingles: clases, metodos, variables, endpoints y comentarios tecnicos.
+- La documentacion para usuarios puede estar en espanol.
+- El SQL oficial usa `tutor`, no `guardians`.
+- El SQL oficial usa `grades_records`, no `student_grades`.
+- El SQL oficial usa `id_*` como nombres de llaves primarias y foraneas.
