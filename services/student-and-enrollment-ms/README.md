@@ -218,77 +218,238 @@ Asistencia
   attendance: registro de asistencia por estudiante y asignacion docente
 ```
 
-## Endpoints Sugeridos
+## Endpoints Disponibles
+
+Base local por defecto:
+
+```text
+http://localhost:8083
+```
+
+Los listados generales usan paginacion de Spring:
+
+```text
+GET /api/v1/students?page=0&size=20
+GET /api/v1/teachers?page=0&size=10
+GET /api/v1/enrollments?page=1&size=25
+```
+
+La respuesta paginada incluye `content`, `totalElements`, `totalPages`, `size`, `number`, `first`, `last` y metadatos similares.
 
 ### Teachers
 
-- `POST /api/v1/teachers`
-- `GET /api/v1/teachers`
-- `GET /api/v1/teachers/{id}`
-- `PUT /api/v1/teachers/{id}`
-- `DELETE /api/v1/teachers/{id}`
+```text
+GET    /api/v1/teachers?page=0&size=20
+GET    /api/v1/teachers/{id}
+POST   /api/v1/teachers
+PUT    /api/v1/teachers/{id}
+DELETE /api/v1/teachers/{id}
+```
+
+Request:
+
+```json
+{
+  "cui": "1234567890123",
+  "firstName": "Ana",
+  "lastName": "Lopez",
+  "email": "ana.lopez@example.com",
+  "userId": 1
+}
+```
 
 ### Tutors
 
-- `POST /api/v1/tutors`
-- `GET /api/v1/tutors`
-- `GET /api/v1/tutors/{id}`
-- `PUT /api/v1/tutors/{id}`
-- `DELETE /api/v1/tutors/{id}`
+```text
+GET    /api/v1/tutors?page=0&size=20
+GET    /api/v1/tutors/{id}
+POST   /api/v1/tutors
+PUT    /api/v1/tutors/{id}
+DELETE /api/v1/tutors/{id}
+```
+
+Request:
+
+```json
+{
+  "cui": "1234567890123",
+  "firstName": "Carlos",
+  "lastName": "Perez",
+  "userId": 2
+}
+```
 
 ### Students
 
-- `POST /api/v1/students`
-- `GET /api/v1/students`
-- `GET /api/v1/students/{id}`
-- `GET /api/v1/students/tutor/{tutorId}`
-- `PUT /api/v1/students/{id}`
-- `DELETE /api/v1/students/{id}`
+```text
+GET    /api/v1/students?page=0&size=20
+GET    /api/v1/students/{id}
+GET    /api/v1/students/tutor/{tutorId}
+POST   /api/v1/students
+PUT    /api/v1/students/{id}
+DELETE /api/v1/students/{id}
+```
+
+Request:
+
+```json
+{
+  "personalCode": "STU-001",
+  "cui": "1234567890123",
+  "firstName": "Maria",
+  "lastName": "Garcia",
+  "tutorId": 1,
+  "userId": 3
+}
+```
 
 ### Enrollments
 
-- `POST /api/v1/enrollments`
-- `GET /api/v1/enrollments`
-- `GET /api/v1/enrollments/{id}`
-- `GET /api/v1/enrollments/student/{studentId}`
-- `GET /api/v1/enrollments/cycle/{cycleId}`
+```text
+GET    /api/v1/enrollments?page=0&size=20
+GET    /api/v1/enrollments/{id}
+GET    /api/v1/enrollments/student/{studentId}
+GET    /api/v1/enrollments/cycle/{cycleId}
+POST   /api/v1/enrollments
+PUT    /api/v1/enrollments/{id}
+DELETE /api/v1/enrollments/{id}
+```
+
+Request:
+
+```json
+{
+  "studentId": 1,
+  "gradeId": 1,
+  "sectionId": 1,
+  "planId": 1,
+  "shiftId": 1,
+  "cycleId": 1,
+  "enrollmentDate": "2026-05-05T10:00:00"
+}
+```
 
 ### Teacher Assignments
 
-- `POST /api/v1/teacher-assignments`
-- `GET /api/v1/teacher-assignments`
-- `GET /api/v1/teacher-assignments/{id}`
-- `GET /api/v1/teacher-assignments/teacher/{teacherId}`
-- `GET /api/v1/teacher-assignments/grade/{gradeId}/section/{sectionId}`
+```text
+GET    /api/v1/teacher-assignments?page=0&size=20
+GET    /api/v1/teacher-assignments/{id}
+GET    /api/v1/teacher-assignments/teacher/{teacherId}
+GET    /api/v1/teacher-assignments/grade/{gradeId}/section/{sectionId}
+POST   /api/v1/teacher-assignments
+PUT    /api/v1/teacher-assignments/{id}
+DELETE /api/v1/teacher-assignments/{id}
+```
+
+Request:
+
+```json
+{
+  "teacherId": 1,
+  "courseId": 1,
+  "gradeId": 1,
+  "sectionId": 1
+}
+```
 
 ### Schedules
 
-- `POST /api/v1/schedules`
-- `GET /api/v1/schedules`
-- `GET /api/v1/schedules/{id}`
-- `GET /api/v1/schedules/teacher-assignment/{teacherAssignmentId}`
+```text
+GET    /api/v1/schedules?page=0&size=20
+GET    /api/v1/schedules/{id}
+GET    /api/v1/schedules/teacher-assignment/{teacherAssignmentId}
+POST   /api/v1/schedules
+PUT    /api/v1/schedules/{id}
+DELETE /api/v1/schedules/{id}
+```
+
+Request:
+
+```json
+{
+  "teacherAssignmentId": 1,
+  "classroomId": 1,
+  "dayOfWeek": "MONDAY",
+  "startTime": "08:00:00",
+  "endTime": "09:00:00"
+}
+```
 
 ### Activities
 
-- `POST /api/v1/activities`
-- `GET /api/v1/activities`
-- `GET /api/v1/activities/{id}`
-- `GET /api/v1/activities/teacher-assignment/{teacherAssignmentId}`
+```text
+GET    /api/v1/activities?page=0&size=20
+GET    /api/v1/activities/{id}
+GET    /api/v1/activities/teacher-assignment/{teacherAssignmentId}
+POST   /api/v1/activities
+PUT    /api/v1/activities/{id}
+DELETE /api/v1/activities/{id}
+```
+
+Request:
+
+```json
+{
+  "teacherAssignmentId": 1,
+  "unitId": 1,
+  "activityName": "Exam 1",
+  "weight": 25.00
+}
+```
 
 ### Grades Records
 
-- `POST /api/v1/grades-records`
-- `GET /api/v1/grades-records/student/{studentId}`
-- `GET /api/v1/grades-records/activity/{activityId}`
+```text
+GET    /api/v1/grades-records?page=0&size=20
+GET    /api/v1/grades-records/{id}
+GET    /api/v1/grades-records/student/{studentId}
+GET    /api/v1/grades-records/activity/{activityId}
+POST   /api/v1/grades-records
+PUT    /api/v1/grades-records/{id}
+DELETE /api/v1/grades-records/{id}
+```
+
+Request:
+
+```json
+{
+  "studentId": 1,
+  "activityId": 1,
+  "scoreObtained": 88.50
+}
+```
 
 ### Attendance
 
-- `POST /api/v1/attendance`
-- `GET /api/v1/attendance/student/{studentId}`
-- `GET /api/v1/attendance/teacher-assignment/{teacherAssignmentId}`
-- `GET /api/v1/attendance/date/{date}`
+```text
+GET    /api/v1/attendance?page=0&size=20
+GET    /api/v1/attendance/{id}
+GET    /api/v1/attendance/student/{studentId}
+GET    /api/v1/attendance/teacher-assignment/{teacherAssignmentId}
+GET    /api/v1/attendance/date/{attendanceDate}
+POST   /api/v1/attendance
+PUT    /api/v1/attendance/{id}
+DELETE /api/v1/attendance/{id}
+```
 
-## DTOs Sugeridos
+`attendanceDate` usa formato ISO:
+
+```text
+2026-05-05
+```
+
+Request:
+
+```json
+{
+  "studentId": 1,
+  "teacherAssignmentId": 1,
+  "attendanceDate": "2026-05-05",
+  "status": "PRESENT"
+}
+```
+
+## DTOs Disponibles
 
 ```text
 TeacherRequest
@@ -311,30 +472,58 @@ AttendanceRequest
 AttendanceResponse
 ```
 
-## Reglas De Negocio Iniciales
+## Reglas De Negocio
 
-- No registrar estudiantes sin tutor valido cuando `id_tutor` sea requerido por el flujo.
+### Implementadas Actualmente
+
 - No registrar estudiante, tutor o docente con CUI duplicado.
 - No registrar estudiante con `personal_code` duplicado.
+- No crear estudiante con `tutorId` inexistente cuando se envia `tutorId`.
 - No crear inscripcion si el estudiante no existe.
 - No crear asignacion docente si el docente no existe.
+- No duplicar una asignacion docente con la misma combinacion de docente, curso, grado y seccion.
 - No crear horario si la asignacion docente no existe.
+- Validar que `startTime` sea menor que `endTime` cuando ambos valores se envian.
+- No crear actividad si la asignacion docente no existe.
+- Validar que `weight` no sea negativo.
 - No registrar nota si el estudiante o la actividad no existen.
+- Validar que `scoreObtained` no sea negativo.
+- No duplicar nota para el mismo estudiante y la misma actividad.
 - No registrar asistencia si el estudiante o la asignacion docente no existen.
-- Validar que `start_time` sea menor que `end_time`.
-- Validar que `score_obtained` y `weight` no sean negativos.
+- No duplicar asistencia para el mismo estudiante, asignacion docente y fecha.
+- Si `attendanceDate` no se envia, se usa la fecha actual.
 
-## Orden Recomendado De Desarrollo
+### Pendientes Recomendados
 
-1. Configurar proyecto Spring Boot del microservicio.
-2. Crear entidades JPA para las 9 tablas propias.
-3. Crear repositorios.
-4. Crear DTOs y mappers.
-5. Crear servicios de dominio con validaciones.
-6. Crear controladores REST.
-7. Agregar manejo global de errores.
-8. Agregar pruebas unitarias de servicios.
-9. Agregar pruebas de endpoints principales.
+- Validar IDs externos contra `academic-ms` o documentar que se validan solo por foreign key en base de datos.
+- Evitar inscripciones duplicadas para el mismo estudiante, ciclo, grado, seccion, plan y jornada.
+- Validar que `dayOfWeek` pertenezca a un conjunto permitido.
+- Evitar choques de horario por docente.
+- Evitar choques de horario por salon.
+- Restringir `attendance.status` a valores permitidos, por ejemplo `PRESENT`, `ABSENT`, `LATE`, `EXCUSED`.
+- Definir maximos para `scoreObtained` y `weight`, por ejemplo 100.00.
+- Evitar borrados que rompan historial academico, o reemplazarlos por estado activo/inactivo cuando aplique.
+
+## Estado Actual De Desarrollo
+
+- Proyecto Spring Boot configurado.
+- Entidades JPA creadas para las tablas propias del microservicio.
+- Repositorios creados.
+- DTOs y mapper creados.
+- Servicios de aplicacion creados con validaciones iniciales.
+- Controladores REST creados.
+- Manejo global de errores creado.
+- Listados generales con paginacion.
+- Prueba basica de aplicacion creada.
+
+## Siguientes Pasos Recomendados
+
+1. Agregar pruebas unitarias de servicios.
+2. Agregar pruebas de endpoints principales.
+3. Implementar regla para evitar inscripciones duplicadas.
+4. Endurecer reglas de horarios, asistencia y notas.
+5. Documentar o implementar validacion de IDs externos contra otros microservicios.
+6. Crear Dockerfile y preparar despliegue local con Docker Compose.
 
 ## Notas De Consistencia
 
