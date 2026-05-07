@@ -303,6 +303,8 @@ Request:
 
 ### Teacher Assignments
 
+Este recurso no administra docentes. `teacherId` es un identificador externo cuyo registro maestro pertenece a `academic-ms`.
+
 ```text
 GET    /api/v1/teacher-assignments?page=0&size=20
 GET    /api/v1/teacher-assignments/{id}
@@ -325,6 +327,8 @@ Request:
 ```
 
 ### Schedules
+
+Los endpoints por docente filtran horarios usando el `teacherId` guardado en `teacher_assignments`; no consultan ni modifican datos maestros del docente.
 
 ```text
 GET    /api/v1/schedules?page=0&size=20
@@ -488,16 +492,17 @@ AttendanceResponse
 - Controladores REST creados.
 - Manejo global de errores creado.
 - Listados generales con paginacion.
-- Prueba basica de aplicacion creada.
+- Pruebas unitarias iniciales para reglas de inscripciones, horarios y asistencia.
+- CRUD directo de docentes eliminado de este microservicio; solo se conserva `teacherId` como referencia externa.
 
 ## Siguientes Pasos Recomendados
 
-1. Agregar pruebas unitarias de servicios.
+1. Ampliar pruebas unitarias de servicios para estudiantes, tutores, asignaciones docentes, actividades y notas.
 2. Agregar pruebas de endpoints principales.
-3. Implementar regla para evitar inscripciones duplicadas.
-4. Endurecer reglas de horarios, asistencia y notas.
-5. Documentar o implementar validacion de IDs externos contra otros microservicios.
-6. Crear Dockerfile y preparar despliegue local con Docker Compose.
+3. Documentar o implementar validacion de IDs externos contra `academic-ms` y `users-ms`.
+4. Definir indices de base de datos en conjunto con los otros microservicios, especialmente para consultas por `studentId`, `teacherId`, `cycleId`, `gradeId`, `sectionId` y fechas.
+5. Evaluar cache o replica de lectura solo cuando los endpoints principales y las consultas reales esten cerrados.
+6. Crear Dockerfile del microservicio cuando se defina la estrategia de despliegue.
 
 ## Notas De Consistencia
 
