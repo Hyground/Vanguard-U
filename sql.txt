@@ -68,7 +68,7 @@ CREATE TABLE teachers (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100),
-    id_user INTEGER REFERENCES users(id_user)
+    id_user INTEGER NOT NULL REFERENCES users(id_user)
 );
 
 CREATE TABLE tutor (
@@ -76,7 +76,7 @@ CREATE TABLE tutor (
     cui CHAR(13) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    id_user INTEGER REFERENCES users(id_user)
+    id_user INTEGER NOT NULL REFERENCES users(id_user)
 );
 
 CREATE TABLE students (
@@ -86,7 +86,7 @@ CREATE TABLE students (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     id_tutor INTEGER REFERENCES tutor(id_tutor),
-    id_user INTEGER REFERENCES users(id_user)
+    id_user INTEGER NOT NULL REFERENCES users(id_user)
 );
 
 --- 4. ACADEMIC MANAGEMENT
