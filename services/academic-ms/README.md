@@ -1,6 +1,12 @@
 # Microservicio Académico (Núcleo Académico)
 
-Este microservicio gestiona los datos fundamentales académicos como salones, planes de estudio, carreras, grados y cursos.
+Este microservicio gestiona los datos fundamentales académicos como salones, planes de estudio, carreras, grados, cursos y docentes.
+
+## Responsabilidad del servicio
+
+`academic-ms` es el dueño de los catálogos y recursos académicos. Por separación de microservicios, este servicio debe administrar directamente los docentes.
+
+`student-and-enrollment-ms` no debe crear, editar ni eliminar docentes. Ese servicio solo guarda el `teacherId` en `teacher_assignments` para relacionar un docente existente con curso, grado y sección.
 
 ## Tech Stack
 - **Java 21**
@@ -54,6 +60,16 @@ CREATE TABLE courses (
     course_name VARCHAR(100) NOT NULL
 );
 
+CREATE TABLE teachers (
+    teacher_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(user_id),
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    specialty VARCHAR(100),
+    phone VARCHAR(20),
+    email VARCHAR(100)
+);
+
 CREATE TABLE academic_units (
     unit_id SERIAL PRIMARY KEY,
     unit_name VARCHAR(50) NOT NULL
@@ -67,6 +83,12 @@ CREATE TABLE academic_units (
 - `GET /api/v1/grades` - Listar todos los grados (opcionalmente filtrar por carrera).
 - `GET /api/v1/courses` - Listar todos los cursos.
 - `GET /api/v1/classrooms` - Listar todos los salones.
+- `GET /api/v1/teachers` - Listar todos los docentes.
+- `GET /api/v1/teachers/{id}` - Obtener un docente por id.
+- `GET /api/v1/teachers/user/{userId}` - Obtener el docente vinculado a un usuario.
+- `POST /api/v1/teachers` - Crear un docente.
+- `PUT /api/v1/teachers/{id}` - Actualizar un docente.
+- `DELETE /api/v1/teachers/{id}` - Eliminar o desactivar un docente.
 
 ### Academic Cycle Controller
 - `GET /api/v1/academic-cycles/active` - Obtener el ciclo escolar activo actual.
@@ -77,6 +99,7 @@ CREATE TABLE academic_units (
 - `GradeDTO` (id, name, careerId)
 - `CourseDTO` (id, code, name)
 - `ClassroomDTO` (id, code, capacity)
+- `TeacherDTO` (id, userId, firstName, lastName, specialty, phone, email)
 
 ## Suggested Sprints
 
@@ -88,6 +111,7 @@ CREATE TABLE academic_units (
 - Implementar Cursos y Unidades Académicas.
 - Implementar gestión de Salones.
 - Implementar lógica de Ciclos Académicos (estados activo/inactivo).
+- Implementar gestión de Docentes.
 
 ---
 *Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*
