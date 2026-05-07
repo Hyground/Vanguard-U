@@ -20,8 +20,8 @@ El sistema utiliza una arquitectura basada en **Microservicios**, permitiendo es
 
 - **Gateway MS:** Punto de entrada centralizado para el enrutamiento y la seguridad perimetral.
 - **Users MS:** Gestión de identidad, autenticación (JWT), autorización y auditoría del sistema.
-- **Academic MS:** Gestión de datos maestros académicos (carreras, cursos, grados, salones).
-- **Student & Enrollment MS:** Lógica de negocio central que maneja ciclos de vida de estudiantes, docentes y procesos de inscripción.
+- **Academic MS:** Gestión de datos maestros académicos (carreras, cursos, grados, salones y docentes).
+- **Student & Enrollment MS:** Lógica de negocio central que maneja ciclos de vida de estudiantes, tutores, inscripciones, asignaciones docentes, horarios, notas y asistencia.
 - **Billing MS:** Gestión financiera, métodos de pago y transacciones.
 
 ---
@@ -33,7 +33,7 @@ vanguard/
 │   ├── academic-ms/             # Datos Maestros Académicos
 │   ├── billing-ms/              # Finanzas y Pagos
 │   ├── gateway-ms/              # API Gateway
-│   ├── student-and-enrollment-ms/# Operaciones Core (Estudiantes/Docentes)
+│   ├── student-and-enrollment-ms/# Operaciones Core (Estudiantes/Inscripciones)
 │   └── users-ms/                # Seguridad y Autenticación
 ├── infrastructure/              # Configuraciones de Docker, Prometheus, Grafana
 └── README.md                    # Este archivo
@@ -68,7 +68,8 @@ La carpeta `infrastructure/` contiene la configuración necesaria para desplegar
 
 ### Fase 2: Núcleo Académico (Sprint 3-4)
 - Implementación de datos maestros en `academic-ms`.
-- Registro inicial de estudiantes y docentes en `student-and-enrollment-ms`.
+- Registro inicial de estudiantes y tutores en `student-and-enrollment-ms`.
+- Registro y administración de docentes en `academic-ms`.
 
 ### Fase 3: Operaciones y Finanzas (Sprint 5-6)
 - Implementación de inscripciones, horarios y calificaciones.
