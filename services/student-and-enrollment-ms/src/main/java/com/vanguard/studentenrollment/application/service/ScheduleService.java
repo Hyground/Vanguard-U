@@ -174,11 +174,11 @@ public class ScheduleService {
             return;
         }
 
-        if (teacherAssignment.getTeacher() == null || teacherAssignment.getTeacher().getId() == null) {
+        if (teacherAssignment.getTeacherId() == null) {
             return;
         }
 
-        scheduleRepository.findByTeacherIdAndDayOfWeek(teacherAssignment.getTeacher().getId(), dayOfWeek)
+        scheduleRepository.findByTeacherIdAndDayOfWeek(teacherAssignment.getTeacherId(), dayOfWeek)
                 .stream()
                 .filter(schedule -> !Objects.equals(schedule.getId(), currentScheduleId))
                 .filter(schedule -> overlaps(schedule, request.startTime(), request.endTime()))

@@ -1,6 +1,6 @@
 # Student and Enrollment MS
 
-Microservicio responsable de la gestion de estudiantes, tutores, docentes, inscripciones, asignaciones docentes, horarios, actividades, notas y asistencia.
+Microservicio responsable de la gestion de estudiantes, tutores, inscripciones, asignaciones docentes, horarios, actividades, notas y asistencia.
 
 Este README toma como fuente principal el archivo `sql.txt` del proyecto. Aunque el sistema usa una sola base de datos compartida, este microservicio solo debe implementar la logica de negocio que corresponde a las tablas indicadas en esta documentacion.
 
@@ -19,7 +19,6 @@ Este README toma como fuente principal el archivo `sql.txt` del proyecto. Aunque
 Este microservicio administra directamente estas tablas:
 
 ```text
-teachers
 tutor
 students
 enrollments
@@ -30,7 +29,7 @@ grades_records
 attendance
 ```
 
-No debe administrar directamente usuarios, roles, catalogos academicos ni pagos. Esas tablas existen en la misma base de datos, pero pertenecen a otros microservicios.
+No debe administrar directamente usuarios, roles, docentes, catalogos academicos ni pagos. Esas tablas existen en la misma base de datos, pero pertenecen a otros microservicios.
 
 ## Mapa De Responsabilidad
 
@@ -42,6 +41,7 @@ users-ms
   system_log
 
 academic-ms
+  teachers
   classrooms
   study_plans
   shifts
@@ -53,7 +53,6 @@ academic-ms
   bimonthly_units
 
 student-and-enrollment-ms
-  teachers
   tutor
   students
   enrollments
@@ -71,15 +70,6 @@ billing-ms
 ## Tablas Propias Segun `sql.txt`
 
 ```sql
-CREATE TABLE teachers (
-    id_teacher SERIAL PRIMARY KEY,
-    cui CHAR(13) UNIQUE NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100),
-    id_user INTEGER REFERENCES users(id_user)
-);
-
 CREATE TABLE tutor (
     id_tutor SERIAL PRIMARY KEY,
     cui CHAR(13) UNIQUE NOT NULL,
@@ -156,6 +146,7 @@ Estas tablas se consultan o se referencian por ID, pero no son responsabilidad d
 
 ```text
 users
+teachers
 grades
 sections
 study_plans
@@ -169,7 +160,6 @@ bimonthly_units
 Referencias principales:
 
 ```text
-teachers.id_user -> users.id_user
 tutor.id_user -> users.id_user
 students.id_user -> users.id_user
 students.id_tutor -> tutor.id_tutor
@@ -197,7 +187,6 @@ attendance.id_teacher_assignment -> teacher_assignments.id_teacher_assignment
 
 ```text
 Gestion de actores
-  teachers: docentes
   tutor: tutores o encargados
   students: estudiantes
 
@@ -230,34 +219,10 @@ Los listados generales usan paginacion de Spring:
 
 ```text
 GET /api/v1/students?page=0&size=20
-GET /api/v1/teachers?page=0&size=10
 GET /api/v1/enrollments?page=1&size=25
 ```
 
 La respuesta paginada incluye `content`, `totalElements`, `totalPages`, `size`, `number`, `first`, `last` y metadatos similares.
-
-### Teachers
-
-```text
-GET    /api/v1/teachers?page=0&size=20
-GET    /api/v1/teachers/{id}
-GET    /api/v1/teachers/cui/{cui}
-POST   /api/v1/teachers
-PUT    /api/v1/teachers/{id}
-DELETE /api/v1/teachers/{id}
-```
-
-Request:
-
-```json
-{
-  "cui": "1234567890123",
-  "firstName": "Ana",
-  "lastName": "Lopez",
-  "email": "ana.lopez@example.com",
-  "userId": 1
-}
-```
 
 ### Tutors
 
@@ -265,6 +230,7 @@ Request:
 GET    /api/v1/tutors?page=0&size=20
 GET    /api/v1/tutors/{id}
 GET    /api/v1/tutors/cui/{cui}
+GET    /api/v1/tutors/user/{userId}
 POST   /api/v1/tutors
 PUT    /api/v1/tutors/{id}
 DELETE /api/v1/tutors/{id}
@@ -288,6 +254,7 @@ GET    /api/v1/students?page=0&size=20
 GET    /api/v1/students/{id}
 GET    /api/v1/students/cui/{cui}
 GET    /api/v1/students/personal-code/{personalCode}
+GET    /api/v1/students/user/{userId}
 GET    /api/v1/students/tutor/{tutorId}
 POST   /api/v1/students
 PUT    /api/v1/students/{id}
@@ -460,8 +427,6 @@ Request:
 ## DTOs Disponibles
 
 ```text
-TeacherRequest
-TeacherResponse
 TutorRequest
 TutorResponse
 StudentRequest
@@ -484,12 +449,11 @@ AttendanceResponse
 
 ### Implementadas Actualmente
 
-- No registrar estudiante, tutor o docente con CUI duplicado.
+- No registrar estudiante o tutor con CUI duplicado.
 - No registrar estudiante con `personal_code` duplicado.
 - No crear estudiante con `tutorId` inexistente cuando se envia `tutorId`.
 - No crear inscripcion si el estudiante no existe.
 - No duplicar inscripciones para el mismo estudiante, ciclo, grado, seccion, plan y jornada.
-- No crear asignacion docente si el docente no existe.
 - No duplicar una asignacion docente con la misma combinacion de docente, curso, grado y seccion.
 - No crear horario si la asignacion docente no existe.
 - Validar que `dayOfWeek` pertenezca a `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY` o `SUNDAY`.

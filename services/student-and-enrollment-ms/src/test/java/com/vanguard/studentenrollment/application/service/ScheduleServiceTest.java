@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import com.vanguard.studentenrollment.application.dto.ScheduleRequest;
 import com.vanguard.studentenrollment.application.exception.BusinessRuleException;
 import com.vanguard.studentenrollment.domain.model.Schedule;
-import com.vanguard.studentenrollment.domain.model.Teacher;
 import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
 import com.vanguard.studentenrollment.domain.repository.ScheduleRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
@@ -89,10 +88,8 @@ class ScheduleServiceTest {
     }
 
     private TeacherAssignment assignmentWithTeacher(Integer teacherId) {
-        Teacher teacher = new Teacher();
-        ReflectionTestUtils.setField(teacher, "id", teacherId);
         TeacherAssignment teacherAssignment = new TeacherAssignment();
-        teacherAssignment.setTeacher(teacher);
+        teacherAssignment.setTeacherId(teacherId);
         return teacherAssignment;
     }
 

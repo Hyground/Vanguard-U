@@ -70,6 +70,18 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
+    public StudentResponse findByUserId(Integer userId) {
+        List<Student> students = studentRepository.findByUserId(userId);
+        if (students.isEmpty()) {
+            throw new ResourceNotFoundException("Student not found with user id: " + userId);
+        }
+        if (students.size() > 1) {
+            throw new BusinessRuleException("More than one student is linked to this user id.");
+        }
+        return StudentEnrollmentMapper.toResponse(students.getFirst());
+    }
+
+    @Transactional(readOnly = true)
     public List<StudentResponse> findByTutorId(Integer tutorId) {
         return studentRepository.findByTutor_Id(tutorId)
                 .stream()

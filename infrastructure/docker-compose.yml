@@ -1,31 +1,50 @@
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: vanguard-db
-    environment:
-      POSTGRES_DB: vanguard_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  # Nodo Principal
+  pg-master:
+    image: bitnami/postgresql:latest
+    container_name: pg-master
+    restart: always
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  billing-ms:
-    build:
-      context: ../services/billing-ms
-      dockerfile: Dockerfile
-    container_name: billing-ms
-    ports:
-      - "8084:8084"
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=vanguard_db
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
-    depends_on:
-      - db
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_user_svc
+      - POSTGRESQL_REPLICATION_PASSWORD=Kj82_mP91_Xz77_Rt
+      - POSTGRESQL_USERNAME=bd2equipomari
+      - POSTGRESQL_PASSWORD=Kj82_mP91_Xz77_Rt
+      - POSTGRESQL_DATABASE=bdedu
+    volumes:
+      - ./master_data:/bitnami/postgresql
 
-volumes:
-  postgres_data:
+  # Nodo Réplica
+  pg-replica:
+    image: bitnami/postgresql:latest
+    container_name: pg-replica
+    restart: always
+    depends_on:
+      - pg-master
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_MASTER_HOST=pg-master
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_REPLICATION_USER=repl_user_svc
+      - POSTGRESQL_REPLICATION_PASSWORD=Kj82_mP91_Xz77_Rt
+      - POSTGRESQL_MASTER_USER=bd2equipomari
+      - POSTGRESQL_MASTER_PASSWORD=Kj82_mP91_Xz77_Rt
+      - POSTGRESQL_PASSWORD=Kj82_mP91_Xz77_Rt
+    volumes:
+      - ./replica_data:/bitnami/postgresql
+
+  # Cache
+  redis-cache:
+    image: bitnami/redis:latest
+    container_name: redis-cache
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=Kj82_mP91_Xz77_Rt
+    volumes:
+      - ./redis_data:/bitnami/redis

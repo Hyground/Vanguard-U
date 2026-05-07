@@ -5,13 +5,11 @@ import com.vanguard.studentenrollment.application.dto.TeacherAssignmentResponse;
 import com.vanguard.studentenrollment.application.exception.BusinessRuleException;
 import com.vanguard.studentenrollment.application.exception.ResourceNotFoundException;
 import com.vanguard.studentenrollment.application.mapper.StudentEnrollmentMapper;
-import com.vanguard.studentenrollment.domain.model.Teacher;
 import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
 import com.vanguard.studentenrollment.domain.repository.ActivityRepository;
 import com.vanguard.studentenrollment.domain.repository.AttendanceRepository;
 import com.vanguard.studentenrollment.domain.repository.ScheduleRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
-import com.vanguard.studentenrollment.domain.repository.TeacherRepository;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -23,20 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class TeacherAssignmentService {
 
     private final TeacherAssignmentRepository teacherAssignmentRepository;
-    private final TeacherRepository teacherRepository;
     private final ScheduleRepository scheduleRepository;
     private final ActivityRepository activityRepository;
     private final AttendanceRepository attendanceRepository;
 
     public TeacherAssignmentService(
             TeacherAssignmentRepository teacherAssignmentRepository,
-            TeacherRepository teacherRepository,
             ScheduleRepository scheduleRepository,
             ActivityRepository activityRepository,
             AttendanceRepository attendanceRepository
     ) {
         this.teacherAssignmentRepository = teacherAssignmentRepository;
-        this.teacherRepository = teacherRepository;
         this.scheduleRepository = scheduleRepository;
         this.activityRepository = activityRepository;
         this.attendanceRepository = attendanceRepository;
@@ -55,7 +50,7 @@ public class TeacherAssignmentService {
 
     @Transactional(readOnly = true)
     public List<TeacherAssignmentResponse> findByTeacherId(Integer teacherId) {
-        return teacherAssignmentRepository.findByTeacher_Id(teacherId)
+        return teacherAssignmentRepository.findByTeacherId(teacherId)
                 .stream()
                 .map(StudentEnrollmentMapper::toResponse)
                 .toList();
@@ -71,10 +66,9 @@ public class TeacherAssignmentService {
 
     @Transactional
     public TeacherAssignmentResponse create(TeacherAssignmentRequest request) {
-        Teacher teacher = getTeacher(request.teacherId());
         ensureAssignmentIsAvailable(request, null);
 
-        TeacherAssignment assignment = StudentEnrollmentMapper.toEntity(request, teacher);
+        TeacherAssignment assignment = StudentEnrollmentMapper.toEntity(request);
         TeacherAssignment savedAssignment = teacherAssignmentRepository.save(assignment);
         return StudentEnrollmentMapper.toResponse(savedAssignment);
     }
@@ -82,10 +76,9 @@ public class TeacherAssignmentService {
     @Transactional
     public TeacherAssignmentResponse update(Integer id, TeacherAssignmentRequest request) {
         TeacherAssignment assignment = getTeacherAssignment(id);
-        Teacher teacher = getTeacher(request.teacherId());
         ensureAssignmentIsAvailable(request, id);
 
-        StudentEnrollmentMapper.updateEntity(assignment, request, teacher);
+        StudentEnrollmentMapper.updateEntity(assignment, request);
         return StudentEnrollmentMapper.toResponse(assignment);
     }
 
@@ -101,13 +94,8 @@ public class TeacherAssignmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher assignment not found with id: " + id));
     }
 
-    private Teacher getTeacher(Integer id) {
-        return teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + id));
-    }
-
     private void ensureAssignmentIsAvailable(TeacherAssignmentRequest request, Integer currentAssignmentId) {
-        teacherAssignmentRepository.findByTeacher_Id(request.teacherId())
+        teacherAssignmentRepository.findByTeacherId(request.teacherId())
                 .stream()
                 .filter(assignment -> !Objects.equals(assignment.getId(), currentAssignmentId))
                 .filter(assignment -> sameAssignment(assignment, request))
@@ -118,7 +106,8 @@ public class TeacherAssignmentService {
     }
 
     private boolean sameAssignment(TeacherAssignment assignment, TeacherAssignmentRequest request) {
-        return sameValue(assignment.getCourseId(), request.courseId())
+        return sameValue(assignment.getTeacherId(), request.teacherId())
+                && sameValue(assignment.getCourseId(), request.courseId())
                 && sameValue(assignment.getGradeId(), request.gradeId())
                 && sameValue(assignment.getSectionId(), request.sectionId());
     }

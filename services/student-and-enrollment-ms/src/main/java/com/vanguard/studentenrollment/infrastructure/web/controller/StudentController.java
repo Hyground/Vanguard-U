@@ -49,6 +49,11 @@ public class StudentController {
         return ResponseEntity.ok(studentService.findByPersonalCode(personalCode));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<StudentResponse> findByUserId(@PathVariable Integer userId) {
+        return ResponseEntity.ok(studentService.findByUserId(userId));
+    }
+
     @GetMapping("/tutor/{tutorId}")
     public ResponseEntity<List<StudentResponse>> findByTutorId(@PathVariable Integer tutorId) {
         return ResponseEntity.ok(studentService.findByTutorId(tutorId));

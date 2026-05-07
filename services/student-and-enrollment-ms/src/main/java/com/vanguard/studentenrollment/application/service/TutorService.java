@@ -43,6 +43,18 @@ public class TutorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tutor not found with CUI: " + cui));
     }
 
+    @Transactional(readOnly = true)
+    public TutorResponse findByUserId(Integer userId) {
+        var tutors = tutorRepository.findByUserId(userId);
+        if (tutors.isEmpty()) {
+            throw new ResourceNotFoundException("Tutor not found with user id: " + userId);
+        }
+        if (tutors.size() > 1) {
+            throw new BusinessRuleException("More than one tutor is linked to this user id.");
+        }
+        return StudentEnrollmentMapper.toResponse(tutors.getFirst());
+    }
+
     @Transactional
     public TutorResponse create(TutorRequest request) {
         ensureCuiIsAvailable(request.cui(), null);

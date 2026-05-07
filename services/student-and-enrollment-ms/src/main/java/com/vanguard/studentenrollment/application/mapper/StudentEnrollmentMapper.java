@@ -14,8 +14,6 @@ import com.vanguard.studentenrollment.application.dto.StudentRequest;
 import com.vanguard.studentenrollment.application.dto.StudentResponse;
 import com.vanguard.studentenrollment.application.dto.TeacherAssignmentRequest;
 import com.vanguard.studentenrollment.application.dto.TeacherAssignmentResponse;
-import com.vanguard.studentenrollment.application.dto.TeacherRequest;
-import com.vanguard.studentenrollment.application.dto.TeacherResponse;
 import com.vanguard.studentenrollment.application.dto.TutorRequest;
 import com.vanguard.studentenrollment.application.dto.TutorResponse;
 import com.vanguard.studentenrollment.domain.model.Activity;
@@ -24,38 +22,12 @@ import com.vanguard.studentenrollment.domain.model.Enrollment;
 import com.vanguard.studentenrollment.domain.model.GradeRecord;
 import com.vanguard.studentenrollment.domain.model.Schedule;
 import com.vanguard.studentenrollment.domain.model.Student;
-import com.vanguard.studentenrollment.domain.model.Teacher;
 import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
 import com.vanguard.studentenrollment.domain.model.Tutor;
 
 public final class StudentEnrollmentMapper {
 
     private StudentEnrollmentMapper() {
-    }
-
-    public static Teacher toEntity(TeacherRequest request) {
-        Teacher teacher = new Teacher();
-        updateEntity(teacher, request);
-        return teacher;
-    }
-
-    public static void updateEntity(Teacher teacher, TeacherRequest request) {
-        teacher.setCui(request.cui());
-        teacher.setFirstName(request.firstName());
-        teacher.setLastName(request.lastName());
-        teacher.setEmail(request.email());
-        teacher.setUserId(request.userId());
-    }
-
-    public static TeacherResponse toResponse(Teacher teacher) {
-        return new TeacherResponse(
-                teacher.getId(),
-                teacher.getCui(),
-                teacher.getFirstName(),
-                teacher.getLastName(),
-                teacher.getEmail(),
-                teacher.getUserId()
-        );
     }
 
     public static Tutor toEntity(TutorRequest request) {
@@ -139,24 +111,23 @@ public final class StudentEnrollmentMapper {
         );
     }
 
-    public static TeacherAssignment toEntity(TeacherAssignmentRequest request, Teacher teacher) {
+    public static TeacherAssignment toEntity(TeacherAssignmentRequest request) {
         TeacherAssignment assignment = new TeacherAssignment();
-        updateEntity(assignment, request, teacher);
+        updateEntity(assignment, request);
         return assignment;
     }
 
-    public static void updateEntity(TeacherAssignment assignment, TeacherAssignmentRequest request, Teacher teacher) {
-        assignment.setTeacher(teacher);
+    public static void updateEntity(TeacherAssignment assignment, TeacherAssignmentRequest request) {
+        assignment.setTeacherId(request.teacherId());
         assignment.setCourseId(request.courseId());
         assignment.setGradeId(request.gradeId());
         assignment.setSectionId(request.sectionId());
     }
 
     public static TeacherAssignmentResponse toResponse(TeacherAssignment assignment) {
-        Integer teacherId = assignment.getTeacher() == null ? null : assignment.getTeacher().getId();
         return new TeacherAssignmentResponse(
                 assignment.getId(),
-                teacherId,
+                assignment.getTeacherId(),
                 assignment.getCourseId(),
                 assignment.getGradeId(),
                 assignment.getSectionId()

@@ -18,8 +18,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
             select schedule
             from Schedule schedule
             join schedule.teacherAssignment assignment
-            join assignment.teacher teacher
-            where teacher.id = :teacherId
+            where assignment.teacherId = :teacherId
             and schedule.dayOfWeek = :dayOfWeek
             """)
     List<Schedule> findByTeacherIdAndDayOfWeek(
