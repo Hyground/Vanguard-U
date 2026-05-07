@@ -8,5 +8,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Integer> {
 
     List<Activity> findByTeacherAssignment_Id(Integer teacherAssignmentId);
 
+    boolean existsByTeacherAssignment_Id(Integer teacherAssignmentId);
+
     List<Activity> findByTeacherAssignment_IdAndUnitId(Integer teacherAssignmentId, Integer unitId);
 }

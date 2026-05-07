@@ -6,7 +6,9 @@ import com.vanguard.studentenrollment.application.exception.BusinessRuleExceptio
 import com.vanguard.studentenrollment.application.exception.ResourceNotFoundException;
 import com.vanguard.studentenrollment.application.mapper.StudentEnrollmentMapper;
 import com.vanguard.studentenrollment.domain.model.Teacher;
+import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherRepository;
+import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,9 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class TeacherService {
 
     private final TeacherRepository teacherRepository;
+    private final TeacherAssignmentRepository teacherAssignmentRepository;
 
-    public TeacherService(TeacherRepository teacherRepository) {
+    public TeacherService(TeacherRepository teacherRepository, TeacherAssignmentRepository teacherAssignmentRepository) {
         this.teacherRepository = teacherRepository;
+        this.teacherAssignmentRepository = teacherAssignmentRepository;
     }
 
     @Transactional(readOnly = true)
@@ -30,6 +34,13 @@ public class TeacherService {
     @Transactional(readOnly = true)
     public TeacherResponse findById(Integer id) {
         return StudentEnrollmentMapper.toResponse(getTeacher(id));
+    }
+
+    @Transactional(readOnly = true)
+    public TeacherResponse findByCui(String cui) {
+        return teacherRepository.findByCui(cui)
+                .map(StudentEnrollmentMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with CUI: " + cui));
     }
 
     @Transactional
@@ -53,6 +64,7 @@ public class TeacherService {
     @Transactional
     public void delete(Integer id) {
         Teacher teacher = getTeacher(id);
+        ensureTeacherCanBeDeleted(id);
         teacherRepository.delete(teacher);
     }
 
@@ -63,9 +75,15 @@ public class TeacherService {
 
     private void ensureCuiIsAvailable(String cui, Integer currentTeacherId) {
         teacherRepository.findByCui(cui)
-                .filter(existingTeacher -> !existingTeacher.getId().equals(currentTeacherId))
+                .filter(existingTeacher -> !Objects.equals(existingTeacher.getId(), currentTeacherId))
                 .ifPresent(existingTeacher -> {
                     throw new BusinessRuleException("A teacher with this CUI already exists.");
                 });
+    }
+
+    private void ensureTeacherCanBeDeleted(Integer teacherId) {
+        if (teacherAssignmentRepository.existsByTeacher_Id(teacherId)) {
+            throw new BusinessRuleException("Teacher cannot be deleted because it has assignments.");
+        }
     }
 }

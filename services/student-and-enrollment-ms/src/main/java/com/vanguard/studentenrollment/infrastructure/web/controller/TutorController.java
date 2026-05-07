@@ -38,6 +38,11 @@ public class TutorController {
         return ResponseEntity.ok(tutorService.findById(id));
     }
 
+    @GetMapping("/cui/{cui}")
+    public ResponseEntity<TutorResponse> findByCui(@PathVariable String cui) {
+        return ResponseEntity.ok(tutorService.findByCui(cui));
+    }
+
     @PostMapping
     public ResponseEntity<TutorResponse> create(@Valid @RequestBody TutorRequest request) {
         TutorResponse response = tutorService.create(request);

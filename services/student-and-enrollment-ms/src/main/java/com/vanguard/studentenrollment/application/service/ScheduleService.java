@@ -9,7 +9,11 @@ import com.vanguard.studentenrollment.domain.model.Schedule;
 import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
 import com.vanguard.studentenrollment.domain.repository.ScheduleRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ScheduleService {
+
+    private static final Set<String> ALLOWED_DAYS = Set.of(
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY"
+    );
 
     private final ScheduleRepository scheduleRepository;
     private final TeacherAssignmentRepository teacherAssignmentRepository;
@@ -48,12 +62,34 @@ public class ScheduleService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ScheduleResponse> findByClassroomAndDay(Integer classroomId, String dayOfWeek) {
+        String normalizedDay = normalizeDayOfWeek(dayOfWeek);
+        validateDayOfWeek(normalizedDay);
+        return scheduleRepository.findByClassroomIdAndDayOfWeek(classroomId, normalizedDay)
+                .stream()
+                .map(StudentEnrollmentMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ScheduleResponse> findByTeacherAndDay(Integer teacherId, String dayOfWeek) {
+        String normalizedDay = normalizeDayOfWeek(dayOfWeek);
+        validateDayOfWeek(normalizedDay);
+        return scheduleRepository.findByTeacherIdAndDayOfWeek(teacherId, normalizedDay)
+                .stream()
+                .map(StudentEnrollmentMapper::toResponse)
+                .toList();
+    }
+
     @Transactional
     public ScheduleResponse create(ScheduleRequest request) {
-        validateTimeRange(request);
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
+        String dayOfWeek = normalizeDayOfWeek(request.dayOfWeek());
+        validateScheduleRules(request, teacherAssignment, dayOfWeek, null);
 
         Schedule schedule = StudentEnrollmentMapper.toEntity(request, teacherAssignment);
+        schedule.setDayOfWeek(dayOfWeek);
         Schedule savedSchedule = scheduleRepository.save(schedule);
         return StudentEnrollmentMapper.toResponse(savedSchedule);
     }
@@ -61,10 +97,12 @@ public class ScheduleService {
     @Transactional
     public ScheduleResponse update(Integer id, ScheduleRequest request) {
         Schedule schedule = getSchedule(id);
-        validateTimeRange(request);
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
+        String dayOfWeek = normalizeDayOfWeek(request.dayOfWeek());
+        validateScheduleRules(request, teacherAssignment, dayOfWeek, id);
 
         StudentEnrollmentMapper.updateEntity(schedule, request, teacherAssignment);
+        schedule.setDayOfWeek(dayOfWeek);
         return StudentEnrollmentMapper.toResponse(schedule);
     }
 
@@ -84,6 +122,18 @@ public class ScheduleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher assignment not found with id: " + id));
     }
 
+    private void validateScheduleRules(
+            ScheduleRequest request,
+            TeacherAssignment teacherAssignment,
+            String dayOfWeek,
+            Integer currentScheduleId
+    ) {
+        validateTimeRange(request);
+        validateDayOfWeek(dayOfWeek);
+        ensureTeacherScheduleIsAvailable(request, teacherAssignment, dayOfWeek, currentScheduleId);
+        ensureClassroomScheduleIsAvailable(request, dayOfWeek, currentScheduleId);
+    }
+
     private void validateTimeRange(ScheduleRequest request) {
         if (request.startTime() == null || request.endTime() == null) {
             return;
@@ -92,5 +142,76 @@ public class ScheduleService {
         if (!request.startTime().isBefore(request.endTime())) {
             throw new BusinessRuleException("Schedule start time must be before end time.");
         }
+    }
+
+    private String normalizeDayOfWeek(String dayOfWeek) {
+        if (dayOfWeek == null || dayOfWeek.isBlank()) {
+            return dayOfWeek;
+        }
+
+        return dayOfWeek.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private void validateDayOfWeek(String dayOfWeek) {
+        if (dayOfWeek == null || dayOfWeek.isBlank()) {
+            return;
+        }
+
+        if (!ALLOWED_DAYS.contains(dayOfWeek)) {
+            throw new BusinessRuleException(
+                    "Schedule day of week must be one of: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY."
+            );
+        }
+    }
+
+    private void ensureTeacherScheduleIsAvailable(
+            ScheduleRequest request,
+            TeacherAssignment teacherAssignment,
+            String dayOfWeek,
+            Integer currentScheduleId
+    ) {
+        if (dayOfWeek == null || request.startTime() == null || request.endTime() == null) {
+            return;
+        }
+
+        if (teacherAssignment.getTeacher() == null || teacherAssignment.getTeacher().getId() == null) {
+            return;
+        }
+
+        scheduleRepository.findByTeacherIdAndDayOfWeek(teacherAssignment.getTeacher().getId(), dayOfWeek)
+                .stream()
+                .filter(schedule -> !Objects.equals(schedule.getId(), currentScheduleId))
+                .filter(schedule -> overlaps(schedule, request.startTime(), request.endTime()))
+                .findAny()
+                .ifPresent(schedule -> {
+                    throw new BusinessRuleException("Teacher already has a schedule in this time range.");
+                });
+    }
+
+    private void ensureClassroomScheduleIsAvailable(
+            ScheduleRequest request,
+            String dayOfWeek,
+            Integer currentScheduleId
+    ) {
+        if (request.classroomId() == null || dayOfWeek == null || request.startTime() == null || request.endTime() == null) {
+            return;
+        }
+
+        scheduleRepository.findByClassroomIdAndDayOfWeek(request.classroomId(), dayOfWeek)
+                .stream()
+                .filter(schedule -> !Objects.equals(schedule.getId(), currentScheduleId))
+                .filter(schedule -> overlaps(schedule, request.startTime(), request.endTime()))
+                .findAny()
+                .ifPresent(schedule -> {
+                    throw new BusinessRuleException("Classroom already has a schedule in this time range.");
+                });
+    }
+
+    private boolean overlaps(Schedule schedule, LocalTime startTime, LocalTime endTime) {
+        if (schedule.getStartTime() == null || schedule.getEndTime() == null) {
+            return false;
+        }
+
+        return startTime.isBefore(schedule.getEndTime()) && endTime.isAfter(schedule.getStartTime());
     }
 }

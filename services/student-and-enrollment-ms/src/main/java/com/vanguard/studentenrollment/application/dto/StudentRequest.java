@@ -1,6 +1,7 @@
 package com.vanguard.studentenrollment.application.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record StudentRequest(
@@ -21,6 +22,8 @@ public record StudentRequest(
         String lastName,
 
         Integer tutorId,
+
+        @NotNull
         Integer userId
 ) {
 }

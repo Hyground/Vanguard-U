@@ -49,6 +49,15 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollmentService.findByCycleId(cycleId));
     }
 
+    @GetMapping("/grade/{gradeId}/section/{sectionId}/cycle/{cycleId}")
+    public ResponseEntity<List<EnrollmentResponse>> findByGradeSectionAndCycle(
+            @PathVariable Integer gradeId,
+            @PathVariable Integer sectionId,
+            @PathVariable Integer cycleId
+    ) {
+        return ResponseEntity.ok(enrollmentService.findByGradeSectionAndCycle(gradeId, sectionId, cycleId));
+    }
+
     @PostMapping
     public ResponseEntity<EnrollmentResponse> create(@Valid @RequestBody EnrollmentRequest request) {
         EnrollmentResponse response = enrollmentService.create(request);

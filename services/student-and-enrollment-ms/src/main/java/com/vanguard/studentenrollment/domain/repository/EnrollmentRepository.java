@@ -8,6 +8,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Integer>
 
     List<Enrollment> findByStudent_Id(Integer studentId);
 
+    boolean existsByStudent_Id(Integer studentId);
+
     List<Enrollment> findByCycleId(Integer cycleId);
 
     List<Enrollment> findByGradeIdAndSectionIdAndCycleId(Integer gradeId, Integer sectionId, Integer cycleId);

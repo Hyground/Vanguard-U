@@ -8,6 +8,8 @@ public interface TeacherAssignmentRepository extends JpaRepository<TeacherAssign
 
     List<TeacherAssignment> findByTeacher_Id(Integer teacherId);
 
+    boolean existsByTeacher_Id(Integer teacherId);
+
     List<TeacherAssignment> findByGradeIdAndSectionId(Integer gradeId, Integer sectionId);
 
     boolean existsByTeacher_IdAndCourseIdAndGradeIdAndSectionId(

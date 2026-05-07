@@ -60,6 +60,14 @@ public class AttendanceController {
         return ResponseEntity.ok(attendanceService.findByAttendanceDate(attendanceDate));
     }
 
+    @GetMapping("/student/{studentId}/date/{attendanceDate}")
+    public ResponseEntity<List<AttendanceResponse>> findByStudentAndAttendanceDate(
+            @PathVariable Integer studentId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate attendanceDate
+    ) {
+        return ResponseEntity.ok(attendanceService.findByStudentAndAttendanceDate(studentId, attendanceDate));
+    }
+
     @PostMapping
     public ResponseEntity<AttendanceResponse> create(@Valid @RequestBody AttendanceRequest request) {
         AttendanceResponse response = attendanceService.create(request);

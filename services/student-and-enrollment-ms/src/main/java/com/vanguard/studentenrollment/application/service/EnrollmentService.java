@@ -2,6 +2,7 @@ package com.vanguard.studentenrollment.application.service;
 
 import com.vanguard.studentenrollment.application.dto.EnrollmentRequest;
 import com.vanguard.studentenrollment.application.dto.EnrollmentResponse;
+import com.vanguard.studentenrollment.application.exception.BusinessRuleException;
 import com.vanguard.studentenrollment.application.exception.ResourceNotFoundException;
 import com.vanguard.studentenrollment.application.mapper.StudentEnrollmentMapper;
 import com.vanguard.studentenrollment.domain.model.Enrollment;
@@ -9,6 +10,7 @@ import com.vanguard.studentenrollment.domain.model.Student;
 import com.vanguard.studentenrollment.domain.repository.EnrollmentRepository;
 import com.vanguard.studentenrollment.domain.repository.StudentRepository;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,8 +54,17 @@ public class EnrollmentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<EnrollmentResponse> findByGradeSectionAndCycle(Integer gradeId, Integer sectionId, Integer cycleId) {
+        return enrollmentRepository.findByGradeIdAndSectionIdAndCycleId(gradeId, sectionId, cycleId)
+                .stream()
+                .map(StudentEnrollmentMapper::toResponse)
+                .toList();
+    }
+
     @Transactional
     public EnrollmentResponse create(EnrollmentRequest request) {
+        ensureEnrollmentIsAvailable(request, null);
         Student student = getStudent(request.studentId());
         Enrollment enrollment = StudentEnrollmentMapper.toEntity(request, student);
         Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
@@ -63,6 +74,7 @@ public class EnrollmentService {
     @Transactional
     public EnrollmentResponse update(Integer id, EnrollmentRequest request) {
         Enrollment enrollment = getEnrollment(id);
+        ensureEnrollmentIsAvailable(request, id);
         Student student = getStudent(request.studentId());
 
         StudentEnrollmentMapper.updateEntity(enrollment, request, student);
@@ -83,5 +95,26 @@ public class EnrollmentService {
     private Student getStudent(Integer id) {
         return studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
+    }
+
+    private void ensureEnrollmentIsAvailable(EnrollmentRequest request, Integer currentEnrollmentId) {
+        enrollmentRepository.findByStudent_Id(request.studentId())
+                .stream()
+                .filter(enrollment -> !Objects.equals(enrollment.getId(), currentEnrollmentId))
+                .filter(enrollment -> sameAcademicPlacement(enrollment, request))
+                .findAny()
+                .ifPresent(enrollment -> {
+                    throw new BusinessRuleException(
+                            "Enrollment for this student, cycle, grade, section, plan and shift already exists."
+                    );
+                });
+    }
+
+    private boolean sameAcademicPlacement(Enrollment enrollment, EnrollmentRequest request) {
+        return Objects.equals(enrollment.getGradeId(), request.gradeId())
+                && Objects.equals(enrollment.getSectionId(), request.sectionId())
+                && Objects.equals(enrollment.getPlanId(), request.planId())
+                && Objects.equals(enrollment.getShiftId(), request.shiftId())
+                && Objects.equals(enrollment.getCycleId(), request.cycleId());
     }
 }

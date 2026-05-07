@@ -241,6 +241,7 @@ La respuesta paginada incluye `content`, `totalElements`, `totalPages`, `size`, 
 ```text
 GET    /api/v1/teachers?page=0&size=20
 GET    /api/v1/teachers/{id}
+GET    /api/v1/teachers/cui/{cui}
 POST   /api/v1/teachers
 PUT    /api/v1/teachers/{id}
 DELETE /api/v1/teachers/{id}
@@ -263,6 +264,7 @@ Request:
 ```text
 GET    /api/v1/tutors?page=0&size=20
 GET    /api/v1/tutors/{id}
+GET    /api/v1/tutors/cui/{cui}
 POST   /api/v1/tutors
 PUT    /api/v1/tutors/{id}
 DELETE /api/v1/tutors/{id}
@@ -284,6 +286,8 @@ Request:
 ```text
 GET    /api/v1/students?page=0&size=20
 GET    /api/v1/students/{id}
+GET    /api/v1/students/cui/{cui}
+GET    /api/v1/students/personal-code/{personalCode}
 GET    /api/v1/students/tutor/{tutorId}
 POST   /api/v1/students
 PUT    /api/v1/students/{id}
@@ -310,6 +314,7 @@ GET    /api/v1/enrollments?page=0&size=20
 GET    /api/v1/enrollments/{id}
 GET    /api/v1/enrollments/student/{studentId}
 GET    /api/v1/enrollments/cycle/{cycleId}
+GET    /api/v1/enrollments/grade/{gradeId}/section/{sectionId}/cycle/{cycleId}
 POST   /api/v1/enrollments
 PUT    /api/v1/enrollments/{id}
 DELETE /api/v1/enrollments/{id}
@@ -358,6 +363,8 @@ Request:
 GET    /api/v1/schedules?page=0&size=20
 GET    /api/v1/schedules/{id}
 GET    /api/v1/schedules/teacher-assignment/{teacherAssignmentId}
+GET    /api/v1/schedules/classroom/{classroomId}/day/{dayOfWeek}
+GET    /api/v1/schedules/teacher/{teacherId}/day/{dayOfWeek}
 POST   /api/v1/schedules
 PUT    /api/v1/schedules/{id}
 DELETE /api/v1/schedules/{id}
@@ -427,6 +434,7 @@ GET    /api/v1/attendance/{id}
 GET    /api/v1/attendance/student/{studentId}
 GET    /api/v1/attendance/teacher-assignment/{teacherAssignmentId}
 GET    /api/v1/attendance/date/{attendanceDate}
+GET    /api/v1/attendance/student/{studentId}/date/{attendanceDate}
 POST   /api/v1/attendance
 PUT    /api/v1/attendance/{id}
 DELETE /api/v1/attendance/{id}
@@ -480,29 +488,31 @@ AttendanceResponse
 - No registrar estudiante con `personal_code` duplicado.
 - No crear estudiante con `tutorId` inexistente cuando se envia `tutorId`.
 - No crear inscripcion si el estudiante no existe.
+- No duplicar inscripciones para el mismo estudiante, ciclo, grado, seccion, plan y jornada.
 - No crear asignacion docente si el docente no existe.
 - No duplicar una asignacion docente con la misma combinacion de docente, curso, grado y seccion.
 - No crear horario si la asignacion docente no existe.
+- Validar que `dayOfWeek` pertenezca a `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY` o `SUNDAY`.
 - Validar que `startTime` sea menor que `endTime` cuando ambos valores se envian.
+- Evitar choques de horario por docente.
+- Evitar choques de horario por salon.
 - No crear actividad si la asignacion docente no existe.
 - Validar que `weight` no sea negativo.
+- Validar que `weight` no sea mayor que 100.00.
 - No registrar nota si el estudiante o la actividad no existen.
 - Validar que `scoreObtained` no sea negativo.
+- Validar que `scoreObtained` no sea mayor que 100.00.
 - No duplicar nota para el mismo estudiante y la misma actividad.
 - No registrar asistencia si el estudiante o la asignacion docente no existen.
 - No duplicar asistencia para el mismo estudiante, asignacion docente y fecha.
+- Restringir `attendance.status` a `PRESENT`, `ABSENT`, `LATE` o `EXCUSED`.
 - Si `attendanceDate` no se envia, se usa la fecha actual.
+- Evitar borrados internos que rompan historial academico relacionado.
 
 ### Pendientes Recomendados
 
-- Validar IDs externos contra `academic-ms` o documentar que se validan solo por foreign key en base de datos.
-- Evitar inscripciones duplicadas para el mismo estudiante, ciclo, grado, seccion, plan y jornada.
-- Validar que `dayOfWeek` pertenezca a un conjunto permitido.
-- Evitar choques de horario por docente.
-- Evitar choques de horario por salon.
-- Restringir `attendance.status` a valores permitidos, por ejemplo `PRESENT`, `ABSENT`, `LATE`, `EXCUSED`.
-- Definir maximos para `scoreObtained` y `weight`, por ejemplo 100.00.
-- Evitar borrados que rompan historial academico, o reemplazarlos por estado activo/inactivo cuando aplique.
+- Validar IDs externos contra `academic-ms` y `users-ms`, o documentar formalmente que se validan solo por foreign key en base de datos compartida.
+- Definir si los borrados deben reemplazarse por estado activo/inactivo. El SQL actual no incluye columnas de estado para estas tablas.
 
 ## Estado Actual De Desarrollo
 

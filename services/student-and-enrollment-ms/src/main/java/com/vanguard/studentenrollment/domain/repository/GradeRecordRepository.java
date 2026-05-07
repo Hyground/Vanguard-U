@@ -11,4 +11,8 @@ public interface GradeRecordRepository extends JpaRepository<GradeRecord, Intege
     List<GradeRecord> findByActivity_Id(Integer activityId);
 
     boolean existsByStudent_IdAndActivity_Id(Integer studentId, Integer activityId);
+
+    boolean existsByStudent_Id(Integer studentId);
+
+    boolean existsByActivity_Id(Integer activityId);
 }

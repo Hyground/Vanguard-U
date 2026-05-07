@@ -38,6 +38,11 @@ public class TeacherController {
         return ResponseEntity.ok(teacherService.findById(id));
     }
 
+    @GetMapping("/cui/{cui}")
+    public ResponseEntity<TeacherResponse> findByCui(@PathVariable String cui) {
+        return ResponseEntity.ok(teacherService.findByCui(cui));
+    }
+
     @PostMapping
     public ResponseEntity<TeacherResponse> create(@Valid @RequestBody TeacherRequest request) {
         TeacherResponse response = teacherService.create(request);

@@ -39,6 +39,16 @@ public class StudentController {
         return ResponseEntity.ok(studentService.findById(id));
     }
 
+    @GetMapping("/cui/{cui}")
+    public ResponseEntity<StudentResponse> findByCui(@PathVariable String cui) {
+        return ResponseEntity.ok(studentService.findByCui(cui));
+    }
+
+    @GetMapping("/personal-code/{personalCode}")
+    public ResponseEntity<StudentResponse> findByPersonalCode(@PathVariable String personalCode) {
+        return ResponseEntity.ok(studentService.findByPersonalCode(personalCode));
+    }
+
     @GetMapping("/tutor/{tutorId}")
     public ResponseEntity<List<StudentResponse>> findByTutorId(@PathVariable Integer tutorId) {
         return ResponseEntity.ok(studentService.findByTutorId(tutorId));

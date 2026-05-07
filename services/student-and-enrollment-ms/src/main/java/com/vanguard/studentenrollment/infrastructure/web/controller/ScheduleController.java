@@ -46,6 +46,22 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.findByTeacherAssignmentId(teacherAssignmentId));
     }
 
+    @GetMapping("/classroom/{classroomId}/day/{dayOfWeek}")
+    public ResponseEntity<List<ScheduleResponse>> findByClassroomAndDay(
+            @PathVariable Integer classroomId,
+            @PathVariable String dayOfWeek
+    ) {
+        return ResponseEntity.ok(scheduleService.findByClassroomAndDay(classroomId, dayOfWeek));
+    }
+
+    @GetMapping("/teacher/{teacherId}/day/{dayOfWeek}")
+    public ResponseEntity<List<ScheduleResponse>> findByTeacherAndDay(
+            @PathVariable Integer teacherId,
+            @PathVariable String dayOfWeek
+    ) {
+        return ResponseEntity.ok(scheduleService.findByTeacherAndDay(teacherId, dayOfWeek));
+    }
+
     @PostMapping
     public ResponseEntity<ScheduleResponse> create(@Valid @RequestBody ScheduleRequest request) {
         ScheduleResponse response = scheduleService.create(request);

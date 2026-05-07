@@ -13,6 +13,9 @@ import com.vanguard.studentenrollment.domain.repository.StudentRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AttendanceService {
+
+    private static final Set<String> ALLOWED_STATUSES = Set.of("PRESENT", "ABSENT", "LATE", "EXCUSED");
 
     private final AttendanceRepository attendanceRepository;
     private final StudentRepository studentRepository;
@@ -70,15 +75,26 @@ public class AttendanceService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<AttendanceResponse> findByStudentAndAttendanceDate(Integer studentId, LocalDate attendanceDate) {
+        return attendanceRepository.findByStudent_IdAndAttendanceDate(studentId, attendanceDate)
+                .stream()
+                .map(StudentEnrollmentMapper::toResponse)
+                .toList();
+    }
+
     @Transactional
     public AttendanceResponse create(AttendanceRequest request) {
         LocalDate attendanceDate = resolveAttendanceDate(request.attendanceDate());
+        String status = normalizeStatus(request.status());
+        validateStatus(status);
         ensureAttendanceIsAvailable(request.studentId(), request.teacherAssignmentId(), attendanceDate, null);
 
         Student student = getStudent(request.studentId());
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
         Attendance attendance = StudentEnrollmentMapper.toEntity(request, student, teacherAssignment);
         attendance.setAttendanceDate(attendanceDate);
+        attendance.setStatus(status);
 
         Attendance savedAttendance = attendanceRepository.save(attendance);
         return StudentEnrollmentMapper.toResponse(savedAttendance);
@@ -88,12 +104,15 @@ public class AttendanceService {
     public AttendanceResponse update(Integer id, AttendanceRequest request) {
         Attendance attendance = getAttendance(id);
         LocalDate attendanceDate = resolveAttendanceDate(request.attendanceDate());
+        String status = normalizeStatus(request.status());
+        validateStatus(status);
         ensureAttendanceIsAvailable(request.studentId(), request.teacherAssignmentId(), attendanceDate, id);
 
         Student student = getStudent(request.studentId());
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
         StudentEnrollmentMapper.updateEntity(attendance, request, student, teacherAssignment);
         attendance.setAttendanceDate(attendanceDate);
+        attendance.setStatus(status);
         return StudentEnrollmentMapper.toResponse(attendance);
     }
 
@@ -122,6 +141,20 @@ public class AttendanceService {
         return attendanceDate == null ? LocalDate.now() : attendanceDate;
     }
 
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return status;
+        }
+
+        return status.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private void validateStatus(String status) {
+        if (!ALLOWED_STATUSES.contains(status)) {
+            throw new BusinessRuleException("Attendance status must be one of: PRESENT, ABSENT, LATE, EXCUSED.");
+        }
+    }
+
     private void ensureAttendanceIsAvailable(
             Integer studentId,
             Integer teacherAssignmentId,
@@ -130,7 +163,7 @@ public class AttendanceService {
     ) {
         attendanceRepository.findByStudent_Id(studentId)
                 .stream()
-                .filter(attendance -> !attendance.getId().equals(currentAttendanceId))
+                .filter(attendance -> !Objects.equals(attendance.getId(), currentAttendanceId))
                 .filter(attendance -> sameAttendance(attendance, teacherAssignmentId, attendanceDate))
                 .findAny()
                 .ifPresent(attendance -> {

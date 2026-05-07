@@ -7,9 +7,13 @@ import com.vanguard.studentenrollment.application.exception.ResourceNotFoundExce
 import com.vanguard.studentenrollment.application.mapper.StudentEnrollmentMapper;
 import com.vanguard.studentenrollment.domain.model.Teacher;
 import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
+import com.vanguard.studentenrollment.domain.repository.ActivityRepository;
+import com.vanguard.studentenrollment.domain.repository.AttendanceRepository;
+import com.vanguard.studentenrollment.domain.repository.ScheduleRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherRepository;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,13 +24,22 @@ public class TeacherAssignmentService {
 
     private final TeacherAssignmentRepository teacherAssignmentRepository;
     private final TeacherRepository teacherRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final ActivityRepository activityRepository;
+    private final AttendanceRepository attendanceRepository;
 
     public TeacherAssignmentService(
             TeacherAssignmentRepository teacherAssignmentRepository,
-            TeacherRepository teacherRepository
+            TeacherRepository teacherRepository,
+            ScheduleRepository scheduleRepository,
+            ActivityRepository activityRepository,
+            AttendanceRepository attendanceRepository
     ) {
         this.teacherAssignmentRepository = teacherAssignmentRepository;
         this.teacherRepository = teacherRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.activityRepository = activityRepository;
+        this.attendanceRepository = attendanceRepository;
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +92,7 @@ public class TeacherAssignmentService {
     @Transactional
     public void delete(Integer id) {
         TeacherAssignment assignment = getTeacherAssignment(id);
+        ensureTeacherAssignmentCanBeDeleted(id);
         teacherAssignmentRepository.delete(assignment);
     }
 
@@ -95,7 +109,7 @@ public class TeacherAssignmentService {
     private void ensureAssignmentIsAvailable(TeacherAssignmentRequest request, Integer currentAssignmentId) {
         teacherAssignmentRepository.findByTeacher_Id(request.teacherId())
                 .stream()
-                .filter(assignment -> !assignment.getId().equals(currentAssignmentId))
+                .filter(assignment -> !Objects.equals(assignment.getId(), currentAssignmentId))
                 .filter(assignment -> sameAssignment(assignment, request))
                 .findAny()
                 .ifPresent(assignment -> {
@@ -111,5 +125,19 @@ public class TeacherAssignmentService {
 
     private boolean sameValue(Integer left, Integer right) {
         return left == null ? right == null : left.equals(right);
+    }
+
+    private void ensureTeacherAssignmentCanBeDeleted(Integer teacherAssignmentId) {
+        if (scheduleRepository.existsByTeacherAssignment_Id(teacherAssignmentId)) {
+            throw new BusinessRuleException("Teacher assignment cannot be deleted because it has schedules.");
+        }
+
+        if (activityRepository.existsByTeacherAssignment_Id(teacherAssignmentId)) {
+            throw new BusinessRuleException("Teacher assignment cannot be deleted because it has activities.");
+        }
+
+        if (attendanceRepository.existsByTeacherAssignment_Id(teacherAssignmentId)) {
+            throw new BusinessRuleException("Teacher assignment cannot be deleted because it has attendance records.");
+        }
     }
 }
