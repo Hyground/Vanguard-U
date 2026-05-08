@@ -10,6 +10,7 @@ import com.vanguard.studentenrollment.domain.repository.ActivityRepository;
 import com.vanguard.studentenrollment.domain.repository.AttendanceRepository;
 import com.vanguard.studentenrollment.domain.repository.ScheduleRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -24,17 +25,20 @@ public class TeacherAssignmentService {
     private final ScheduleRepository scheduleRepository;
     private final ActivityRepository activityRepository;
     private final AttendanceRepository attendanceRepository;
+    private final ExternalReferenceValidator externalReferenceValidator;
 
     public TeacherAssignmentService(
             TeacherAssignmentRepository teacherAssignmentRepository,
             ScheduleRepository scheduleRepository,
             ActivityRepository activityRepository,
-            AttendanceRepository attendanceRepository
+            AttendanceRepository attendanceRepository,
+            ExternalReferenceValidator externalReferenceValidator
     ) {
         this.teacherAssignmentRepository = teacherAssignmentRepository;
         this.scheduleRepository = scheduleRepository;
         this.activityRepository = activityRepository;
         this.attendanceRepository = attendanceRepository;
+        this.externalReferenceValidator = externalReferenceValidator;
     }
 
     @Transactional(readOnly = true)
@@ -66,6 +70,7 @@ public class TeacherAssignmentService {
 
     @Transactional
     public TeacherAssignmentResponse create(TeacherAssignmentRequest request) {
+        validateExternalReferences(request);
         ensureAssignmentIsAvailable(request, null);
 
         TeacherAssignment assignment = StudentEnrollmentMapper.toEntity(request);
@@ -76,6 +81,7 @@ public class TeacherAssignmentService {
     @Transactional
     public TeacherAssignmentResponse update(Integer id, TeacherAssignmentRequest request) {
         TeacherAssignment assignment = getTeacherAssignment(id);
+        validateExternalReferences(request);
         ensureAssignmentIsAvailable(request, id);
 
         StudentEnrollmentMapper.updateEntity(assignment, request);
@@ -128,5 +134,12 @@ public class TeacherAssignmentService {
         if (attendanceRepository.existsByTeacherAssignment_Id(teacherAssignmentId)) {
             throw new BusinessRuleException("Teacher assignment cannot be deleted because it has attendance records.");
         }
+    }
+
+    private void validateExternalReferences(TeacherAssignmentRequest request) {
+        externalReferenceValidator.ensureTeacherExists(request.teacherId());
+        externalReferenceValidator.ensureCourseExists(request.courseId());
+        externalReferenceValidator.ensureGradeExists(request.gradeId());
+        externalReferenceValidator.ensureSectionExists(request.sectionId());
     }
 }

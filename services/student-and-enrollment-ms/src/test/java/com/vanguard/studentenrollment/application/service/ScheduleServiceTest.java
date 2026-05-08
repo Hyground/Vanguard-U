@@ -3,6 +3,7 @@ package com.vanguard.studentenrollment.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import com.vanguard.studentenrollment.application.dto.ScheduleRequest;
@@ -11,6 +12,7 @@ import com.vanguard.studentenrollment.domain.model.Schedule;
 import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
 import com.vanguard.studentenrollment.domain.repository.ScheduleRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,9 @@ class ScheduleServiceTest {
     @Mock
     private TeacherAssignmentRepository teacherAssignmentRepository;
 
+    @Mock
+    private ExternalReferenceValidator externalReferenceValidator;
+
     @InjectMocks
     private ScheduleService scheduleService;
 
@@ -38,6 +43,7 @@ class ScheduleServiceTest {
         ScheduleRequest request = request("HOLIDAY", LocalTime.of(8, 0), LocalTime.of(9, 0));
 
         when(teacherAssignmentRepository.findById(1)).thenReturn(Optional.of(assignmentWithTeacher(5)));
+        doNothing().when(externalReferenceValidator).ensureClassroomExists(7);
 
         assertThatThrownBy(() -> scheduleService.create(request))
                 .isInstanceOf(BusinessRuleException.class)
@@ -50,6 +56,7 @@ class ScheduleServiceTest {
         ScheduleRequest request = request("MONDAY", LocalTime.of(8, 0), LocalTime.of(9, 0));
 
         when(teacherAssignmentRepository.findById(1)).thenReturn(Optional.of(assignmentWithTeacher(5)));
+        doNothing().when(externalReferenceValidator).ensureClassroomExists(7);
         when(scheduleRepository.findByTeacherIdAndDayOfWeek(5, "MONDAY")).thenReturn(List.of(existingSchedule));
 
         assertThatThrownBy(() -> scheduleService.create(request))
@@ -63,6 +70,7 @@ class ScheduleServiceTest {
         ScheduleRequest request = request("MONDAY", LocalTime.of(8, 0), LocalTime.of(9, 0));
 
         when(teacherAssignmentRepository.findById(1)).thenReturn(Optional.of(assignmentWithTeacher(5)));
+        doNothing().when(externalReferenceValidator).ensureClassroomExists(7);
         when(scheduleRepository.findByTeacherIdAndDayOfWeek(5, "MONDAY")).thenReturn(List.of());
         when(scheduleRepository.findByClassroomIdAndDayOfWeek(7, "MONDAY")).thenReturn(List.of(existingSchedule));
 
@@ -76,6 +84,7 @@ class ScheduleServiceTest {
         ScheduleRequest request = request(" monday ", LocalTime.of(8, 0), LocalTime.of(9, 0));
 
         when(teacherAssignmentRepository.findById(1)).thenReturn(Optional.of(assignmentWithTeacher(5)));
+        doNothing().when(externalReferenceValidator).ensureClassroomExists(7);
         when(scheduleRepository.findByTeacherIdAndDayOfWeek(5, "MONDAY")).thenReturn(List.of());
         when(scheduleRepository.findByClassroomIdAndDayOfWeek(7, "MONDAY")).thenReturn(List.of());
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> invocation.getArgument(0));

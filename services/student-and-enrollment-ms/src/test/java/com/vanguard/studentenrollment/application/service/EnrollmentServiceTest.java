@@ -9,6 +9,7 @@ import com.vanguard.studentenrollment.application.exception.BusinessRuleExceptio
 import com.vanguard.studentenrollment.domain.model.Enrollment;
 import com.vanguard.studentenrollment.domain.repository.EnrollmentRepository;
 import com.vanguard.studentenrollment.domain.repository.StudentRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,9 @@ class EnrollmentServiceTest {
 
     @Mock
     private StudentRepository studentRepository;
+
+    @Mock
+    private ExternalReferenceValidator externalReferenceValidator;
 
     @InjectMocks
     private EnrollmentService enrollmentService;

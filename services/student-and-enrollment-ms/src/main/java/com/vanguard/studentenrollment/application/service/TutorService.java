@@ -8,6 +8,7 @@ import com.vanguard.studentenrollment.application.mapper.StudentEnrollmentMapper
 import com.vanguard.studentenrollment.domain.model.Tutor;
 import com.vanguard.studentenrollment.domain.repository.StudentRepository;
 import com.vanguard.studentenrollment.domain.repository.TutorRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,10 +20,16 @@ public class TutorService {
 
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
+    private final ExternalReferenceValidator externalReferenceValidator;
 
-    public TutorService(TutorRepository tutorRepository, StudentRepository studentRepository) {
+    public TutorService(
+            TutorRepository tutorRepository,
+            StudentRepository studentRepository,
+            ExternalReferenceValidator externalReferenceValidator
+    ) {
         this.tutorRepository = tutorRepository;
         this.studentRepository = studentRepository;
+        this.externalReferenceValidator = externalReferenceValidator;
     }
 
     @Transactional(readOnly = true)
@@ -57,6 +64,7 @@ public class TutorService {
 
     @Transactional
     public TutorResponse create(TutorRequest request) {
+        externalReferenceValidator.ensureUserExists(request.userId());
         ensureCuiIsAvailable(request.cui(), null);
 
         Tutor tutor = StudentEnrollmentMapper.toEntity(request);
@@ -67,6 +75,7 @@ public class TutorService {
     @Transactional
     public TutorResponse update(Integer id, TutorRequest request) {
         Tutor tutor = getTutor(id);
+        externalReferenceValidator.ensureUserExists(request.userId());
         ensureCuiIsAvailable(request.cui(), id);
 
         StudentEnrollmentMapper.updateEntity(tutor, request);

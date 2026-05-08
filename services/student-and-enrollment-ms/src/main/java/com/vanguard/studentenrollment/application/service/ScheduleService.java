@@ -9,6 +9,7 @@ import com.vanguard.studentenrollment.domain.model.Schedule;
 import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
 import com.vanguard.studentenrollment.domain.repository.ScheduleRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Locale;
@@ -34,13 +35,16 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final TeacherAssignmentRepository teacherAssignmentRepository;
+    private final ExternalReferenceValidator externalReferenceValidator;
 
     public ScheduleService(
             ScheduleRepository scheduleRepository,
-            TeacherAssignmentRepository teacherAssignmentRepository
+            TeacherAssignmentRepository teacherAssignmentRepository,
+            ExternalReferenceValidator externalReferenceValidator
     ) {
         this.scheduleRepository = scheduleRepository;
         this.teacherAssignmentRepository = teacherAssignmentRepository;
+        this.externalReferenceValidator = externalReferenceValidator;
     }
 
     @Transactional(readOnly = true)
@@ -85,6 +89,7 @@ public class ScheduleService {
     @Transactional
     public ScheduleResponse create(ScheduleRequest request) {
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
+        externalReferenceValidator.ensureClassroomExists(request.classroomId());
         String dayOfWeek = normalizeDayOfWeek(request.dayOfWeek());
         validateScheduleRules(request, teacherAssignment, dayOfWeek, null);
 
@@ -98,6 +103,7 @@ public class ScheduleService {
     public ScheduleResponse update(Integer id, ScheduleRequest request) {
         Schedule schedule = getSchedule(id);
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
+        externalReferenceValidator.ensureClassroomExists(request.classroomId());
         String dayOfWeek = normalizeDayOfWeek(request.dayOfWeek());
         validateScheduleRules(request, teacherAssignment, dayOfWeek, id);
 

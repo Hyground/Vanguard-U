@@ -12,6 +12,7 @@ import com.vanguard.studentenrollment.domain.repository.EnrollmentRepository;
 import com.vanguard.studentenrollment.domain.repository.GradeRecordRepository;
 import com.vanguard.studentenrollment.domain.repository.StudentRepository;
 import com.vanguard.studentenrollment.domain.repository.TutorRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -27,19 +28,22 @@ public class StudentService {
     private final EnrollmentRepository enrollmentRepository;
     private final GradeRecordRepository gradeRecordRepository;
     private final AttendanceRepository attendanceRepository;
+    private final ExternalReferenceValidator externalReferenceValidator;
 
     public StudentService(
             StudentRepository studentRepository,
             TutorRepository tutorRepository,
             EnrollmentRepository enrollmentRepository,
             GradeRecordRepository gradeRecordRepository,
-            AttendanceRepository attendanceRepository
+            AttendanceRepository attendanceRepository,
+            ExternalReferenceValidator externalReferenceValidator
     ) {
         this.studentRepository = studentRepository;
         this.tutorRepository = tutorRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.gradeRecordRepository = gradeRecordRepository;
         this.attendanceRepository = attendanceRepository;
+        this.externalReferenceValidator = externalReferenceValidator;
     }
 
     @Transactional(readOnly = true)
@@ -91,6 +95,7 @@ public class StudentService {
 
     @Transactional
     public StudentResponse create(StudentRequest request) {
+        externalReferenceValidator.ensureUserExists(request.userId());
         ensureCuiIsAvailable(request.cui(), null);
         ensurePersonalCodeIsAvailable(request.personalCode(), null);
 
@@ -103,6 +108,7 @@ public class StudentService {
     @Transactional
     public StudentResponse update(Integer id, StudentRequest request) {
         Student student = getStudent(id);
+        externalReferenceValidator.ensureUserExists(request.userId());
         ensureCuiIsAvailable(request.cui(), id);
         ensurePersonalCodeIsAvailable(request.personalCode(), id);
 

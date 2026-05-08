@@ -117,6 +117,11 @@ Referencias externas:
 - `attendance.id_student -> students.id_student`
 - `attendance.id_teacher_assignment -> teacher_assignments.id_teacher_assignment`
 
+Validacion esperada:
+
+- antes de guardar, este servicio debe confirmar que los IDs externos existen en la BD compartida
+- si un ID no existe, debe fallar con error de recurso no encontrado o regla de negocio equivalente
+
 ## `billing-ms`
 
 Tablas propias:

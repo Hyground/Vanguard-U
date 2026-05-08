@@ -37,6 +37,7 @@ public class AuthService {
         userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
         return AuthResponse.builder()
+                .idUser(user.getId())
                 .token(jwtToken)
                 .username(user.getUsername())
                 .role(role.getName())
@@ -54,6 +55,7 @@ public class AuthService {
                 .orElseThrow();
         var jwtToken = jwtService.generateToken(user);
         return AuthResponse.builder()
+                .idUser(user.getId())
                 .token(jwtToken)
                 .username(user.getUsername())
                 .role(user.getRole().getName())

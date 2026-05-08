@@ -9,6 +9,7 @@ import com.vanguard.studentenrollment.domain.model.Enrollment;
 import com.vanguard.studentenrollment.domain.model.Student;
 import com.vanguard.studentenrollment.domain.repository.EnrollmentRepository;
 import com.vanguard.studentenrollment.domain.repository.StudentRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -21,10 +22,16 @@ public class EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
     private final StudentRepository studentRepository;
+    private final ExternalReferenceValidator externalReferenceValidator;
 
-    public EnrollmentService(EnrollmentRepository enrollmentRepository, StudentRepository studentRepository) {
+    public EnrollmentService(
+            EnrollmentRepository enrollmentRepository,
+            StudentRepository studentRepository,
+            ExternalReferenceValidator externalReferenceValidator
+    ) {
         this.enrollmentRepository = enrollmentRepository;
         this.studentRepository = studentRepository;
+        this.externalReferenceValidator = externalReferenceValidator;
     }
 
     @Transactional(readOnly = true)
@@ -64,6 +71,7 @@ public class EnrollmentService {
 
     @Transactional
     public EnrollmentResponse create(EnrollmentRequest request) {
+        validateExternalPlacement(request);
         ensureEnrollmentIsAvailable(request, null);
         Student student = getStudent(request.studentId());
         Enrollment enrollment = StudentEnrollmentMapper.toEntity(request, student);
@@ -74,6 +82,7 @@ public class EnrollmentService {
     @Transactional
     public EnrollmentResponse update(Integer id, EnrollmentRequest request) {
         Enrollment enrollment = getEnrollment(id);
+        validateExternalPlacement(request);
         ensureEnrollmentIsAvailable(request, id);
         Student student = getStudent(request.studentId());
 
@@ -116,5 +125,13 @@ public class EnrollmentService {
                 && Objects.equals(enrollment.getPlanId(), request.planId())
                 && Objects.equals(enrollment.getShiftId(), request.shiftId())
                 && Objects.equals(enrollment.getCycleId(), request.cycleId());
+    }
+
+    private void validateExternalPlacement(EnrollmentRequest request) {
+        externalReferenceValidator.ensureGradeExists(request.gradeId());
+        externalReferenceValidator.ensureSectionExists(request.sectionId());
+        externalReferenceValidator.ensureStudyPlanExists(request.planId());
+        externalReferenceValidator.ensureShiftExists(request.shiftId());
+        externalReferenceValidator.ensureSchoolCycleExists(request.cycleId());
     }
 }

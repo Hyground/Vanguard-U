@@ -10,6 +10,7 @@ import com.vanguard.studentenrollment.domain.model.TeacherAssignment;
 import com.vanguard.studentenrollment.domain.repository.ActivityRepository;
 import com.vanguard.studentenrollment.domain.repository.GradeRecordRepository;
 import com.vanguard.studentenrollment.domain.repository.TeacherAssignmentRepository;
+import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,15 +23,18 @@ public class ActivityService {
     private final ActivityRepository activityRepository;
     private final TeacherAssignmentRepository teacherAssignmentRepository;
     private final GradeRecordRepository gradeRecordRepository;
+    private final ExternalReferenceValidator externalReferenceValidator;
 
     public ActivityService(
             ActivityRepository activityRepository,
             TeacherAssignmentRepository teacherAssignmentRepository,
-            GradeRecordRepository gradeRecordRepository
+            GradeRecordRepository gradeRecordRepository,
+            ExternalReferenceValidator externalReferenceValidator
     ) {
         this.activityRepository = activityRepository;
         this.teacherAssignmentRepository = teacherAssignmentRepository;
         this.gradeRecordRepository = gradeRecordRepository;
+        this.externalReferenceValidator = externalReferenceValidator;
     }
 
     @Transactional(readOnly = true)
@@ -55,6 +59,7 @@ public class ActivityService {
     @Transactional
     public ActivityResponse create(ActivityRequest request) {
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
+        externalReferenceValidator.ensureBimonthlyUnitExists(request.unitId());
         Activity activity = StudentEnrollmentMapper.toEntity(request, teacherAssignment);
         Activity savedActivity = activityRepository.save(activity);
         return StudentEnrollmentMapper.toResponse(savedActivity);
@@ -64,6 +69,7 @@ public class ActivityService {
     public ActivityResponse update(Integer id, ActivityRequest request) {
         Activity activity = getActivity(id);
         TeacherAssignment teacherAssignment = getTeacherAssignment(request.teacherAssignmentId());
+        externalReferenceValidator.ensureBimonthlyUnitExists(request.unitId());
 
         StudentEnrollmentMapper.updateEntity(activity, request, teacherAssignment);
         return StudentEnrollmentMapper.toResponse(activity);
