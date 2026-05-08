@@ -1,14 +1,14 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8082}
 
 spring:
   application:
     name: academic-ms
   
   datasource:
-    url: jdbc:postgresql://vps.wissegt.com:5432/bdedu
-    username: bd2equipomari
-    password: Kj82_mP91_Xz77_Rt
+    url: jdbc:postgresql://${DB_HOST:vps.wissegt.com}:${DB_PORT:5432}/${DB_NAME:bdedu}
+    username: ${DB_USERNAME:bd2equipomari}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     
   jpa:
