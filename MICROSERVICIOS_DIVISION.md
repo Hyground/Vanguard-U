@@ -139,6 +139,10 @@ Referencias externas:
 - `payments.id_user_issuer -> users.id_user`
 - `payments.id_user_payer -> users.id_user`
 
+Validacion esperada:
+
+- antes de guardar un pago, este servicio debe confirmar que `id_student`, `id_user_issuer` e `id_user_payer` existen en la BD compartida (si son proporcionados)
+
 ## `gateway-ms`
 
 No administra tablas.
