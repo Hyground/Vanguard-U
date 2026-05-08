@@ -19,4 +19,16 @@ public class RegisterRequest {
 
     @NotBlank(message = "Role is required")
     private String role;
+
+    // Profile Fields
+    @NotBlank(message = "CUI is required")
+    private String cui;
+
+    @NotBlank(message = "First name is required")
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    private String lastName;
+
+    private String email;
 }
