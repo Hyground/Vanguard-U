@@ -81,3 +81,18 @@ La carpeta `infrastructure/` contiene la configuracion necesaria para desplegar 
 
 Este README es de contexto general. La division real de responsabilidades y tablas vive en `MICROSERVICIOS_DIVISION.md`.
 
+## Flujo De Cuenta Y Perfil
+
+`users-ms` solo crea la cuenta de acceso y devuelve `idUser`. No crea perfiles humanos.
+
+Despues de crear la cuenta, el perfil se crea en el microservicio dueno:
+
+- Estudiante: `POST /api/v1/students` en `student-and-enrollment-ms`, usando el `idUser`.
+- Tutor: `POST /api/v1/tutors` en `student-and-enrollment-ms`, usando el `idUser`.
+- Docente: `POST /api/v1/teachers` en `academic-ms`, usando el `idUser`.
+- Admin: no tiene tabla de perfil propia en `sql.txt`; vive como cuenta con rol `ADMIN`.
+
+## Reiniciar Base De Datos
+
+El reinicio de la base se hace manualmente contra PostgreSQL usando `sql.txt` como esquema oficial.
+Antes de probar los microservicios, la tabla `roles` debe contener los roles base y cada cuenta debe apuntar a `roles.id_role`.

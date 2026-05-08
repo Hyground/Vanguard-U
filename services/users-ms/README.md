@@ -1,78 +1,91 @@
-# Microservicio de Usuarios (Núcleo de Seguridad)
+# Microservicio de Usuarios
 
-Este microservicio se encarga de la autenticación, autorización, gestión de usuarios y auditoría del sistema.
+Este microservicio se encarga de autenticacion, autorizacion, gestion de usuarios y auditoria del sistema.
+
+`users-ms` solo crea cuentas de acceso. No crea perfiles en `students`, `tutor` ni `teachers`.
+El endpoint de registro devuelve `idUser`; ese valor se usa despues para crear el perfil en el microservicio correspondiente.
 
 ## Tech Stack
-- **Java 21**
-- **Spring Boot 3.x**
-- **Spring Security**
-- **JWT (JSON Web Tokens)**
-- **PostgreSQL**
 
-## Database Schema (English)
+- Java 21
+- Spring Boot 3.x
+- Spring Security
+- JWT
+- PostgreSQL
+
+## Esquema Oficial
+
+La fuente de verdad es `sql.txt`.
 
 ```sql
 CREATE TABLE roles (
-    role_id SERIAL PRIMARY KEY,
+    id_role SERIAL PRIMARY KEY,
     role_name VARCHAR(50) NOT NULL UNIQUE
 );
 
 CREATE TABLE users (
-    user_id SERIAL PRIMARY KEY,
+    id_user SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role_id INTEGER REFERENCES roles(role_id),
+    id_role INTEGER REFERENCES roles(id_role),
     status BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE password_recovery (
-    token_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(user_id) NOT NULL,
-    temporary_token VARCHAR(255) NOT NULL,
+    id_token SERIAL PRIMARY KEY,
+    id_user INTEGER REFERENCES users(id_user) NOT NULL,
+    temp_token VARCHAR(255) NOT NULL,
     expiration_date TIMESTAMP NOT NULL,
-    is_used BOOLEAN DEFAULT FALSE
+    used BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE system_log (
-    log_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(user_id),
+    id_log SERIAL PRIMARY KEY,
+    id_user INTEGER REFERENCES users(id_user),
     action TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-## Suggested Endpoints
+## Endpoints
 
-### Auth Controller
-- `POST /api/v1/auth/login` - Autenticar usuario y devolver JWT.
-- `POST /api/v1/auth/register` - Registrar un nuevo usuario (estudiante por defecto o como admin).
-- `POST /api/v1/auth/recover-password` - Iniciar recuperación de contraseña.
-- `PUT /api/v1/auth/reset-password` - Restablecer contraseña usando un token.
+### Auth
 
-### User Controller
-- `GET /api/v1/users` - Listar todos los usuarios (Solo Admin).
-- `GET /api/v1/users/{id}` - Obtener detalles del usuario.
-- `PATCH /api/v1/users/{id}/status` - Habilitar/Deshabilitar usuario.
+- `POST /api/v1/auth/register` - registra una cuenta de acceso con `roleId` y devuelve `idUser`.
+- `POST /api/v1/auth/login` - autentica usuario y devuelve JWT.
 
-### Role Controller
-- `GET /api/v1/roles` - Listar todos los roles.
+### Users
 
-## Suggested DTOs
-- `AuthRequestDTO` (username, password)
-- `AuthResponseDTO` (jwt, username, role)
-- `UserResponseDTO` (id, username, role, status)
-- `PasswordResetDTO` (token, newPassword)
+- `GET /api/v1/users` - lista usuarios.
+- `GET /api/v1/users/{id}` - obtiene un usuario.
+- `PATCH /api/v1/users/{id}/status` - habilita o deshabilita usuario.
 
-## Suggested Sprints
+### Roles
 
-### Sprint 1: Fundamentos de Seguridad
-- Configuración de Spring Security y JWT.
-- Implementar entidades y repositorios de Usuario y Rol.
-- Endpoints básicos de Login y Registro.
+- `GET /api/v1/roles` - lista roles.
 
-### Sprint 2: Recuperación de Contraseña y Auditoría
-- Implementar lógica de recuperación de contraseña.
-- Implementar aspecto de Log de Sistema (Auditoría) para interceptar y registrar acciones.
+## Flujo Correcto
 
----
-*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*
+1. Crear cuenta:
+
+```http
+POST /api/v1/auth/register
+```
+
+```json
+{
+  "username": "estudiante1",
+  "password": "secret123",
+  "roleId": 3
+}
+```
+
+2. Tomar `idUser` de la respuesta. El `roleId` debe existir en `roles.id_role`.
+
+3. Crear el perfil en el servicio correspondiente:
+
+- Estudiante: `POST /api/v1/students` en `student-and-enrollment-ms`.
+- Tutor: `POST /api/v1/tutors` en `student-and-enrollment-ms`.
+- Docente: `POST /api/v1/teachers` en `academic-ms`.
+
+Un usuario `ADMIN` no tiene tabla de perfil propia en `sql.txt`; basta con la cuenta y el rol.

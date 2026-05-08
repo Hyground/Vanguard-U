@@ -1,6 +1,7 @@
 package com.vanguard.users.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,17 +18,15 @@ public class RegisterRequest {
     @NotBlank(message = "Password is required")
     private String password;
 
-    @NotBlank(message = "Role is required")
-    private String role;
+    @NotNull(message = "Role id is required")
+    private Integer roleId;
 
-    // Profile Fields
-    @NotBlank(message = "CUI is required")
+    // Optional profile fields kept for compatibility with existing clients.
+    // Profile records are created by academic-ms or student-and-enrollment-ms.
     private String cui;
 
-    @NotBlank(message = "First name is required")
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
     private String lastName;
 
     private String email;
