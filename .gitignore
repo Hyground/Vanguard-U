@@ -1,0 +1,4 @@
+
+# Security: Local environment variables
+.env
+env/
