@@ -1,98 +1,186 @@
-# Vanguard - Sistema Academico y de Gestion
+# Vanguard-U
 
-Vanguard es un sistema de gestion academica integral diseñado para centralizar y automatizar los procesos educativos, desde la inscripcion de estudiantes y asignacion de docentes hasta la facturacion y auditoria del sistema.
+Sistema academico basado en microservicios. Este README es la guia general para levantar el proyecto y probar el flujo principal por gateway.
 
-## Tabla de Contenido
-- Arquitectura
-- Microservicios
-- Estructura del Proyecto
-- Stack Tecnologico
-- Infraestructura y Monitoreo
-- Hoja de Ruta
-- Instrucciones para Agentes AI/CLI
+La fuente de verdad del esquema de base de datos es `sql.txt`.
+La division real de tablas por microservicio esta en `MICROSERVICIOS_DIVISION.md`.
 
-## Arquitectura
+## READMEs Del Proyecto
 
-El sistema utiliza una arquitectura basada en microservicios, permitiendo escalabilidad independiente y mantenimiento simplificado.
+- `README.md`: guia general de arranque y flujo principal.
+- `MICROSERVICIOS_DIVISION.md`: define que tablas pertenecen a cada microservicio.
+- `services/users-ms/README.md`: autenticacion, usuarios, roles y JWT.
+- `services/academic-ms/README.md`: catalogos academicos y docentes.
+- `services/student-and-enrollment-ms/README.md`: estudiantes, tutores, inscripciones, horarios, notas y asistencia.
+- `services/billing-ms/README.md`: metodos de pago y pagos.
+- `services/gateway-ms/README.md`: rutas del gateway.
+- `sql.txt`: esquema oficial actual de la base de datos.
 
-- `gateway-ms`: punto de entrada centralizado para el enrutamiento y la seguridad perimetral.
-- `users-ms`: gestion de identidad, autenticacion, autorizacion y auditoria del sistema.
-- `academic-ms`: gestion de datos maestros academicos y docentes.
-- `student-and-enrollment-ms`: logica de negocio central para estudiantes, tutores, inscripciones, asignaciones docentes, horarios, notas y asistencia.
-- `billing-ms`: gestion financiera, metodos de pago y transacciones.
+## Microservicios
 
-## Estructura del Proyecto
+Todo consumo externo debe pasar por `gateway-ms` en `http://localhost:8080`.
 
-```text
-vanguard/
-├── services/
-│   ├── academic-ms/
-│   ├── billing-ms/
-│   ├── gateway-ms/
-│   ├── student-and-enrollment-ms/
-│   └── users-ms/
-├── infrastructure/
-└── README.md
+Puertos internos:
+
+- `gateway-ms`: `8080`
+- `users-ms`: `8081`
+- `academic-ms`: `8082`
+- `student-and-enrollment-ms`: `8083`
+- `billing-ms`: `8084`
+
+## Base De Datos
+
+Los microservicios se conectan a PostgreSQL usando las variables del archivo `env/.env`.
+El esquema actual debe coincidir con `sql.txt`.
+
+Antes de crear usuarios, revisar los roles en pgAdmin:
+
+```sql
+SELECT * FROM roles ORDER BY id_role;
 ```
 
-## Stack Tecnologico
+En la base actual los roles estan asi:
 
-- Java 21
-- Spring Boot 3.x
-- Spring Cloud
-- PostgreSQL
-- Spring Data JPA
-- Spring Security
-- JWT
-- Prometheus y Grafana
-- Docker y Docker Compose
+```text
+5 = ADMIN
+6 = TEACHER
+7 = STUDENT
+8 = TUTOR
+```
 
-## Infraestructura y Monitoreo
+Si la base se reinicia manualmente, estos IDs pueden cambiar. Siempre usar el `id_role` real que devuelva la consulta.
 
-La carpeta `infrastructure/` contiene la configuracion necesaria para desplegar el entorno:
+## Levantar Servicios
 
-- Docker Compose para orquestacion
-- Prometheus para metricas
-- Grafana para visualizacion
+Abrir una terminal por microservicio y ejecutar:
 
-## Hoja de Ruta
+```powershell
+$env:JAVA_HOME="C:\Program Files\Java\jdk-21.0.10"
+.\mvnw.cmd spring-boot:run
+```
 
-### Fase 1: Cimientos
-- Configuracion inicial de microservicios con health checks y dockerizacion.
-- Implementacion del nucleo de seguridad (`users-ms`) y el gateway.
+Ejecutarlo desde cada carpeta:
 
-### Fase 2: Nucleo Academico
-- Implementacion de datos maestros en `academic-ms`.
-- Registro inicial de estudiantes y tutores en `student-and-enrollment-ms`.
-- Registro y administracion de docentes en `academic-ms`.
+```text
+services/users-ms
+services/academic-ms
+services/student-and-enrollment-ms
+services/billing-ms
+services/gateway-ms
+```
 
-### Fase 3: Operaciones y Finanzas
-- Implementacion de inscripciones, horarios y calificaciones.
-- Implementacion de pagos y transacciones en `billing-ms`.
+Verificar gateway:
 
-## Instrucciones para Agentes AI/CLI
-
-1. Seguir siempre Clean Architecture y principios SOLID.
-2. Usar ingles para codigo, clases, metodos, variables y comentarios tecnicos.
-3. La documentacion para usuarios puede estar en espanol.
-4. La autenticacion es centralizada en `users-ms` y validada en `gateway-ms`.
-
-## Notas
-
-Este README es de contexto general. La division real de responsabilidades y tablas vive en `MICROSERVICIOS_DIVISION.md`.
+```http
+GET http://localhost:8080/actuator/health
+```
 
 ## Flujo De Cuenta Y Perfil
 
-`users-ms` solo crea la cuenta de acceso y devuelve `idUser`. No crea perfiles humanos.
+`users-ms` crea cuentas de acceso en `users`.
+Los perfiles se crean en el microservicio que corresponde.
 
-Despues de crear la cuenta, el perfil se crea en el microservicio dueno:
+La cuenta guarda permisos:
 
-- Estudiante: `POST /api/v1/students` en `student-and-enrollment-ms`, usando el `idUser`.
-- Tutor: `POST /api/v1/tutors` en `student-and-enrollment-ms`, usando el `idUser`.
-- Docente: `POST /api/v1/teachers` en `academic-ms`, usando el `idUser`.
-- Admin: no tiene tabla de perfil propia en `sql.txt`; vive como cuenta con rol `ADMIN`.
+```text
+users.id_role -> roles.id_role
+```
 
-## Reiniciar Base De Datos
+El perfil guarda datos de la persona:
 
-El reinicio de la base se hace manualmente contra PostgreSQL usando `sql.txt` como esquema oficial.
-Antes de probar los microservicios, la tabla `roles` debe contener los roles base y cada cuenta debe apuntar a `roles.id_role`.
+- Docente/director/admin academico: `teachers`
+- Estudiante: `students`
+- Tutor: `tutor`
+
+Un usuario puede tener rol `ADMIN` y tambien tener perfil en `teachers`.
+Ejemplo: un director puede iniciar sesion como admin y tener registro docente.
+
+## Crear Admin Por Gateway
+
+Crear cuenta:
+
+```http
+POST http://localhost:8080/api/v1/auth/register
+```
+
+```json
+{
+  "username": "admin1",
+  "password": "123456",
+  "roleId": 5
+}
+```
+
+Respuesta esperada:
+
+```json
+{
+  "idUser": 2,
+  "token": "...",
+  "username": "admin1",
+  "role": "ADMIN"
+}
+```
+
+Crear perfil docente/director para ese mismo usuario:
+
+```http
+POST http://localhost:8080/api/v1/teachers
+```
+
+```json
+{
+  "cui": "0000000000002",
+  "firstName": "Admin",
+  "lastName": "Director",
+  "email": "admin1@vanguard.edu",
+  "userId": 2
+}
+```
+
+## Login
+
+```http
+POST http://localhost:8080/api/v1/auth/login
+```
+
+```json
+{
+  "username": "admin1",
+  "password": "123456"
+}
+```
+
+Usar el token devuelto como:
+
+```http
+Authorization: Bearer <token>
+```
+
+## Verificar En Base De Datos
+
+```sql
+SELECT
+  u.id_user,
+  u.username,
+  u.id_role,
+  r.role_name,
+  u.status,
+  t.id_teacher,
+  t.cui,
+  t.first_name,
+  t.last_name,
+  t.email
+FROM users u
+JOIN roles r ON r.id_role = u.id_role
+LEFT JOIN teachers t ON t.id_user = u.id_user
+WHERE u.username = 'admin1';
+```
+
+## Reglas Importantes
+
+- No probar endpoints internos directamente salvo diagnostico; usar `gateway-ms`.
+- No modificar `sql.txt` sin decidir primero el cambio de modelo de datos.
+- No crear perfiles desde `users-ms`.
+- `users-ms` recibe `roleId`, no texto de rol, porque la base guarda `users.id_role`.
+- El reinicio de base se hace manualmente en pgAdmin usando `sql.txt` como referencia.
