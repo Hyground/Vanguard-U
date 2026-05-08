@@ -14,6 +14,8 @@ La division real de tablas por microservicio esta en `MICROSERVICIOS_DIVISION.md
 - `services/student-and-enrollment-ms/README.md`: estudiantes, tutores, inscripciones, horarios, notas y asistencia.
 - `services/billing-ms/README.md`: metodos de pago y pagos.
 - `services/gateway-ms/README.md`: rutas del gateway.
+- `deploy/README.md`: plan de Docker, replicas y Docker Swarm para microservicios.
+- `infrastructure/README.md`: infraestructura local auxiliar como PostgreSQL/Redis.
 - `sql.txt`: esquema oficial actual de la base de datos.
 
 ## Microservicios
@@ -74,6 +76,78 @@ Verificar gateway:
 ```http
 GET http://localhost:8080/actuator/health
 ```
+
+## Despliegue Distribuido Pendiente
+
+El despliegue final debe permitir que los microservicios sigan vivos aunque una computadora se apague.
+La opcion recomendada para este proyecto es Docker Swarm.
+
+Modelo objetivo:
+
+```text
+Cliente
+  -> entrada del sistema / gateway
+  -> replicas de microservicios en varias computadoras
+  -> PostgreSQL en la nube
+```
+
+Reglas del modelo:
+
+- Cada microservicio debe tener su propia imagen Docker.
+- No se debe crear un solo contenedor con todos los microservicios.
+- Cada microservicio debe poder ejecutarse con mas de una replica.
+- Las computadoras del cluster no necesitan tener el proyecto completo; necesitan Docker y las imagenes.
+- La base de datos principal vive en la nube.
+- `sql.txt` sigue siendo la referencia del esquema.
+
+Estado actual:
+
+- `gateway-ms` tiene Dockerfile.
+- `billing-ms` tiene Dockerfile.
+- Faltan Dockerfile para `users-ms`, `academic-ms` y `student-and-enrollment-ms`.
+- Falta definir `deploy/docker-compose.local.yml` para pruebas en una sola computadora.
+- Falta definir `deploy/docker-stack.yml` para Docker Swarm en varias computadoras.
+- Falta definir healthchecks por servicio.
+- Falta definir balanceador o entrada estable para multiples replicas de `gateway-ms`.
+
+Plan recomendado:
+
+1. Probar localmente con Docker Compose en una sola computadora.
+2. Levantar 2 replicas por microservicio para simular alta disponibilidad.
+3. Probar apagando una replica y verificando que otra responde.
+4. Pasar el mismo modelo a Docker Swarm con 4 computadoras.
+5. Usar PostgreSQL en la nube como base principal.
+
+## Base De Datos, Redis Y Carga
+
+PostgreSQL:
+
+- Vive en la nube.
+- Es el sistema de persistencia principal.
+- No debe levantarse como contenedor local para produccion si ya se usa la nube.
+- Las replicas de base de datos, si se implementan, deben definirse en la capa de PostgreSQL o proveedor cloud, no dentro de cada microservicio.
+
+Redis:
+
+- No reemplaza PostgreSQL.
+- Se debe usar cuando exista una necesidad concreta de cache, rate limiting, sesiones temporales, colas ligeras o bloqueo distribuido.
+- Para mas de 5,000 peticiones, Redis puede ayudar a reducir lecturas repetidas a PostgreSQL, pero primero deben existir metricas de los endpoints mas usados.
+
+Uso recomendado de Redis en este proyecto:
+
+- Cache de catalogos academicos que cambian poco: grados, secciones, jornadas, cursos.
+- Rate limiting en gateway.
+- Cache temporal de validaciones frecuentes.
+- No usar Redis para datos criticos como pagos, notas o inscripciones sin persistir primero en PostgreSQL.
+
+Pendiente antes de prometer mas de 5,000 peticiones:
+
+- Pruebas de carga con escenarios reales.
+- Indices en PostgreSQL para las consultas mas usadas.
+- Pool de conexiones ajustado por microservicio.
+- Timeouts y limites de concurrencia.
+- Observabilidad: logs, metricas y healthchecks.
+- Cache Redis solo donde las pruebas demuestren beneficio.
 
 ## Flujo De Cuenta Y Perfil
 
