@@ -33,6 +33,7 @@ E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\service\SchoolCycleService.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\repository\SectionRepository.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\service\MajorService.java
+E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\infrastructure\persistence\ExternalReferenceValidator.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\AcademicMsApplication.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\model\BimonthlyUnit.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\application\dto\CatalogItemDTO.java

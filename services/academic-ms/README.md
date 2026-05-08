@@ -1,117 +1,125 @@
-# Microservicio Académico (Núcleo Académico)
+# academic-ms
 
-Este microservicio gestiona los datos fundamentales académicos como salones, planes de estudio, carreras, grados, cursos y docentes.
+Microservicio responsable de los catalogos academicos y del registro de docentes.
 
-## Responsabilidad del servicio
+La fuente de verdad del esquema es `sql.txt` y la division funcional se define en `MICROSERVICIOS_DIVISION.md`.
 
-`academic-ms` es el dueño de los catálogos y recursos académicos. Por separación de microservicios, este servicio debe administrar directamente los docentes.
+## Responsabilidad
 
-`student-and-enrollment-ms` no debe crear, editar ni eliminar docentes. Ese servicio solo guarda el `teacherId` en `teacher_assignments` para relacionar un docente existente con curso, grado y sección.
+Este servicio administra:
 
-## Tech Stack
-- **Java 21**
-- **Spring Boot 3.x**
-- **PostgreSQL**
+- `classrooms`
+- `study_plans`
+- `shifts`
+- `school_cycle`
+- `majors`
+- `grades`
+- `sections`
+- `teachers`
+- `courses`
+- `bimonthly_units`
 
-## Database Schema (English)
+Tambien valida que `teachers.id_user` exista en `users`.
+
+No debe crear cuentas de acceso, contrasenas ni roles. Eso pertenece a `users-ms`.
+
+## Esquema oficial
 
 ```sql
 CREATE TABLE classrooms (
-    classroom_id SERIAL PRIMARY KEY,
-    classroom_code VARCHAR(10) UNIQUE NOT NULL,
+    id_classroom SERIAL PRIMARY KEY,
+    room_code VARCHAR(10) UNIQUE NOT NULL,
     capacity INTEGER
 );
 
 CREATE TABLE study_plans (
-    plan_id SERIAL PRIMARY KEY,
+    id_plan SERIAL PRIMARY KEY,
     plan_name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE school_days (
-    day_id SERIAL PRIMARY KEY,
-    day_name VARCHAR(50) NOT NULL
+CREATE TABLE shifts (
+    id_shift SERIAL PRIMARY KEY,
+    shift_name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE academic_cycles (
-    cycle_id SERIAL PRIMARY KEY,
+CREATE TABLE school_cycle (
+    id_cycle SERIAL PRIMARY KEY,
     year INTEGER NOT NULL UNIQUE,
     status BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE careers (
-    career_id SERIAL PRIMARY KEY,
-    career_name VARCHAR(100) NOT NULL
+CREATE TABLE majors (
+    id_major SERIAL PRIMARY KEY,
+    major_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE grades (
-    grade_id SERIAL PRIMARY KEY,
+    id_grade SERIAL PRIMARY KEY,
     grade_name VARCHAR(50) NOT NULL,
-    career_id INTEGER REFERENCES careers(career_id)
+    id_major INTEGER REFERENCES majors(id_major)
 );
 
 CREATE TABLE sections (
-    section_id SERIAL PRIMARY KEY,
+    id_section SERIAL PRIMARY KEY,
     section_name CHAR(1) NOT NULL
 );
 
 CREATE TABLE courses (
-    course_id SERIAL PRIMARY KEY,
+    id_course SERIAL PRIMARY KEY,
     course_code VARCHAR(10) UNIQUE NOT NULL,
     course_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE teachers (
-    teacher_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(user_id),
+    id_teacher SERIAL PRIMARY KEY,
+    cui CHAR(13) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    specialty VARCHAR(100),
-    phone VARCHAR(20),
-    email VARCHAR(100)
+    email VARCHAR(100),
+    id_user INTEGER NOT NULL REFERENCES users(id_user)
 );
 
-CREATE TABLE academic_units (
-    unit_id SERIAL PRIMARY KEY,
+CREATE TABLE bimonthly_units (
+    id_unit SERIAL PRIMARY KEY,
     unit_name VARCHAR(50) NOT NULL
 );
 ```
 
-## Suggested Endpoints
+## Endpoints
 
-### Master Data Controllers (Genéricos)
-- `GET /api/v1/careers` - Listar todas las carreras.
-- `GET /api/v1/grades` - Listar todos los grados (opcionalmente filtrar por carrera).
-- `GET /api/v1/courses` - Listar todos los cursos.
-- `GET /api/v1/classrooms` - Listar todos los salones.
-- `GET /api/v1/teachers` - Listar todos los docentes.
-- `GET /api/v1/teachers/{id}` - Obtener un docente por id.
-- `GET /api/v1/teachers/user/{userId}` - Obtener el docente vinculado a un usuario.
-- `POST /api/v1/teachers` - Crear un docente.
-- `PUT /api/v1/teachers/{id}` - Actualizar un docente.
-- `DELETE /api/v1/teachers/{id}` - Eliminar o desactivar un docente.
+### Catalogos
 
-### Academic Cycle Controller
-- `GET /api/v1/academic-cycles/active` - Obtener el ciclo escolar activo actual.
-- `POST /api/v1/academic-cycles` - Crear un nuevo ciclo.
+- `GET /api/v1/classrooms`
+- `GET /api/v1/study-plans`
+- `GET /api/v1/shifts`
+- `GET /api/v1/school-cycles`
+- `GET /api/v1/academic-cycles`
+- `GET /api/v1/majors`
+- `GET /api/v1/careers`
+- `GET /api/v1/grades`
+- `GET /api/v1/sections`
+- `GET /api/v1/courses`
+- `GET /api/v1/bimonthly-units`
 
-## Suggested DTOs
-- `CareerDTO` (id, name)
-- `GradeDTO` (id, name, careerId)
-- `CourseDTO` (id, code, name)
-- `ClassroomDTO` (id, code, capacity)
-- `TeacherDTO` (id, userId, firstName, lastName, specialty, phone, email)
+### Docentes
 
-## Suggested Sprints
+- `GET /api/v1/teachers`
+- `GET /api/v1/teachers/{id}`
+- `GET /api/v1/teachers/user/{userId}`
+- `GET /api/v1/teachers/search?name=...`
+- `POST /api/v1/teachers`
+- `PUT /api/v1/teachers/{id}`
+- `DELETE /api/v1/teachers/{id}`
 
-### Sprint 1: Configuración de Infraestructura
-- Implementar CRUD de Carreras, Grados y Secciones.
-- Implementar Planes de Estudio y Jornadas Escolares.
+## Contrato de datos
 
-### Sprint 2: Datos Académicos Core
-- Implementar Cursos y Unidades Académicas.
-- Implementar gestión de Salones.
-- Implementar lógica de Ciclos Académicos (estados activo/inactivo).
-- Implementar gestión de Docentes.
+- `Grade` se relaciona con `Major` por `id_major`.
+- `Teacher` guarda `id_user` como referencia externa.
+- `academic-ms` no crea `users`, solo valida que existan cuando registra docentes.
 
----
-*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*
+## Arranque
+
+- Puerto: `8082`
+- Base de datos: `bdedu`
+- `ddl-auto: none`
+- Health check disponible en `/actuator/health`

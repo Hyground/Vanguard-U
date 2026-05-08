@@ -2,6 +2,7 @@ package com.vanguard.academic.domain.service;
 
 import com.vanguard.academic.domain.model.Teacher;
 import com.vanguard.academic.domain.repository.TeacherRepository;
+import com.vanguard.academic.infrastructure.persistence.ExternalReferenceValidator;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class TeacherService {
 
     private final TeacherRepository teacherRepository;
+    private final ExternalReferenceValidator externalReferenceValidator;
 
-    public TeacherService(TeacherRepository teacherRepository) {
+    public TeacherService(TeacherRepository teacherRepository, ExternalReferenceValidator externalReferenceValidator) {
         this.teacherRepository = teacherRepository;
+        this.externalReferenceValidator = externalReferenceValidator;
     }
 
     @Transactional(readOnly = true)
@@ -38,6 +41,8 @@ public class TeacherService {
     }
 
     public Teacher save(Teacher teacher) {
+        externalReferenceValidator.ensureUserExists(teacher.getUserId());
+
         if (teacherRepository.existsByCui(teacher.getCui())) {
             throw new IllegalArgumentException("Teacher with CUI '" + teacher.getCui() + "' already exists");
         }
@@ -50,6 +55,8 @@ public class TeacherService {
     public Teacher update(Long id, Teacher teacher) {
         return teacherRepository.findById(id)
             .map(existingTeacher -> {
+                externalReferenceValidator.ensureUserExists(teacher.getUserId());
+
                 if (!existingTeacher.getCui().equals(teacher.getCui()) && teacherRepository.existsByCui(teacher.getCui())) {
                     throw new IllegalArgumentException("Teacher with CUI '" + teacher.getCui() + "' already exists");
                 }

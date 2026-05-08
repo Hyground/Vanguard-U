@@ -70,6 +70,10 @@ Referencia externa:
 
 - `teachers.id_user -> users.id_user`
 
+Validacion esperada:
+
+- antes de guardar un docente, este servicio debe confirmar que `users.id_user` existe en la BD compartida
+
 ## `student-and-enrollment-ms`
 
 Tablas propias:
