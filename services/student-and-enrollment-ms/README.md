@@ -209,10 +209,10 @@ Asistencia
 
 ## Endpoints Disponibles
 
-Base local por defecto:
+Todos estos endpoints deben consumirse por gateway:
 
 ```text
-http://localhost:8083
+http://localhost:8080
 ```
 
 Los listados generales usan paginacion de Spring:
@@ -479,7 +479,7 @@ AttendanceResponse
 
 ### Pendientes Recomendados
 
-- Validar IDs externos contra `academic-ms` y `users-ms`, o documentar formalmente que se validan solo por foreign key en base de datos compartida.
+- Definir si las validaciones de IDs externos se mantienen por consulta directa a la base compartida o se migran a llamadas HTTP entre microservicios.
 - Definir si los borrados deben reemplazarse por estado activo/inactivo. El SQL actual no incluye columnas de estado para estas tablas.
 
 ## Estado Actual De Desarrollo
@@ -511,3 +511,5 @@ AttendanceResponse
 - El SQL oficial usa `tutor`, no `guardians`.
 - El SQL oficial usa `grades_records`, no `student_grades`.
 - El SQL oficial usa `id_*` como nombres de llaves primarias y foraneas.
+- Puerto interno: `8083`.
+- Entrada externa: `http://localhost:8080`.

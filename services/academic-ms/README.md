@@ -87,15 +87,19 @@ CREATE TABLE bimonthly_units (
 
 ## Endpoints
 
+Todos estos endpoints deben consumirse por gateway:
+
+```text
+http://localhost:8080
+```
+
 ### Catalogos
 
 - `GET /api/v1/classrooms`
 - `GET /api/v1/study-plans`
 - `GET /api/v1/shifts`
 - `GET /api/v1/school-cycles`
-- `GET /api/v1/academic-cycles`
 - `GET /api/v1/majors`
-- `GET /api/v1/careers`
 - `GET /api/v1/grades`
 - `GET /api/v1/sections`
 - `GET /api/v1/courses`
@@ -111,6 +115,18 @@ CREATE TABLE bimonthly_units (
 - `PUT /api/v1/teachers/{id}`
 - `DELETE /api/v1/teachers/{id}`
 
+Request para crear docente/director/admin academico:
+
+```json
+{
+  "cui": "0000000000002",
+  "firstName": "Admin",
+  "lastName": "Director",
+  "email": "admin1@vanguard.edu",
+  "userId": 2
+}
+```
+
 ## Contrato de datos
 
 - `Grade` se relaciona con `Major` por `id_major`.
@@ -119,7 +135,8 @@ CREATE TABLE bimonthly_units (
 
 ## Arranque
 
-- Puerto: `8082`
+- Puerto interno: `8082`
+- Entrada externa: `http://localhost:8080`
 - Base de datos: `bdedu`
 - `ddl-auto: none`
 - Health check disponible en `/actuator/health`

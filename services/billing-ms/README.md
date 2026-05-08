@@ -1,16 +1,25 @@
-# Microservicio de Facturación (Finanzas)
+# billing-ms
 
-Este microservicio gestiona los métodos de pago y registra las transacciones financieras para las inscripciones y colegiaturas de los estudiantes.
+Microservicio responsable de metodos de pago y pagos.
 
-## Tech Stack
-- **Java 21**
-- **Spring Boot 3.x**
-- **PostgreSQL**
+La fuente de verdad del esquema es `sql.txt` y la division funcional se define en `MICROSERVICIOS_DIVISION.md`.
 
-## Database Schema (English)
+## Responsabilidad
+
+Este servicio administra:
+
+- `payment_methods`
+- `payments`
+
+No administra estudiantes ni usuarios. Solo guarda referencias externas:
+
+- `payments.id_student -> students.id_student`
+- `payments.id_user_issuer -> users.id_user`
+- `payments.id_user_payer -> users.id_user`
+
+## Esquema Oficial
 
 ```sql
---- 6. FINANCE
 CREATE TABLE payment_methods (
     id_method SERIAL PRIMARY KEY,
     method_name VARCHAR(50) NOT NULL
@@ -27,28 +36,44 @@ CREATE TABLE payments (
 );
 ```
 
-## Suggested Endpoints
+## Endpoints Por Gateway
 
-### Payment Method Controller
-- `GET /api/v1/payment-methods` - Listar todos los métodos disponibles.
-- `POST /api/v1/payment-methods` - Agregar un nuevo método (Solo Admin).
+Base externa:
 
-### Payment Controller
-- `POST /api/v1/payments` - Procesar un nuevo pago.
-- `GET /api/v1/payments/student/{studentId}` - Obtener historial de pagos de un estudiante específico.
-- `GET /api/v1/payments/{id}` - Obtener detalles de una transacción.
+```text
+http://localhost:8080
+```
 
-## Suggested DTOs
-- `PaymentMethodDTO` (id, name)
-- `PaymentRequestDTO` (studentId, methodId, issuerId, payerId, amount)
-- `PaymentResponseDTO` (id, amount, date, methodName)
+### Metodos De Pago
 
-## Suggested Sprints
+- `GET /api/v1/billing/payment-methods`
+- `POST /api/v1/billing/payment-methods`
 
-### Sprint 1: Núcleo de Finanzas
-- Implementar CRUD de Métodos de Pago.
-- Implementar lógica de procesamiento de pagos.
-- Endpoints básicos de reporte.
+### Pagos
 
----
-*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*
+- `POST /api/v1/billing/payments`
+- `GET /api/v1/billing/payments/student/{idStudent}`
+
+Request de pago:
+
+```json
+{
+  "idStudent": 1,
+  "idMethod": 1,
+  "idUserIssuer": 2,
+  "idUserPayer": 2,
+  "amount": 150.00
+}
+```
+
+## Contrato De Datos
+
+- `idStudent` debe existir en `students`.
+- `idMethod` debe existir en `payment_methods`.
+- `idUserIssuer` y `idUserPayer`, si se envian, deben existir en `users`.
+
+## Arranque
+
+- Puerto interno: `8084`
+- Entrada externa: `http://localhost:8080`
+- Base de datos: `bdedu`

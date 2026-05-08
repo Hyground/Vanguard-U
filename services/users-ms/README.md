@@ -1,21 +1,22 @@
-# Microservicio de Usuarios
+# users-ms
 
-Este microservicio se encarga de autenticacion, autorizacion, gestion de usuarios y auditoria del sistema.
+Microservicio responsable de cuentas de acceso, roles, autenticacion JWT y auditoria.
 
-`users-ms` solo crea cuentas de acceso. No crea perfiles en `students`, `tutor` ni `teachers`.
-El endpoint de registro devuelve `idUser`; ese valor se usa despues para crear el perfil en el microservicio correspondiente.
+La fuente de verdad del esquema es `sql.txt` y la division funcional se define en `MICROSERVICIOS_DIVISION.md`.
 
-## Tech Stack
+## Responsabilidad
 
-- Java 21
-- Spring Boot 3.x
-- Spring Security
-- JWT
-- PostgreSQL
+Este servicio administra:
+
+- `roles`
+- `users`
+- `password_recovery`
+- `system_log`
+
+No debe crear ni modificar perfiles en `teachers`, `students` o `tutor`.
+Esos perfiles pertenecen a `academic-ms` y `student-and-enrollment-ms`.
 
 ## Esquema Oficial
-
-La fuente de verdad es `sql.txt`.
 
 ```sql
 CREATE TABLE roles (
@@ -47,26 +48,38 @@ CREATE TABLE system_log (
 );
 ```
 
-## Endpoints
+## Endpoints Por Gateway
+
+Base externa:
+
+```text
+http://localhost:8080
+```
 
 ### Auth
 
-- `POST /api/v1/auth/register` - registra una cuenta de acceso con `roleId` y devuelve `idUser`.
-- `POST /api/v1/auth/login` - autentica usuario y devuelve JWT.
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
 
 ### Users
 
-- `GET /api/v1/users` - lista usuarios.
-- `GET /api/v1/users/{id}` - obtiene un usuario.
-- `PATCH /api/v1/users/{id}/status` - habilita o deshabilita usuario.
+- `GET /api/v1/users`
+- `GET /api/v1/users/{id}`
+- `PATCH /api/v1/users/{id}/status`
 
 ### Roles
 
-- `GET /api/v1/roles` - lista roles.
+- `GET /api/v1/roles`
 
-## Flujo Correcto
+## Crear Cuenta
 
-1. Crear cuenta:
+Primero revisar los roles reales en la base:
+
+```sql
+SELECT * FROM roles ORDER BY id_role;
+```
+
+La cuenta se crea usando `roleId`, porque `users.id_role` apunta a `roles.id_role`.
 
 ```http
 POST /api/v1/auth/register
@@ -74,18 +87,38 @@ POST /api/v1/auth/register
 
 ```json
 {
-  "username": "estudiante1",
-  "password": "secret123",
-  "roleId": 3
+  "username": "admin1",
+  "password": "123456",
+  "roleId": 5
 }
 ```
 
-2. Tomar `idUser` de la respuesta. El `roleId` debe existir en `roles.id_role`.
+Respuesta:
 
-3. Crear el perfil en el servicio correspondiente:
+```json
+{
+  "idUser": 2,
+  "token": "...",
+  "username": "admin1",
+  "role": "ADMIN"
+}
+```
 
+## Cuenta Y Perfil
+
+`users-ms` solo devuelve `idUser`.
+
+Despues se crea el perfil en el servicio correspondiente:
+
+- Docente/director/admin academico: `POST /api/v1/teachers` en `academic-ms`.
 - Estudiante: `POST /api/v1/students` en `student-and-enrollment-ms`.
 - Tutor: `POST /api/v1/tutors` en `student-and-enrollment-ms`.
-- Docente: `POST /api/v1/teachers` en `academic-ms`.
 
-Un usuario `ADMIN` no tiene tabla de perfil propia en `sql.txt`; basta con la cuenta y el rol.
+Un usuario con rol `ADMIN` tambien puede tener perfil en `teachers`.
+
+## Arranque
+
+- Puerto interno: `8081`
+- Entrada externa: `http://localhost:8080`
+- Base de datos: `bdedu`
+- `ddl-auto: none`

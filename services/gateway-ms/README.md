@@ -1,34 +1,80 @@
-# Microservicio API Gateway
+# gateway-ms
 
-Este microservicio actúa como el punto de entrada para todas las solicitudes de los clientes, proporcionando enrutamiento, equilibrio de carga y manejo de aspectos transversales como seguridad y limitación de tasa (rate limiting).
+Punto de entrada externo para todos los microservicios.
 
-## Tech Stack
-- **Java 21**
-- **Spring Boot 3.x**
-- **Spring Cloud Gateway**
-- **Spring Cloud Discovery Client** (Eureka/Consul opcional)
+Todo consumo desde cliente, Postman o frontend debe pasar por:
 
-## Responsabilidades
-- **Enrutamiento (Routing):** Dirigir solicitudes a `users-ms`, `academic-ms`, `student-and-enrollment-ms` y `billing-ms`.
-- **Seguridad:** Validar tokens JWT antes de redirigir las solicitudes a los servicios internos.
-- **Agregación:** (Opcional) Combinar respuestas de múltiples servicios.
-- **Limitación de Tasa (Rate Limiting):** Proteger el sistema contra abusos.
+```text
+http://localhost:8080
+```
 
-## Suggested Routes (Rutas sugeridas)
+## Responsabilidad
 
-- `/api/v1/auth/**` -> `users-ms`
-- `/api/v1/users/**` -> `users-ms`
-- `/api/v1/academic/**` -> `academic-ms`
-- `/api/v1/students/**` -> `student-and-enrollment-ms`
-- `/api/v1/enrollments/**` -> `student-and-enrollment-ms`
-- `/api/v1/billing/**` -> `billing-ms`
+- Enrutar solicitudes a los microservicios internos.
+- Centralizar la entrada HTTP del sistema.
+- Exponer health check del gateway.
 
-## Suggested Sprints
+Este servicio no administra tablas.
 
-### Sprint 1: Configuración del Gateway
-- Configurar Spring Cloud Gateway.
-- Implementar enrutamiento básico a los microservicios existentes.
-- Implementar Filtro Global para la validación de JWT.
+## Rutas Actuales
 
----
-*Desarrollado por Gemini CLI - Experto en Spring Boot y Microservicios.*
+### `users-ms`
+
+- `/api/v1/auth/**`
+- `/api/v1/users/**`
+- `/api/v1/roles/**`
+
+Destino interno: `http://localhost:8081`
+
+### `academic-ms`
+
+- `/api/v1/school-cycles/**`
+- `/api/v1/majors/**`
+- `/api/v1/classrooms/**`
+- `/api/v1/courses/**`
+- `/api/v1/grades/**`
+- `/api/v1/sections/**`
+- `/api/v1/study-plans/**`
+- `/api/v1/shifts/**`
+- `/api/v1/bimonthly-units/**`
+- `/api/v1/teachers/**`
+
+Destino interno: `http://localhost:8082`
+
+### `student-and-enrollment-ms`
+
+- `/api/v1/students/**`
+- `/api/v1/enrollments/**`
+- `/api/v1/activities/**`
+- `/api/v1/attendance/**`
+- `/api/v1/grades-records/**`
+- `/api/v1/schedules/**`
+- `/api/v1/teacher-assignments/**`
+- `/api/v1/tutors/**`
+
+Destino interno: `http://localhost:8083`
+
+### `billing-ms`
+
+- `/api/v1/billing/**`
+
+Destino interno: `http://localhost:8084`
+
+## Health Check
+
+```http
+GET http://localhost:8080/actuator/health
+```
+
+Respuesta esperada:
+
+```json
+{
+  "status": "UP"
+}
+```
+
+## Arranque
+
+- Puerto: `8080`
+- Configuracion de rutas: `src/main/resources/application.properties`
