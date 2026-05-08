@@ -1,6 +1,7 @@
 package com.vanguard.billing.controller;
 
-import com.vanguard.billing.model.Payment;
+import com.vanguard.billing.dto.PaymentRequest;
+import com.vanguard.billing.dto.PaymentResponse;
 import com.vanguard.billing.model.PaymentMethod;
 import com.vanguard.billing.service.BillingService;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +28,12 @@ public class BillingController {
     }
 
     @PostMapping("/payments")
-    public ResponseEntity<Payment> processPayment(@RequestBody Payment payment) {
-        return ResponseEntity.ok(billingService.processPayment(payment));
+    public ResponseEntity<PaymentResponse> processPayment(@RequestBody PaymentRequest request) {
+        return ResponseEntity.ok(billingService.processPayment(request));
     }
 
-    @GetMapping("/payments/student/{studentId}")
-    public ResponseEntity<List<Payment>> getPaymentsByStudent(@PathVariable Integer studentId) {
-        return ResponseEntity.ok(billingService.getPaymentsByStudent(studentId));
+    @GetMapping("/payments/student/{idStudent}")
+    public ResponseEntity<List<PaymentResponse>> getPaymentsByStudent(@PathVariable Integer idStudent) {
+        return ResponseEntity.ok(billingService.getPaymentsByStudent(idStudent));
     }
 }

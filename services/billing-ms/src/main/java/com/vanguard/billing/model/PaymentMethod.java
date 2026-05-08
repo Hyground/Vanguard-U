@@ -11,11 +11,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PaymentMethod {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_method")
-    private Integer id;
+    private Integer idMethod;
 
     @Column(name = "method_name", nullable = false, length = 50)
     private String methodName;
