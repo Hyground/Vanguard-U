@@ -11,8 +11,8 @@ public record GradeDTO(
     @Size(max = 50, message = "Grade name must not exceed 50 characters")
     String name,
     
-    @NotNull(message = "Career ID is required")
-    Long careerId
+    @NotNull(message = "Major ID is required")
+    Long majorId
 ) {
     public GradeDTO {
         if (name != null) {
@@ -20,7 +20,7 @@ public record GradeDTO(
         }
     }
     
-    public GradeDTO(String name, Long careerId) {
-        this(null, name, careerId);
+    public GradeDTO(String name, Long majorId) {
+        this(null, name, majorId);
     }
 }

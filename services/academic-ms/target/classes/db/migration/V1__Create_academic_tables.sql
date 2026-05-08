@@ -1,56 +1,65 @@
 -- Create academic tables for academic-ms microservice
 
 CREATE TABLE classrooms (
-    classroom_id SERIAL PRIMARY KEY,
-    classroom_code VARCHAR(10) UNIQUE NOT NULL,
+    id_classroom SERIAL PRIMARY KEY,
+    room_code VARCHAR(10) UNIQUE NOT NULL,
     capacity INTEGER
 );
 
 CREATE TABLE study_plans (
-    plan_id SERIAL PRIMARY KEY,
+    id_plan SERIAL PRIMARY KEY,
     plan_name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE school_days (
-    day_id SERIAL PRIMARY KEY,
-    day_name VARCHAR(50) NOT NULL
+CREATE TABLE shifts (
+    id_shift SERIAL PRIMARY KEY,
+    shift_name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE academic_cycles (
-    cycle_id SERIAL PRIMARY KEY,
+CREATE TABLE school_cycle (
+    id_cycle SERIAL PRIMARY KEY,
     year INTEGER NOT NULL UNIQUE,
     status BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE careers (
-    career_id SERIAL PRIMARY KEY,
-    career_name VARCHAR(100) NOT NULL
+CREATE TABLE majors (
+    id_major SERIAL PRIMARY KEY,
+    major_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE grades (
-    grade_id SERIAL PRIMARY KEY,
+    id_grade SERIAL PRIMARY KEY,
     grade_name VARCHAR(50) NOT NULL,
-    career_id INTEGER REFERENCES careers(career_id)
+    id_major INTEGER REFERENCES majors(id_major)
 );
 
 CREATE TABLE sections (
-    section_id SERIAL PRIMARY KEY,
+    id_section SERIAL PRIMARY KEY,
     section_name CHAR(1) NOT NULL
 );
 
 CREATE TABLE courses (
-    course_id SERIAL PRIMARY KEY,
+    id_course SERIAL PRIMARY KEY,
     course_code VARCHAR(10) UNIQUE NOT NULL,
     course_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE academic_units (
-    unit_id SERIAL PRIMARY KEY,
+CREATE TABLE teachers (
+    id_teacher SERIAL PRIMARY KEY,
+    cui CHAR(13) UNIQUE NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    id_user INTEGER NOT NULL REFERENCES users(id_user)
+);
+
+CREATE TABLE bimonthly_units (
+    id_unit SERIAL PRIMARY KEY,
     unit_name VARCHAR(50) NOT NULL
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_grades_career_id ON grades(career_id);
-CREATE INDEX idx_academic_cycles_status ON academic_cycles(status);
-CREATE INDEX idx_classrooms_code ON classrooms(classroom_code);
+CREATE INDEX idx_grades_id_major ON grades(id_major);
+CREATE INDEX idx_school_cycle_status ON school_cycle(status);
+CREATE INDEX idx_classrooms_code ON classrooms(room_code);
 CREATE INDEX idx_courses_code ON courses(course_code);

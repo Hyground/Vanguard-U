@@ -13,7 +13,7 @@ public class Section {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "section_id")
+    @Column(name = "id_section")
     private Long id;
     
     @Column(name = "section_name", nullable = false, length = 1)

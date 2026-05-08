@@ -2,7 +2,7 @@ package com.vanguard.academic.domain.service;
 
 import com.vanguard.academic.domain.model.Grade;
 import com.vanguard.academic.domain.repository.GradeRepository;
-import com.vanguard.academic.domain.repository.CareerRepository;
+import com.vanguard.academic.domain.repository.MajorRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,11 +14,11 @@ import java.util.Optional;
 public class GradeService {
     
     private final GradeRepository gradeRepository;
-    private final CareerRepository careerRepository;
+    private final MajorRepository majorRepository;
     
-    public GradeService(GradeRepository gradeRepository, CareerRepository careerRepository) {
+    public GradeService(GradeRepository gradeRepository, MajorRepository majorRepository) {
         this.gradeRepository = gradeRepository;
-        this.careerRepository = careerRepository;
+        this.majorRepository = majorRepository;
     }
     
     @Transactional(readOnly = true)
@@ -32,11 +32,11 @@ public class GradeService {
     }
     
     @Transactional(readOnly = true)
-    public List<Grade> findByCareerId(Long careerId) {
-        if (!careerRepository.existsById(careerId)) {
-            throw new IllegalArgumentException("Career not found with id: " + careerId);
+    public List<Grade> findByMajorId(Long majorId) {
+        if (!majorRepository.existsById(majorId)) {
+            throw new IllegalArgumentException("Major not found with id: " + majorId);
         }
-        return gradeRepository.findByCareerId(careerId);
+        return gradeRepository.findByMajorId(majorId);
     }
     
     @Transactional(readOnly = true)
@@ -45,13 +45,13 @@ public class GradeService {
     }
     
     public Grade save(Grade grade) {
-        if (!careerRepository.existsById(grade.getCareer().getId())) {
-            throw new IllegalArgumentException("Career not found with id: " + grade.getCareer().getId());
+        if (!majorRepository.existsById(grade.getMajor().getId())) {
+            throw new IllegalArgumentException("Major not found with id: " + grade.getMajor().getId());
         }
         
-        if (gradeRepository.existsByNameAndCareerId(grade.getName(), grade.getCareer().getId())) {
+        if (gradeRepository.existsByNameAndMajorId(grade.getName(), grade.getMajor().getId())) {
             throw new IllegalArgumentException("Grade with name '" + grade.getName() + 
-                "' already exists for this career");
+                "' already exists for this major");
         }
         return gradeRepository.save(grade);
     }
@@ -59,19 +59,19 @@ public class GradeService {
     public Grade update(Long id, Grade grade) {
         return gradeRepository.findById(id)
             .map(existingGrade -> {
-                if (!careerRepository.existsById(grade.getCareer().getId())) {
-                    throw new IllegalArgumentException("Career not found with id: " + grade.getCareer().getId());
+                if (!majorRepository.existsById(grade.getMajor().getId())) {
+                    throw new IllegalArgumentException("Major not found with id: " + grade.getMajor().getId());
                 }
                 
                 if ((!existingGrade.getName().equals(grade.getName()) || 
-                     !existingGrade.getCareer().getId().equals(grade.getCareer().getId())) &&
-                    gradeRepository.existsByNameAndCareerId(grade.getName(), grade.getCareer().getId())) {
+                     !existingGrade.getMajor().getId().equals(grade.getMajor().getId())) &&
+                    gradeRepository.existsByNameAndMajorId(grade.getName(), grade.getMajor().getId())) {
                     throw new IllegalArgumentException("Grade with name '" + grade.getName() + 
-                        "' already exists for this career");
+                        "' already exists for this major");
                 }
                 
                 existingGrade.setName(grade.getName());
-                existingGrade.setCareer(grade.getCareer());
+                existingGrade.setMajor(grade.getMajor());
                 return gradeRepository.save(existingGrade);
             })
             .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + id));

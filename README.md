@@ -1,88 +1,83 @@
-# Vanguard - Sistema Académico y de Gestión
+# Vanguard - Sistema Academico y de Gestion
 
-Vanguard es un Sistema de Gestión Académica (AMS) integral diseñado para centralizar y automatizar los procesos educativos, desde la inscripción de estudiantes y asignación de docentes hasta la facturación y auditoría del sistema.
+Vanguard es un sistema de gestion academica integral diseñado para centralizar y automatizar los procesos educativos, desde la inscripcion de estudiantes y asignacion de docentes hasta la facturacion y auditoria del sistema.
 
----
+## Tabla de Contenido
+- Arquitectura
+- Microservicios
+- Estructura del Proyecto
+- Stack Tecnologico
+- Infraestructura y Monitoreo
+- Hoja de Ruta
+- Instrucciones para Agentes AI/CLI
 
-## 📑 Tabla de Contenido
-- [Arquitectura](#arquitectura)
-- [Microservicios](#microservicios)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Stack Tecnológico](#stack-tecnológico)
-- [Infraestructura y Monitoreo](#infraestructura-y-monitoreo)
-- [Hoja de Ruta (Roadmap)](#hoja-de-ruta-roadmap)
-- [Instrucciones para Agentes AI/CLI](#instrucciones-para-agentes-aicli)
+## Arquitectura
 
----
+El sistema utiliza una arquitectura basada en microservicios, permitiendo escalabilidad independiente y mantenimiento simplificado.
 
-## 🏗️ Arquitectura
-El sistema utiliza una arquitectura basada en **Microservicios**, permitiendo escalabilidad independiente y mantenimiento simplificado.
+- `gateway-ms`: punto de entrada centralizado para el enrutamiento y la seguridad perimetral.
+- `users-ms`: gestion de identidad, autenticacion, autorizacion y auditoria del sistema.
+- `academic-ms`: gestion de datos maestros academicos y docentes.
+- `student-and-enrollment-ms`: logica de negocio central para estudiantes, tutores, inscripciones, asignaciones docentes, horarios, notas y asistencia.
+- `billing-ms`: gestion financiera, metodos de pago y transacciones.
 
-- **Gateway MS:** Punto de entrada centralizado para el enrutamiento y la seguridad perimetral.
-- **Users MS:** Gestión de identidad, autenticación (JWT), autorización y auditoría del sistema.
-- **Academic MS:** Gestión de datos maestros académicos (carreras, cursos, grados, salones y docentes).
-- **Student & Enrollment MS:** Lógica de negocio central que maneja ciclos de vida de estudiantes, tutores, inscripciones, asignaciones docentes, horarios, notas y asistencia.
-- **Billing MS:** Gestión financiera, métodos de pago y transacciones.
+## Estructura del Proyecto
 
----
-
-## 📂 Estructura del Proyecto
 ```text
 vanguard/
 ├── services/
-│   ├── academic-ms/             # Datos Maestros Académicos
-│   ├── billing-ms/              # Finanzas y Pagos
-│   ├── gateway-ms/              # API Gateway
-│   ├── student-and-enrollment-ms/# Operaciones Core (Estudiantes/Inscripciones)
-│   └── users-ms/                # Seguridad y Autenticación
-├── infrastructure/              # Configuraciones de Docker, Prometheus, Grafana
-└── README.md                    # Este archivo
+│   ├── academic-ms/
+│   ├── billing-ms/
+│   ├── gateway-ms/
+│   ├── student-and-enrollment-ms/
+│   └── users-ms/
+├── infrastructure/
+└── README.md
 ```
 
----
+## Stack Tecnologico
 
-## 🛠️ Stack Tecnológico
-- **Lenguaje:** Java 21 (Records, Pattern Matching).
-- **Framework:** Spring Boot 3.4+, Spring Cloud.
-- **Persistencia:** PostgreSQL, Spring Data JPA.
-- **Seguridad:** Spring Security, JSON Web Tokens (JWT).
-- **Observabilidad:** Prometheus & Grafana.
-- **Contenedores:** Docker & Docker Compose.
-- **Migraciones:** Flyway / Liquibase.
+- Java 21
+- Spring Boot 3.x
+- Spring Cloud
+- PostgreSQL
+- Spring Data JPA
+- Spring Security
+- JWT
+- Prometheus y Grafana
+- Docker y Docker Compose
 
----
+## Infraestructura y Monitoreo
 
-## 📊 Infraestructura y Monitoreo
-La carpeta `infrastructure/` contiene la configuración necesaria para desplegar el entorno:
-- **Docker Compose:** Orquestación de todos los microservicios y bases de datos.
-- **Prometheus:** Recolección de métricas de rendimiento.
-- **Grafana:** Visualización de métricas y tableros de control.
+La carpeta `infrastructure/` contiene la configuracion necesaria para desplegar el entorno:
 
----
+- Docker Compose para orquestacion
+- Prometheus para metricas
+- Grafana para visualizacion
 
-## 🚀 Hoja de Ruta (Roadmap)
+## Hoja de Ruta
 
-### Fase 1: Cimientos (Sprint 1-2)
-- Configuración inicial de microservicios con Health Checks y Dockerización.
-- Implementación del núcleo de seguridad (`users-ms`) y el Gateway.
+### Fase 1: Cimientos
+- Configuracion inicial de microservicios con health checks y dockerizacion.
+- Implementacion del nucleo de seguridad (`users-ms`) y el gateway.
 
-### Fase 2: Núcleo Académico (Sprint 3-4)
-- Implementación de datos maestros en `academic-ms`.
+### Fase 2: Nucleo Academico
+- Implementacion de datos maestros en `academic-ms`.
 - Registro inicial de estudiantes y tutores en `student-and-enrollment-ms`.
-- Registro y administración de docentes en `academic-ms`.
+- Registro y administracion de docentes en `academic-ms`.
 
-### Fase 3: Operaciones y Finanzas (Sprint 5-6)
-- Implementación de inscripciones, horarios y calificaciones.
-- Implementación de pagos y transacciones en `billing-ms`.
+### Fase 3: Operaciones y Finanzas
+- Implementacion de inscripciones, horarios y calificaciones.
+- Implementacion de pagos y transacciones en `billing-ms`.
 
----
+## Instrucciones para Agentes AI/CLI
 
-## 🤖 Instrucciones para Agentes AI/CLI
-1. **Estándares:** Seguir siempre Clean Architecture y principios SOLID. Usar características de **Java 21**.
-2. **Contexto:** Cada servicio en `services/` tiene su propio esquema de base de datos y responsabilidades.
-3. **Consistencia:** Usar **Inglés** para todo el código (clases, métodos, variables, tablas, comentarios). El español se reserva para documentación de usuario final.
-4. **Comunicación:** Preferir **Spring Cloud OpenFeign** para llamadas sincrónicas.
-5. **Seguridad:** La autenticación es centralizada en `users-ms` y validada en `gateway-ms`.
+1. Seguir siempre Clean Architecture y principios SOLID.
+2. Usar ingles para codigo, clases, metodos, variables y comentarios tecnicos.
+3. La documentacion para usuarios puede estar en espanol.
+4. La autenticacion es centralizada en `users-ms` y validada en `gateway-ms`.
 
----
-*Mantenido por Gemini CLI - Arquitecto Principal.*
+## Notas
+
+Este README es de contexto general. La division real de responsabilidades y tablas vive en `MICROSERVICIOS_DIVISION.md`.
+

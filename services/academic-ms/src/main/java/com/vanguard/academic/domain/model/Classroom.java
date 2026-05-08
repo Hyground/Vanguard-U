@@ -13,10 +13,10 @@ public class Classroom {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "classroom_id")
+    @Column(name = "id_classroom")
     private Long id;
     
-    @Column(name = "classroom_code", unique = true, nullable = false, length = 10)
+    @Column(name = "room_code", unique = true, nullable = false, length = 10)
     private String code;
     
     @Column(name = "capacity")

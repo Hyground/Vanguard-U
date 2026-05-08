@@ -2,9 +2,9 @@ package com.vanguard.academic.presentation.controller;
 
 import com.vanguard.academic.application.dto.GradeDTO;
 import com.vanguard.academic.domain.model.Grade;
-import com.vanguard.academic.domain.model.Career;
+import com.vanguard.academic.domain.model.Major;
 import com.vanguard.academic.domain.service.GradeService;
-import com.vanguard.academic.domain.service.CareerService;
+import com.vanguard.academic.domain.service.MajorService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +17,11 @@ import java.util.List;
 public class GradeController {
     
     private final GradeService gradeService;
-    private final CareerService careerService;
+    private final MajorService majorService;
     
-    public GradeController(GradeService gradeService, CareerService careerService) {
+    public GradeController(GradeService gradeService, MajorService majorService) {
         this.gradeService = gradeService;
-        this.careerService = careerService;
+        this.majorService = majorService;
     }
     
     @GetMapping
@@ -40,9 +40,9 @@ public class GradeController {
             .orElse(ResponseEntity.notFound().build());
     }
     
-    @GetMapping("/career/{careerId}")
-    public ResponseEntity<List<GradeDTO>> getGradesByCareer(@PathVariable Long careerId) {
-        List<Grade> grades = gradeService.findByCareerId(careerId);
+    @GetMapping({"/major/{majorId}", "/career/{majorId}"})
+    public ResponseEntity<List<GradeDTO>> getGradesByMajor(@PathVariable Long majorId) {
+        List<Grade> grades = gradeService.findByMajorId(majorId);
         List<GradeDTO> gradeDTOs = grades.stream()
             .map(this::toDTO)
             .toList();
@@ -79,12 +79,12 @@ public class GradeController {
     }
     
     private GradeDTO toDTO(Grade grade) {
-        return new GradeDTO(grade.getId(), grade.getName(), grade.getCareer().getId());
+        return new GradeDTO(grade.getId(), grade.getName(), grade.getMajor().getId());
     }
     
     private Grade toEntity(GradeDTO dto) {
-        Career career = careerService.findById(dto.careerId())
-            .orElseThrow(() -> new IllegalArgumentException("Career not found with id: " + dto.careerId()));
-        return new Grade(dto.name(), career);
+        Major major = majorService.findById(dto.majorId())
+            .orElseThrow(() -> new IllegalArgumentException("Major not found with id: " + dto.majorId()));
+        return new Grade(dto.name(), major);
     }
 }

@@ -9,8 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface GradeRepository extends JpaRepository<Grade, Long> {
-    List<Grade> findByCareerId(Long careerId);
-    Optional<Grade> findByNameAndCareerId(String name, Long careerId);
-    boolean existsByNameAndCareerId(String name, Long careerId);
+    List<Grade> findByMajorId(Long majorId);
+    Optional<Grade> findByNameAndMajorId(String name, Long majorId);
+    boolean existsByNameAndMajorId(String name, Long majorId);
     List<Grade> findByNameContainingIgnoreCase(String name);
 }

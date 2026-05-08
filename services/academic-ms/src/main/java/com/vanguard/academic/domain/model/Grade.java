@@ -15,21 +15,21 @@ public class Grade {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "grade_id")
+    @Column(name = "id_grade")
     private Long id;
     
     @Column(name = "grade_name", nullable = false, length = 50)
     private String name;
     
     @ManyToOne
-    @JoinColumn(name = "career_id", nullable = false)
-    private Career career;
+    @JoinColumn(name = "id_major")
+    private Major major;
     
     public Grade() {}
     
-    public Grade(String name, Career career) {
+    public Grade(String name, Major major) {
         this.name = name;
-        this.career = career;
+        this.major = major;
     }
     
     public Long getId() {
@@ -48,11 +48,11 @@ public class Grade {
         this.name = name;
     }
     
-    public Career getCareer() {
-        return career;
+    public Major getMajor() {
+        return major;
     }
     
-    public void setCareer(Career career) {
-        this.career = career;
+    public void setMajor(Major major) {
+        this.major = major;
     }
 }

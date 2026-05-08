@@ -13,7 +13,7 @@ public class StudyPlan {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "plan_id")
+    @Column(name = "id_plan")
     private Long id;
     
     @Column(name = "plan_name", nullable = false, length = 50)
