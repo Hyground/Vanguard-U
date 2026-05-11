@@ -520,12 +520,14 @@ Este microservicio debe usar la infraestructura con cuidado porque maneja inscri
 
 Le corresponde:
 
-1. Mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
-2. Usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para listados, horarios, reportes de notas y reportes de asistencia.
-3. Mantener en master las lecturas que deben ver inmediatamente una escritura recien hecha, por ejemplo validar una inscripcion antes de continuar el flujo.
-4. Usar Redis de forma limitada para cache temporal de validaciones frecuentes y consultas repetidas de horarios.
-5. No guardar notas, asistencia, inscripciones ni pagos en Redis como fuente de verdad.
-6. Agregar indices y paginacion para consultas por estudiante, docente, ciclo, grado, seccion y fechas.
-7. Medir los endpoints principales antes de mover mas lecturas a replica o cache.
+1. Hecho: mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
+2. Hecho: conservar compatibilidad con `DB_HOST` y `DB_PORT` si las variables nuevas no existen.
+3. Hecho: configurar pool basico de conexiones con HikariCP.
+4. Pendiente: usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para listados, horarios, reportes de notas y reportes de asistencia.
+5. Pendiente: mantener en master las lecturas que deben ver inmediatamente una escritura recien hecha, por ejemplo validar una inscripcion antes de continuar el flujo.
+6. Pendiente: usar Redis de forma limitada para cache temporal de validaciones frecuentes y consultas repetidas de horarios.
+7. Pendiente: no guardar notas, asistencia, inscripciones ni pagos en Redis como fuente de verdad.
+8. Pendiente: agregar indices y paginacion para consultas por estudiante, docente, ciclo, grado, seccion y fechas.
+9. Pendiente: medir los endpoints principales antes de mover mas lecturas a replica o cache.
 
 La replica puede tener atraso respecto al master. Por eso no debe usarse en flujos donde el usuario necesita ver inmediatamente un dato recien creado.

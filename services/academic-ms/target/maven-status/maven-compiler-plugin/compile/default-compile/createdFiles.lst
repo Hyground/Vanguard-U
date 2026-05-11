@@ -3,6 +3,7 @@ com\vanguard\academic\domain\model\Section.class
 com\vanguard\academic\domain\service\TeacherService.class
 com\vanguard\academic\AcademicMsApplication.class
 com\vanguard\academic\domain\service\GradeService.class
+com\vanguard\academic\infrastructure\config\DataSourceConfig.class
 com\vanguard\academic\presentation\controller\ShiftController.class
 com\vanguard\academic\application\dto\SchoolCycleDTO.class
 com\vanguard\academic\infrastructure\config\GlobalExceptionHandler.class
@@ -31,13 +32,16 @@ com\vanguard\academic\infrastructure\persistence\ExternalReferenceValidator.clas
 com\vanguard\academic\domain\service\CourseService.class
 com\vanguard\academic\domain\repository\MajorRepository.class
 com\vanguard\academic\domain\repository\ClassroomRepository.class
+com\vanguard\academic\infrastructure\config\ReplicationRoutingDataSource$DataSourceType.class
 com\vanguard\academic\domain\model\SchoolCycle.class
 com\vanguard\academic\presentation\controller\BimonthlyUnitController.class
 com\vanguard\academic\presentation\controller\MajorController.class
 com\vanguard\academic\domain\model\Grade.class
 com\vanguard\academic\presentation\controller\ClassroomController.class
 com\vanguard\academic\domain\model\StudyPlan.class
+com\vanguard\academic\infrastructure\config\RedisCacheConfig.class
 com\vanguard\academic\domain\repository\BimonthlyUnitRepository.class
+com\vanguard\academic\infrastructure\config\ReplicationRoutingDataSource.class
 com\vanguard\academic\domain\model\Teacher.class
 com\vanguard\academic\presentation\controller\CourseController.class
 com\vanguard\academic\application\dto\CatalogItemDTO.class

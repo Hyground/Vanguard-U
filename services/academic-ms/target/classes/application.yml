@@ -22,11 +22,22 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+    generate-ddl: false
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+  sql:
+    init:
+      mode: never
+
+  flyway:
+    enabled: false
+
+  liquibase:
+    enabled: false
 
   data:
     redis:
@@ -40,6 +51,11 @@ spring:
     redis:
       time-to-live: ${ACADEMIC_CACHE_TTL_MS:300000}
       cache-null-values: false
+
+app:
+  datasource:
+    read-replica:
+      enabled: ${ACADEMIC_READ_REPLICA_ENABLED:true}
 
 logging:
   level:

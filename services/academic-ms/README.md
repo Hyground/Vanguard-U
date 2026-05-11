@@ -148,11 +148,27 @@ Este microservicio es el principal candidato para aprovechar Redis y PostgreSQL 
 Le corresponde:
 
 1. Hecho: mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
-2. Pendiente: usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para listados y consultas de catalogos.
+2. Hecho: usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para transacciones marcadas como solo lectura.
 3. Hecho: configurar Redis con `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD`.
 4. Hecho: cachear catalogos de alta lectura: grados, secciones, jornadas, cursos, carreras, planes de estudio, ciclos escolares, salones y unidades bimestrales.
 5. Hecho: invalidar cache cuando se cree, edite o elimine un catalogo.
-6. Pendiente: mantener lecturas criticas en master cuando se necesite ver inmediatamente un cambio recien guardado.
+6. Hecho: mantener en master las operaciones que no esten marcadas como `readOnly`.
 7. Pendiente: agregar paginacion o filtros en listados que puedan crecer.
 
 No debe usar Redis como fuente principal de datos. PostgreSQL sigue siendo la fuente de verdad.
+
+## Funcion De Redis Y Replica
+
+Redis y PostgreSQL replica no cumplen la misma funcion.
+
+- Redis guarda respuestas temporales de catalogos frecuentes. Si el dato esta en cache, el servicio evita consultar PostgreSQL.
+- PostgreSQL replica atiende lecturas reales cuando el dato no esta en Redis o cuando el endpoint no esta cacheado.
+- PostgreSQL master recibe escrituras y cualquier operacion que no este marcada como solo lectura.
+
+Variables relacionadas:
+
+- `ACADEMIC_READ_REPLICA_ENABLED`: activa o desactiva el routing hacia replica.
+- `DB_WRITE_HOST` y `DB_WRITE_PORT`: conexion al master.
+- `DB_READ_HOST` y `DB_READ_PORT`: conexion a la replica.
+- `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD`: conexion a Redis.
+- `ACADEMIC_CACHE_TTL_MS`: tiempo de vida de cache para catalogos.

@@ -28,6 +28,12 @@ Cada tecnologia debe tener un uso claro:
 - PostgreSQL replica: lecturas pesadas, listados, reportes y consultas repetidas.
 - Redis: cache, rate limiting, datos temporales y validaciones frecuentes.
 
+Redis y la replica no son reemplazos entre si:
+
+- Redis responde desde memoria cuando existe una clave cacheada o un contador temporal.
+- La replica responde consultas SQL reales sin cargar el master.
+- El master sigue siendo la fuente de verdad y recibe las escrituras.
+
 ## Variables Recomendadas
 
 Separar la conexion de escritura y lectura:

@@ -1,0 +1,69 @@
+Scripts oficiales para reconstruir y llenar la base:
+
+scripts/reset_database_from_sql.sql
+scripts/seed_stress_data.sql
+
+`scripts/reset_database_from_sql.sql` elimina el esquema `public` completo y lo recrea usando el modelo de `sql.txt`.
+
+`scripts/seed_stress_data.sql` inserta datos de carga sobre ese esquema limpio.
+
+Llena la base con datos suficientes para probar:
+
+- login de usuarios por rol
+- catalogos academicos
+- cache Redis en academic-ms
+- lecturas desde replica en academic-ms
+- estudiantes, tutores y docentes
+- inscripciones
+- asignaciones docentes
+- horarios
+- actividades
+- notas
+- asistencia
+- pagos
+- listados y reportes con volumen considerable
+
+Cantidad aproximada:
+
+- 80 docentes
+- 500 tutores
+- 5,000 estudiantes
+- 5,000 inscripciones
+- 240 asignaciones docentes
+- 960 actividades
+- alrededor de 200,000 notas
+- alrededor de 250,000 asistencias
+- 5,000 pagos
+
+Credenciales demo:
+
+- load_admin / Demo123!
+- load_teacher1..load_teacher80 / Demo123!
+- load_tutor1..load_tutor500 / Demo123!
+- load_student1..load_student5000 / Demo123!
+
+Uso recomendado:
+
+1. Ejecutar scripts/reset_database_from_sql.sql en pgAdmin o psql.
+2. Ejecutar scripts/seed_stress_data.sql en pgAdmin o psql.
+3. Levantar users-ms, academic-ms, student-and-enrollment-ms, billing-ms y gateway-ms.
+4. Probar login por gateway.
+5. Probar catalogos repetidos para validar Redis.
+6. Probar listados/reportes para validar lecturas contra replica donde aplique.
+
+Notas de cuidado:
+
+- No usa DROP, TRUNCATE ni DELETE.
+- No guarda contrasenas planas; usa hashes BCrypt.
+- No depende de IDs fijos de roles.
+- Los usuarios se relacionan con roles buscando por `role_name`, no por ID fijo.
+- Es para pruebas, no para produccion.
+
+Advertencia:
+
+- `reset_database_from_sql.sql` si es destructivo: elimina todas las tablas actuales.
+- Al recrear desde cero, los roles normalmente quedaran como 1=ADMIN, 2=TEACHER, 3=STUDENT, 4=TUTOR.
+- Si antes la nube tenia 5=ADMIN, 6=TEACHER, 7=STUDENT, 8=TUTOR, esos IDs cambiaran tras el reset.
+- Para crear usuarios por API despues del reset, primero consultar:
+
+SELECT * FROM roles ORDER BY id_role;
