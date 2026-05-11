@@ -4,6 +4,8 @@ import com.vanguard.academic.application.dto.MajorDTO;
 import com.vanguard.academic.domain.model.Major;
 import com.vanguard.academic.domain.service.MajorService;
 import jakarta.validation.Valid;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ public class MajorController {
     }
     
     @GetMapping
+    @Cacheable(cacheNames = "academicCatalogs", key = "'majors:all'")
     public ResponseEntity<List<MajorDTO>> getAllMajors() {
         List<Major> majors = majorService.findAll();
         List<MajorDTO> majorDTOs = majors.stream()
@@ -46,6 +49,7 @@ public class MajorController {
     }
     
     @PostMapping
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<MajorDTO> createMajor(@Valid @RequestBody MajorDTO majorDTO) {
         Major major = toEntity(majorDTO);
         Major savedMajor = majorService.save(major);
@@ -53,6 +57,7 @@ public class MajorController {
     }
     
     @PutMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<MajorDTO> updateMajor(@PathVariable Long id, @Valid @RequestBody MajorDTO majorDTO) {
         Major major = toEntity(majorDTO);
         Major updatedMajor = majorService.update(id, major);
@@ -60,6 +65,7 @@ public class MajorController {
     }
     
     @DeleteMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<Void> deleteMajor(@PathVariable Long id) {
         majorService.deleteById(id);
         return ResponseEntity.noContent().build();

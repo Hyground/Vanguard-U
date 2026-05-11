@@ -9,6 +9,7 @@ E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\model\Course.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\presentation\controller\StudyPlanController.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\service\ClassroomService.java
+E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\infrastructure\config\RedisCacheConfig.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\repository\MajorRepository.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\application\dto\CourseDTO.java
 E:\proyecot final bd\Vanguard-U\services\academic-ms\src\main\java\com\vanguard\academic\domain\model\Section.java

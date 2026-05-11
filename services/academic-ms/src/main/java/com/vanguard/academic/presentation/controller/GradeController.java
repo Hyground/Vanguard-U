@@ -6,6 +6,8 @@ import com.vanguard.academic.domain.model.Major;
 import com.vanguard.academic.domain.service.GradeService;
 import com.vanguard.academic.domain.service.MajorService;
 import jakarta.validation.Valid;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,7 @@ public class GradeController {
     }
     
     @GetMapping
+    @Cacheable(cacheNames = "academicCatalogs", key = "'grades:all'")
     public ResponseEntity<List<GradeDTO>> getAllGrades() {
         List<Grade> grades = gradeService.findAll();
         List<GradeDTO> gradeDTOs = grades.stream()
@@ -41,6 +44,7 @@ public class GradeController {
     }
     
     @GetMapping({"/major/{majorId}", "/career/{majorId}"})
+    @Cacheable(cacheNames = "academicCatalogs", key = "'grades:major:' + #majorId")
     public ResponseEntity<List<GradeDTO>> getGradesByMajor(@PathVariable Long majorId) {
         List<Grade> grades = gradeService.findByMajorId(majorId);
         List<GradeDTO> gradeDTOs = grades.stream()
@@ -59,6 +63,7 @@ public class GradeController {
     }
     
     @PostMapping
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<GradeDTO> createGrade(@Valid @RequestBody GradeDTO gradeDTO) {
         Grade grade = toEntity(gradeDTO);
         Grade savedGrade = gradeService.save(grade);
@@ -66,6 +71,7 @@ public class GradeController {
     }
     
     @PutMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<GradeDTO> updateGrade(@PathVariable Long id, @Valid @RequestBody GradeDTO gradeDTO) {
         Grade grade = toEntity(gradeDTO);
         Grade updatedGrade = gradeService.update(id, grade);
@@ -73,6 +79,7 @@ public class GradeController {
     }
     
     @DeleteMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<Void> deleteGrade(@PathVariable Long id) {
         gradeService.deleteById(id);
         return ResponseEntity.noContent().build();

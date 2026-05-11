@@ -4,6 +4,8 @@ import com.vanguard.academic.application.dto.SchoolCycleDTO;
 import com.vanguard.academic.domain.model.SchoolCycle;
 import com.vanguard.academic.domain.service.SchoolCycleService;
 import jakarta.validation.Valid;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ public class SchoolCycleController {
     }
     
     @GetMapping
+    @Cacheable(cacheNames = "academicCatalogs", key = "'school-cycles:all'")
     public ResponseEntity<List<SchoolCycleDTO>> getAllSchoolCycles() {
         List<SchoolCycle> cycles = schoolCycleService.findAll();
         List<SchoolCycleDTO> cycleDTOs = cycles.stream()
@@ -37,6 +40,7 @@ public class SchoolCycleController {
     }
     
     @GetMapping("/active")
+    @Cacheable(cacheNames = "academicCatalogs", key = "'school-cycles:active'")
     public ResponseEntity<SchoolCycleDTO> getActiveSchoolCycle() {
         return schoolCycleService.findActiveCycle()
             .map(cycle -> ResponseEntity.ok(toDTO(cycle)))
@@ -44,6 +48,7 @@ public class SchoolCycleController {
     }
     
     @PostMapping
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<SchoolCycleDTO> createSchoolCycle(@Valid @RequestBody SchoolCycleDTO cycleDTO) {
         SchoolCycle cycle = toEntity(cycleDTO);
         SchoolCycle savedCycle = schoolCycleService.save(cycle);
@@ -51,6 +56,7 @@ public class SchoolCycleController {
     }
     
     @PutMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<SchoolCycleDTO> updateSchoolCycle(@PathVariable Long id, @Valid @RequestBody SchoolCycleDTO cycleDTO) {
         SchoolCycle cycle = toEntity(cycleDTO);
         SchoolCycle updatedCycle = schoolCycleService.update(id, cycle);
@@ -58,12 +64,14 @@ public class SchoolCycleController {
     }
     
     @PutMapping("/{id}/activate")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<SchoolCycleDTO> activateSchoolCycle(@PathVariable Long id) {
         SchoolCycle activatedCycle = schoolCycleService.activateCycle(id);
         return ResponseEntity.ok(toDTO(activatedCycle));
     }
     
     @DeleteMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<Void> deleteSchoolCycle(@PathVariable Long id) {
         schoolCycleService.deleteById(id);
         return ResponseEntity.noContent().build();

@@ -147,12 +147,12 @@ Este microservicio es el principal candidato para aprovechar Redis y PostgreSQL 
 
 Le corresponde:
 
-1. Mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
-2. Usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para listados y consultas de catalogos.
-3. Configurar Redis con `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD`.
-4. Cachear catalogos de alta lectura: grados, secciones, jornadas, cursos, carreras, planes de estudio, ciclos escolares y unidades bimestrales.
-5. Invalidar cache cuando se cree, edite o elimine un catalogo.
-6. Mantener lecturas criticas en master cuando se necesite ver inmediatamente un cambio recien guardado.
-7. Agregar paginacion o filtros en listados que puedan crecer.
+1. Hecho: mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
+2. Pendiente: usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para listados y consultas de catalogos.
+3. Hecho: configurar Redis con `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD`.
+4. Hecho: cachear catalogos de alta lectura: grados, secciones, jornadas, cursos, carreras, planes de estudio, ciclos escolares, salones y unidades bimestrales.
+5. Hecho: invalidar cache cuando se cree, edite o elimine un catalogo.
+6. Pendiente: mantener lecturas criticas en master cuando se necesite ver inmediatamente un cambio recien guardado.
+7. Pendiente: agregar paginacion o filtros en listados que puedan crecer.
 
 No debe usar Redis como fuente principal de datos. PostgreSQL sigue siendo la fuente de verdad.

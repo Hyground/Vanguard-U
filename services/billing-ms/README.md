@@ -84,12 +84,13 @@ Este microservicio debe ser conservador porque administra pagos.
 
 Le corresponde:
 
-1. Mantener creacion y cambios de pagos contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
-2. Usar `DB_HOST` y `DB_PORT` mientras no exista separacion lectura/escritura.
-3. Evaluar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` solo para reportes historicos y listados administrativos.
-4. No usar replica para confirmar pagos recien creados ni para flujos que requieran consistencia inmediata.
-5. No usar Redis al inicio para datos de pagos.
-6. Si Redis se usa despues, limitarlo a rate limiting o cache de reportes no criticos.
-7. Agregar indices para consultas por estudiante, metodo de pago, usuario emisor, usuario pagador y fecha.
+1. Hecho: mantener creacion y cambios de pagos contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
+2. Hecho: conservar compatibilidad con `DB_HOST` y `DB_PORT` si las variables nuevas no existen.
+3. Hecho: configurar pool basico de conexiones con HikariCP.
+4. Pendiente: evaluar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` solo para reportes historicos y listados administrativos.
+5. Pendiente: no usar replica para confirmar pagos recien creados ni para flujos que requieran consistencia inmediata.
+6. Pendiente: no usar Redis al inicio para datos de pagos.
+7. Pendiente: si Redis se usa despues, limitarlo a rate limiting o cache de reportes no criticos.
+8. Pendiente: agregar indices para consultas por estudiante, metodo de pago, usuario emisor, usuario pagador y fecha.
 
 PostgreSQL master sigue siendo la unica fuente de verdad para pagos.

@@ -4,6 +4,8 @@ import com.vanguard.academic.application.dto.CourseDTO;
 import com.vanguard.academic.domain.model.Course;
 import com.vanguard.academic.domain.service.CourseService;
 import jakarta.validation.Valid;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ public class CourseController {
     }
     
     @GetMapping
+    @Cacheable(cacheNames = "academicCatalogs", key = "'courses:all'")
     public ResponseEntity<List<CourseDTO>> getAllCourses() {
         List<Course> courses = courseService.findAll();
         List<CourseDTO> courseDTOs = courses.stream()
@@ -46,6 +49,7 @@ public class CourseController {
     }
     
     @PostMapping
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<CourseDTO> createCourse(@Valid @RequestBody CourseDTO courseDTO) {
         Course course = toEntity(courseDTO);
         Course savedCourse = courseService.save(course);
@@ -53,6 +57,7 @@ public class CourseController {
     }
     
     @PutMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<CourseDTO> updateCourse(@PathVariable Long id, @Valid @RequestBody CourseDTO courseDTO) {
         Course course = toEntity(courseDTO);
         Course updatedCourse = courseService.update(id, course);
@@ -60,6 +65,7 @@ public class CourseController {
     }
     
     @DeleteMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         courseService.deleteById(id);
         return ResponseEntity.noContent().build();

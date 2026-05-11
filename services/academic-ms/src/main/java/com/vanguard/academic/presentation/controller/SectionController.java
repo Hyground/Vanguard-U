@@ -5,6 +5,8 @@ import com.vanguard.academic.domain.model.Section;
 import com.vanguard.academic.domain.repository.SectionRepository;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ public class SectionController {
     }
 
     @GetMapping
+    @Cacheable(cacheNames = "academicCatalogs", key = "'sections:all'")
     public ResponseEntity<List<CatalogItemDTO>> findAll() {
         return ResponseEntity.ok(repository.findAll().stream().map(this::toDTO).toList());
     }
@@ -32,6 +35,7 @@ public class SectionController {
     }
 
     @PostMapping
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<CatalogItemDTO> create(@Valid @RequestBody CatalogItemDTO dto) {
         if (repository.existsByName(dto.name())) {
             throw new IllegalArgumentException("Section with name '" + dto.name() + "' already exists");
@@ -40,6 +44,7 @@ public class SectionController {
     }
 
     @PutMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<CatalogItemDTO> update(@PathVariable Long id, @Valid @RequestBody CatalogItemDTO dto) {
         Section item = repository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Section not found with id: " + id));
@@ -48,6 +53,7 @@ public class SectionController {
     }
 
     @DeleteMapping("/{id}")
+    @CacheEvict(cacheNames = "academicCatalogs", allEntries = true)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!repository.existsById(id)) {
             throw new IllegalArgumentException("Section not found with id: " + id);
