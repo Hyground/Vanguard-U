@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  users-ms:
+    image: vanguardu/users-ms:latest
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+      - SERVER_PORT=8081
+      - DB_HOST=vps.wissegt.com
+    env_file:
+      - ./env/.env
+    networks:
+      - vanguard-net
+
+  academic-ms:
+    image: vanguardu/academic-ms:latest
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+      - ACADEMIC_PORT=8082
+      - DB_HOST=vps.wissegt.com
+      - REDIS_HOST=vps.wissegt.com
+    env_file:
+      - ./env/.env
+    networks:
+      - vanguard-net
+
+  student-ms:
+    image: vanguardu/student-ms:latest
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+      - STUDENT_PORT=8083
+      - DB_HOST=vps.wissegt.com
+    env_file:
+      - ./env/.env
+    networks:
+      - vanguard-net
+
+  billing-ms:
+    image: vanguardu/billing-ms:latest
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+      - BILLING_PORT=8084
+      - DB_HOST=vps.wissegt.com
+    env_file:
+      - ./env/.env
+    networks:
+      - vanguard-net
+
+  gateway-ms:
+    image: vanguardu/gateway-ms:latest
+    ports:
+      - "80:8080"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+      - GATEWAY_PORT=8080
+      - USERS_MS_URL=http://users-ms:8081
+      - ACADEMIC_MS_URL=http://academic-ms:8082
+      - STUDENT_MS_URL=http://student-ms:8083
+      - BILLING_MS_URL=http://billing-ms:8084
+      - REDIS_HOST=vps.wissegt.com
+    env_file:
+      - ./env/.env
+    networks:
+      - vanguard-net
+
+networks:
+  vanguard-net:
+    driver: overlay

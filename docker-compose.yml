@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  users-ms:
+    build: ./services/users-ms
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - DB_HOST=vps.wissegt.com
+      - DB_PASSWORD=${DB_PASSWORD}
+    env_file:
+      - ./env/.env
+
+  academic-ms:
+    build: ./services/academic-ms
+    ports:
+      - "8082:8082"
+    environment:
+      - ACADEMIC_PORT=8082
+      - DB_HOST=vps.wissegt.com
+      - REDIS_HOST=vps.wissegt.com
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    env_file:
+      - ./env/.env
+
+  student-ms:
+    build: ./services/student-and-enrollment-ms
+    ports:
+      - "8083:8083"
+    environment:
+      - STUDENT_PORT=8083
+      - DB_HOST=vps.wissegt.com
+      - DB_PASSWORD=${DB_PASSWORD}
+    env_file:
+      - ./env/.env
+
+  billing-ms:
+    build: ./services/billing-ms
+    ports:
+      - "8084:8084"
+    environment:
+      - BILLING_PORT=8084
+      - DB_HOST=vps.wissegt.com
+      - DB_PASSWORD=${DB_PASSWORD}
+    env_file:
+      - ./env/.env
+
+  gateway-ms:
+    build: ./services/gateway-ms
+    ports:
+      - "8080:8080"
+    environment:
+      - GATEWAY_PORT=8080
+      - USERS_MS_URL=http://users-ms:8081
+      - ACADEMIC_MS_URL=http://academic-ms:8082
+      - STUDENT_MS_URL=http://student-ms:8083
+      - BILLING_MS_URL=http://billing-ms:8084
+      - REDIS_HOST=vps.wissegt.com
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    env_file:
+      - ./env/.env
