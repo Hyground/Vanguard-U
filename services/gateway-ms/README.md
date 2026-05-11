@@ -78,3 +78,20 @@ Respuesta esperada:
 
 - Puerto: `8080`
 - Configuracion de rutas: `src/main/resources/application.properties`
+
+## Tareas De Infraestructura Cloud
+
+Este microservicio debe ser el primero en aprovechar Redis.
+
+Le corresponde:
+
+1. Leer `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD` desde `env/.env` o desde variables del orquestador.
+2. Configurar rate limiting usando Redis.
+3. Aplicar limites por IP, usuario o token.
+4. Definir timeouts por ruta hacia cada microservicio.
+5. Agregar circuit breaker para evitar que una falla de un microservicio bloquee todo el sistema.
+6. Mantener health check activo para que el orquestador pueda reiniciarlo si falla.
+
+No le corresponde conectarse a PostgreSQL master ni replica.
+
+Cuando los microservicios se ejecuten en contenedores, las rutas `USERS_MS_URL`, `ACADEMIC_MS_URL`, `STUDENT_MS_URL` y `BILLING_MS_URL` deben apuntar a nombres de servicio del orquestador, no a `localhost`.

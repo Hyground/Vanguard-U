@@ -122,3 +122,18 @@ Un usuario con rol `ADMIN` tambien puede tener perfil en `teachers`.
 - Entrada externa: `http://localhost:8080`
 - Base de datos: `bdedu`
 - `ddl-auto: none`
+
+## Tareas De Infraestructura Cloud
+
+Este microservicio debe priorizar consistencia porque maneja autenticacion, usuarios y roles.
+
+Le corresponde:
+
+1. Mantener escrituras y validaciones criticas contra PostgreSQL master.
+2. Usar `DB_HOST` y `DB_PORT` mientras no exista separacion lectura/escritura.
+3. Preparar configuracion futura con `DB_WRITE_HOST` y `DB_WRITE_PORT` para operaciones criticas.
+4. Evaluar `DB_READ_HOST` y `DB_READ_PORT` solo para listados administrativos no criticos.
+5. Conectar Redis solo para datos temporales, por ejemplo intentos fallidos de login o bloqueo temporal por abuso.
+6. No usar replica para login, registro, recuperacion de contrasena o cambios de rol.
+
+Redis no debe guardar usuarios, contrasenas ni tokens como fuente de verdad.

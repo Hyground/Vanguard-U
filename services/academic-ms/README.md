@@ -140,3 +140,19 @@ Request para crear docente/director/admin academico:
 - Base de datos: `bdedu`
 - `ddl-auto: none`
 - Health check disponible en `/actuator/health`
+
+## Tareas De Infraestructura Cloud
+
+Este microservicio es el principal candidato para aprovechar Redis y PostgreSQL replica, porque administra catalogos que cambian poco y se consultan mucho.
+
+Le corresponde:
+
+1. Mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
+2. Usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para listados y consultas de catalogos.
+3. Configurar Redis con `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD`.
+4. Cachear catalogos de alta lectura: grados, secciones, jornadas, cursos, carreras, planes de estudio, ciclos escolares y unidades bimestrales.
+5. Invalidar cache cuando se cree, edite o elimine un catalogo.
+6. Mantener lecturas criticas en master cuando se necesite ver inmediatamente un cambio recien guardado.
+7. Agregar paginacion o filtros en listados que puedan crecer.
+
+No debe usar Redis como fuente principal de datos. PostgreSQL sigue siendo la fuente de verdad.

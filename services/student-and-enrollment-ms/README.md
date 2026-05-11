@@ -513,3 +513,19 @@ AttendanceResponse
 - El SQL oficial usa `id_*` como nombres de llaves primarias y foraneas.
 - Puerto interno: `8083`.
 - Entrada externa: `http://localhost:8080`.
+
+## Tareas De Infraestructura Cloud
+
+Este microservicio debe usar la infraestructura con cuidado porque maneja inscripciones, horarios, notas y asistencia.
+
+Le corresponde:
+
+1. Mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
+2. Usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para listados, horarios, reportes de notas y reportes de asistencia.
+3. Mantener en master las lecturas que deben ver inmediatamente una escritura recien hecha, por ejemplo validar una inscripcion antes de continuar el flujo.
+4. Usar Redis de forma limitada para cache temporal de validaciones frecuentes y consultas repetidas de horarios.
+5. No guardar notas, asistencia, inscripciones ni pagos en Redis como fuente de verdad.
+6. Agregar indices y paginacion para consultas por estudiante, docente, ciclo, grado, seccion y fechas.
+7. Medir los endpoints principales antes de mover mas lecturas a replica o cache.
+
+La replica puede tener atraso respecto al master. Por eso no debe usarse en flujos donde el usuario necesita ver inmediatamente un dato recien creado.
