@@ -28,12 +28,11 @@ public class GradeController {
     
     @GetMapping
     @Cacheable(cacheNames = "academicCatalogs", key = "'grades:all'")
-    public ResponseEntity<List<GradeDTO>> getAllGrades() {
+    public List<GradeDTO> getAllGrades() {
         List<Grade> grades = gradeService.findAll();
-        List<GradeDTO> gradeDTOs = grades.stream()
+        return grades.stream()
             .map(this::toDTO)
             .toList();
-        return ResponseEntity.ok(gradeDTOs);
     }
     
     @GetMapping("/{id}")
@@ -45,12 +44,11 @@ public class GradeController {
     
     @GetMapping({"/major/{majorId}", "/career/{majorId}"})
     @Cacheable(cacheNames = "academicCatalogs", key = "'grades:major:' + #majorId")
-    public ResponseEntity<List<GradeDTO>> getGradesByMajor(@PathVariable Long majorId) {
+    public List<GradeDTO> getGradesByMajor(@PathVariable Long majorId) {
         List<Grade> grades = gradeService.findByMajorId(majorId);
-        List<GradeDTO> gradeDTOs = grades.stream()
+        return grades.stream()
             .map(this::toDTO)
             .toList();
-        return ResponseEntity.ok(gradeDTOs);
     }
     
     @GetMapping("/search")

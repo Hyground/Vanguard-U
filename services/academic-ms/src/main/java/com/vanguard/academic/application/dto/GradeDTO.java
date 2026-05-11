@@ -1,5 +1,6 @@
 package com.vanguard.academic.application.dto;
 
+import java.io.Serializable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,7 +14,7 @@ public record GradeDTO(
     
     @NotNull(message = "Major ID is required")
     Long majorId
-) {
+) implements Serializable {
     public GradeDTO {
         if (name != null) {
             name = name.trim();

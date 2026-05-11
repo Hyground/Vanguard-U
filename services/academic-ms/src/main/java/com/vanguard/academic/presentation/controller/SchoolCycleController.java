@@ -24,12 +24,11 @@ public class SchoolCycleController {
     
     @GetMapping
     @Cacheable(cacheNames = "academicCatalogs", key = "'school-cycles:all'")
-    public ResponseEntity<List<SchoolCycleDTO>> getAllSchoolCycles() {
+    public List<SchoolCycleDTO> getAllSchoolCycles() {
         List<SchoolCycle> cycles = schoolCycleService.findAll();
-        List<SchoolCycleDTO> cycleDTOs = cycles.stream()
+        return cycles.stream()
             .map(this::toDTO)
             .toList();
-        return ResponseEntity.ok(cycleDTOs);
     }
     
     @GetMapping("/{id}")
@@ -40,7 +39,6 @@ public class SchoolCycleController {
     }
     
     @GetMapping("/active")
-    @Cacheable(cacheNames = "academicCatalogs", key = "'school-cycles:active'")
     public ResponseEntity<SchoolCycleDTO> getActiveSchoolCycle() {
         return schoolCycleService.findActiveCycle()
             .map(cycle -> ResponseEntity.ok(toDTO(cycle)))

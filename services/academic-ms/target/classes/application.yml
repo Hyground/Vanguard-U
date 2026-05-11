@@ -45,6 +45,8 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: ${REDIS_TIMEOUT_MS:2000}
+      repositories:
+        enabled: false
 
   cache:
     type: redis

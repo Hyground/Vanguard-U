@@ -24,12 +24,11 @@ public class MajorController {
     
     @GetMapping
     @Cacheable(cacheNames = "academicCatalogs", key = "'majors:all'")
-    public ResponseEntity<List<MajorDTO>> getAllMajors() {
+    public List<MajorDTO> getAllMajors() {
         List<Major> majors = majorService.findAll();
-        List<MajorDTO> majorDTOs = majors.stream()
+        return majors.stream()
             .map(this::toDTO)
             .toList();
-        return ResponseEntity.ok(majorDTOs);
     }
     
     @GetMapping("/{id}")

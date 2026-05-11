@@ -1,5 +1,6 @@
 package com.vanguard.academic.application.dto;
 
+import java.io.Serializable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -13,7 +14,7 @@ public record CourseDTO(
     @NotBlank(message = "Course name is required")
     @Size(max = 100, message = "Course name must not exceed 100 characters")
     String name
-) {
+) implements Serializable {
     public CourseDTO {
         if (code != null) {
             code = code.trim().toUpperCase();

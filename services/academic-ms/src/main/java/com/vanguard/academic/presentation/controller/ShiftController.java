@@ -23,8 +23,8 @@ public class ShiftController {
 
     @GetMapping
     @Cacheable(cacheNames = "academicCatalogs", key = "'shifts:all'")
-    public ResponseEntity<List<CatalogItemDTO>> findAll() {
-        return ResponseEntity.ok(repository.findAll().stream().map(this::toDTO).toList());
+    public List<CatalogItemDTO> findAll() {
+        return repository.findAll().stream().map(this::toDTO).toList();
     }
 
     @GetMapping("/{id}")

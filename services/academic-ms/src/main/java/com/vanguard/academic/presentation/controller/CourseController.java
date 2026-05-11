@@ -24,12 +24,11 @@ public class CourseController {
     
     @GetMapping
     @Cacheable(cacheNames = "academicCatalogs", key = "'courses:all'")
-    public ResponseEntity<List<CourseDTO>> getAllCourses() {
+    public List<CourseDTO> getAllCourses() {
         List<Course> courses = courseService.findAll();
-        List<CourseDTO> courseDTOs = courses.stream()
+        return courses.stream()
             .map(this::toDTO)
             .toList();
-        return ResponseEntity.ok(courseDTOs);
     }
     
     @GetMapping("/{id}")

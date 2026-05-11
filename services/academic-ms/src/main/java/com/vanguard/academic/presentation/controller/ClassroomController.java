@@ -24,12 +24,11 @@ public class ClassroomController {
     
     @GetMapping
     @Cacheable(cacheNames = "academicCatalogs", key = "'classrooms:all'")
-    public ResponseEntity<List<ClassroomDTO>> getAllClassrooms() {
+    public List<ClassroomDTO> getAllClassrooms() {
         List<Classroom> classrooms = classroomService.findAll();
-        List<ClassroomDTO> classroomDTOs = classrooms.stream()
+        return classrooms.stream()
             .map(this::toDTO)
             .toList();
-        return ResponseEntity.ok(classroomDTOs);
     }
     
     @GetMapping("/{id}")
