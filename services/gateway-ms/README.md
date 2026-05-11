@@ -85,12 +85,18 @@ Este microservicio debe ser el primero en aprovechar Redis.
 
 Le corresponde:
 
-1. Leer `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD` desde `env/.env` o desde variables del orquestador.
-2. Configurar rate limiting usando Redis.
-3. Aplicar limites por IP, usuario o token.
-4. Definir timeouts por ruta hacia cada microservicio.
-5. Agregar circuit breaker para evitar que una falla de un microservicio bloquee todo el sistema.
-6. Mantener health check activo para que el orquestador pueda reiniciarlo si falla.
+1. Hecho: leer `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD` desde `env/.env` o desde variables del orquestador.
+2. Hecho: configurar rate limiting usando Redis.
+3. Hecho: aplicar limites por IP de cliente.
+4. Pendiente: definir timeouts por ruta hacia cada microservicio.
+5. Pendiente: agregar circuit breaker para evitar que una falla de un microservicio bloquee todo el sistema.
+6. Hecho: mantener health check activo para que el orquestador pueda reiniciarlo si falla.
+
+Variables de rate limiting:
+
+- `GATEWAY_RATE_LIMIT_REPLENISH_RATE`: tokens recuperados por segundo.
+- `GATEWAY_RATE_LIMIT_BURST_CAPACITY`: maximo de tokens acumulados.
+- `GATEWAY_RATE_LIMIT_REQUESTED_TOKENS`: tokens consumidos por request.
 
 No le corresponde conectarse a PostgreSQL master ni replica.
 

@@ -129,11 +129,12 @@ Este microservicio debe priorizar consistencia porque maneja autenticacion, usua
 
 Le corresponde:
 
-1. Mantener escrituras y validaciones criticas contra PostgreSQL master.
-2. Usar `DB_HOST` y `DB_PORT` mientras no exista separacion lectura/escritura.
-3. Preparar configuracion futura con `DB_WRITE_HOST` y `DB_WRITE_PORT` para operaciones criticas.
-4. Evaluar `DB_READ_HOST` y `DB_READ_PORT` solo para listados administrativos no criticos.
-5. Conectar Redis solo para datos temporales, por ejemplo intentos fallidos de login o bloqueo temporal por abuso.
-6. No usar replica para login, registro, recuperacion de contrasena o cambios de rol.
+1. Hecho: mantener escrituras y validaciones criticas contra PostgreSQL master.
+2. Hecho: conservar compatibilidad con `DB_HOST` y `DB_PORT` si las variables nuevas no existen.
+3. Hecho: preparar configuracion con `DB_WRITE_HOST` y `DB_WRITE_PORT` para operaciones criticas.
+4. Hecho: configurar pool basico de conexiones con HikariCP.
+5. Pendiente: evaluar `DB_READ_HOST` y `DB_READ_PORT` solo para listados administrativos no criticos.
+6. Pendiente: conectar Redis solo para datos temporales, por ejemplo intentos fallidos de login o bloqueo temporal por abuso.
+7. Pendiente: no usar replica para login, registro, recuperacion de contrasena o cambios de rol.
 
 Redis no debe guardar usuarios, contrasenas ni tokens como fuente de verdad.
