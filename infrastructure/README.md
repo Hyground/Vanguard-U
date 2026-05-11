@@ -12,6 +12,8 @@ Esta carpeta contiene infraestructura auxiliar local.
 
 Este archivo no es el despliegue final de los microservicios.
 
+Si esta misma composicion ya fue desplegada en la nube, revisar `USO_INFRAESTRUCTURA_NUBE.md` para definir como los microservicios deben aprovechar master, replica y Redis.
+
 ## Uso
 
 Usar este compose solo cuando se necesite probar infraestructura local.

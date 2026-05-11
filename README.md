@@ -35,6 +35,10 @@ Puertos internos:
 Los microservicios se conectan a PostgreSQL usando las variables del archivo `env/.env`.
 El esquema actual debe coincidir con `sql.txt`.
 
+El archivo real de variables debe estar en `env/.env`. Ese archivo contiene secretos y no debe subirse al repositorio.
+
+Si la infraestructura de nube ya esta desplegada con PostgreSQL master, PostgreSQL replica y Redis, revisar `infrastructure/USO_INFRAESTRUCTURA_NUBE.md`. Ese documento define que debe usar cada microservicio y que tareas faltan para aprovechar la tecnologia existente.
+
 Antes de crear usuarios, revisar los roles en pgAdmin:
 
 ```sql
@@ -117,6 +121,25 @@ Plan recomendado:
 3. Probar apagando una replica y verificando que otra responde.
 4. Pasar el mismo modelo a Docker Swarm con 4 computadoras.
 5. Usar PostgreSQL en la nube como base principal.
+
+## Tareas Para Aprovechar La Infraestructura De Nube
+
+La infraestructura puede existir en la nube, pero los microservicios solo la aprovechan cuando su configuracion y codigo la consumen explicitamente.
+
+Tareas pendientes:
+
+1. Mantener `env/.env` como archivo real de configuracion local y usar esas mismas variables en el orquestador cuando los microservicios se desplieguen en nube.
+2. Mantener `DB_HOST` y `DB_PORT` para compatibilidad mientras los servicios no tengan separacion lectura/escritura.
+3. Agregar variables `DB_WRITE_HOST`, `DB_WRITE_PORT`, `DB_READ_HOST` y `DB_READ_PORT`.
+4. Configurar `gateway-ms` con Redis para rate limiting.
+5. Configurar `academic-ms` con Redis para cache de catalogos.
+6. Configurar `academic-ms` con datasource de escritura al master y datasource de lectura a la replica.
+7. Configurar `student-and-enrollment-ms` con datasource de lectura para listados, horarios y reportes.
+8. Evaluar replica en `users-ms` solo para listados administrativos.
+9. Evaluar replica en `billing-ms` solo para reportes historicos.
+10. Medir carga con pruebas reales antes de afirmar soporte para 50,000 consultas.
+
+Regla importante: el YAML o el orquestador solo entregan variables y reinician contenedores. La decision de usar master, replica o Redis debe implementarse dentro de cada microservicio.
 
 ## Base De Datos, Redis Y Carga
 
