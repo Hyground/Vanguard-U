@@ -106,9 +106,7 @@ Reglas del modelo:
 
 Estado actual:
 
-- `gateway-ms` tiene Dockerfile.
-- `billing-ms` tiene Dockerfile.
-- Faltan Dockerfile para `users-ms`, `academic-ms` y `student-and-enrollment-ms`.
+- Cada microservicio ya tiene su Dockerfile en `services/`.
 - Falta definir `deploy/docker-compose.local.yml` para pruebas en una sola computadora.
 - Falta definir `deploy/docker-stack.yml` para Docker Swarm en varias computadoras.
 - Falta definir healthchecks por servicio.

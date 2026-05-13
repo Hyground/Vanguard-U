@@ -10,8 +10,10 @@ services:
     environment:
       - SERVER_PORT=8081
       - DB_HOST=vps.wissegt.com
+      - DB_WRITE_HOST=vps.wissegt.com
+      - DB_WRITE_PORT=5432
     env_file:
-      - ./env/.env
+      - ../env/.env
     networks:
       - vanguard-net
 
@@ -24,14 +26,19 @@ services:
     environment:
       - ACADEMIC_PORT=8082
       - DB_HOST=vps.wissegt.com
+      - DB_WRITE_HOST=vps.wissegt.com
+      - DB_WRITE_PORT=5432
+      - DB_READ_HOST=vps.wissegt.com
+      - DB_READ_PORT=5433
       - REDIS_HOST=vps.wissegt.com
+      - REDIS_PORT=6379
     env_file:
-      - ./env/.env
+      - ../env/.env
     networks:
       - vanguard-net
 
-  student-ms:
-    image: vanguardu/student-ms:latest
+  student-and-enrollment-ms:
+    image: vanguardu/student-and-enrollment-ms:latest
     deploy:
       replicas: 2
       restart_policy:
@@ -39,8 +46,10 @@ services:
     environment:
       - STUDENT_PORT=8083
       - DB_HOST=vps.wissegt.com
+      - DB_WRITE_HOST=vps.wissegt.com
+      - DB_WRITE_PORT=5432
     env_file:
-      - ./env/.env
+      - ../env/.env
     networks:
       - vanguard-net
 
@@ -53,8 +62,10 @@ services:
     environment:
       - BILLING_PORT=8084
       - DB_HOST=vps.wissegt.com
+      - DB_WRITE_HOST=vps.wissegt.com
+      - DB_WRITE_PORT=5432
     env_file:
-      - ./env/.env
+      - ../env/.env
     networks:
       - vanguard-net
 
@@ -70,11 +81,12 @@ services:
       - GATEWAY_PORT=8080
       - USERS_MS_URL=http://users-ms:8081
       - ACADEMIC_MS_URL=http://academic-ms:8082
-      - STUDENT_MS_URL=http://student-ms:8083
+      - STUDENT_MS_URL=http://student-and-enrollment-ms:8083
       - BILLING_MS_URL=http://billing-ms:8084
       - REDIS_HOST=vps.wissegt.com
+      - REDIS_PORT=6379
     env_file:
-      - ./env/.env
+      - ../env/.env
     networks:
       - vanguard-net
 

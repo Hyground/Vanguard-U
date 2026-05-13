@@ -25,7 +25,7 @@ services:
     env_file:
       - ./env/.env
 
-  student-ms:
+  student-and-enrollment-ms:
     build: ./services/student-and-enrollment-ms
     ports:
       - "8083:8083"
@@ -55,7 +55,7 @@ services:
       - GATEWAY_PORT=8080
       - USERS_MS_URL=http://users-ms:8081
       - ACADEMIC_MS_URL=http://academic-ms:8082
-      - STUDENT_MS_URL=http://student-ms:8083
+      - STUDENT_MS_URL=http://student-and-enrollment-ms:8083
       - BILLING_MS_URL=http://billing-ms:8084
       - REDIS_HOST=vps.wissegt.com
       - REDIS_PASSWORD=${REDIS_PASSWORD}

@@ -25,44 +25,48 @@ No se debe crear una sola imagen con todos los microservicios.
 
 ## Archivos Pendientes
 
-- `docker-compose.local.yml`: prueba local en una sola computadora.
 - `docker-stack.yml`: despliegue distribuido con Docker Swarm.
-- Dockerfile para `users-ms`.
-- Dockerfile para `academic-ms`.
-- Dockerfile para `student-and-enrollment-ms`.
 - Healthchecks por servicio.
 - Variables de entorno por servicio.
 
-## Prueba En Una Sola Computadora
+## Fase Actual
 
-Primero se debe probar localmente:
+La fase actual es subir y probar en la nube, no validar en una sola computadora.
+
+Objetivo:
 
 ```text
-gateway-ms: 1 replica
-users-ms: 2 replicas
-academic-ms: 2 replicas
-student-and-enrollment-ms: 2 replicas
-billing-ms: 2 replicas
+Imágenes Docker por microservicio
+  -> registry accesible por los nodos
+  -> cluster Swarm en la nube
+  -> gateway-ms como entrada estable
+  -> réplicas reubicables entre máquinas
 ```
 
-Objetivo de la prueba:
+## Archivos Ya Presentes
 
-- matar una replica
-- confirmar que otra replica responde
-- confirmar que gateway sigue enrutando
+Todos los microservicios ya tienen su Dockerfile en `services/`:
 
-## Docker Swarm En 4 Computadoras
+- `services/gateway-ms/Dockerfile`
+- `services/users-ms/Dockerfile`
+- `services/academic-ms/Dockerfile`
+- `services/student-and-enrollment-ms/Dockerfile`
+- `services/billing-ms/Dockerfile`
+
+## Validacion En Nube
+
+La validacion principal debe hacerse ya sobre la nube.
 
 Modelo recomendado:
 
 ```text
-PC A: manager
-PC B: worker
-PC C: worker
-PC D: worker
+Nodo manager
+Nodo worker
+Nodo worker
+Nodo worker
 ```
 
-El manager coordina el cluster, pero no debe ser la unica computadora que ejecuta servicios.
+El manager coordina el cluster, pero no debe ser la unica maquina ejecutando servicios.
 
 El stack debe definir replicas, por ejemplo:
 
@@ -74,18 +78,18 @@ student-and-enrollment-ms: 2 replicas
 billing-ms: 2 replicas
 ```
 
-Docker Swarm decide en que computadora ejecuta cada replica.
+Docker Swarm decide en que nodo ejecuta cada replica y puede reubicarla si una maquina cae.
 
 ## Proyecto, JARs E Imagenes
 
-El proyecto completo debe vivir en la computadora de desarrollo o manager.
-Las otras computadoras no necesitan el proyecto completo.
+El proyecto completo puede quedarse en la computadora de desarrollo o manager.
+Los nodos de la nube no necesitan el repositorio completo; necesitan Docker y acceso a las imagenes.
 
 Flujo recomendado:
 
 1. Compilar los JAR en la computadora principal.
 2. Construir imagenes Docker por microservicio.
-3. Distribuir las imagenes a las computadoras del cluster.
+3. Publicar o distribuir las imagenes al registry o a los nodos del cluster.
 4. Desplegar con `docker stack deploy`.
 
 ## PostgreSQL
