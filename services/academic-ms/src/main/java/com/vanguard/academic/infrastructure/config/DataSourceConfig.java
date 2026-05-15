@@ -19,11 +19,11 @@ public class DataSourceConfig {
 
     @Bean
     public DataSource writeDataSource(
-            @Value("${DB_WRITE_HOST:${DB_HOST:vps.wissegt.com}}") String host,
+            @Value("${DB_WRITE_HOST:${DB_HOST:localhost}}") String host,
             @Value("${DB_WRITE_PORT:${DB_PORT:5432}}") int port,
             @Value("${DB_NAME:bdedu}") String database,
             @Value("${DB_USERNAME:bd2equipomari}") String username,
-            @Value("${DB_PASSWORD}") String password,
+            @Value("${DB_PASSWORD:Kj82_mP91_Xz77_Rt}") String password,
             @Value("${DB_POOL_MAX_SIZE:10}") int maximumPoolSize,
             @Value("${DB_POOL_MIN_IDLE:2}") int minimumIdle,
             @Value("${DB_CONNECTION_TIMEOUT_MS:30000}") long connectionTimeout,
@@ -46,11 +46,11 @@ public class DataSourceConfig {
 
     @Bean
     public DataSource readDataSource(
-            @Value("${DB_READ_HOST:${DB_WRITE_HOST:${DB_HOST:vps.wissegt.com}}}") String host,
+            @Value("${DB_READ_HOST:${DB_WRITE_HOST:${DB_HOST:localhost}}}") String host,
             @Value("${DB_READ_PORT:${DB_WRITE_PORT:${DB_PORT:5432}}}") int port,
             @Value("${DB_NAME:bdedu}") String database,
             @Value("${DB_USERNAME:bd2equipomari}") String username,
-            @Value("${DB_PASSWORD}") String password,
+            @Value("${DB_PASSWORD:Kj82_mP91_Xz77_Rt}") String password,
             @Value("${DB_READ_POOL_MAX_SIZE:${DB_POOL_MAX_SIZE:10}}") int maximumPoolSize,
             @Value("${DB_READ_POOL_MIN_IDLE:${DB_POOL_MIN_IDLE:2}}") int minimumIdle,
             @Value("${DB_CONNECTION_TIMEOUT_MS:30000}") long connectionTimeout,
