@@ -1,22 +1,29 @@
 package com.vanguard.studentenrollment.application.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vanguard.studentenrollment.application.dto.EnrollmentRequest;
 import com.vanguard.studentenrollment.application.exception.BusinessRuleException;
+import com.vanguard.studentenrollment.application.dto.events.EnrollmentCreatedEvent;
 import com.vanguard.studentenrollment.domain.model.Enrollment;
+import com.vanguard.studentenrollment.domain.model.Student;
 import com.vanguard.studentenrollment.domain.repository.EnrollmentRepository;
 import com.vanguard.studentenrollment.domain.repository.StudentRepository;
+import com.vanguard.studentenrollment.infrastructure.messaging.RabbitMQConfig;
 import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,8 +38,35 @@ class EnrollmentServiceTest {
     @Mock
     private ExternalReferenceValidator externalReferenceValidator;
 
+    @Mock
+    private RabbitTemplate rabbitTemplate;
+
     @InjectMocks
     private EnrollmentService enrollmentService;
+
+    @Test
+    void createSendsMessageToRabbitMQ() {
+        // Arrange
+        EnrollmentRequest request = request(1, 2, 3, 4, 5, 6);
+        Student student = new Student();
+        ReflectionTestUtils.setField(student, "id", 1);
+        
+        Enrollment savedEnrollment = enrollment(100, 2, 3, 4, 5, 6);
+        ReflectionTestUtils.setField(savedEnrollment, "student", student);
+
+        when(studentRepository.findById(1)).thenReturn(Optional.of(student));
+        when(enrollmentRepository.save(any(Enrollment.class))).thenReturn(savedEnrollment);
+
+        // Act
+        enrollmentService.create(request);
+
+        // Assert
+        verify(rabbitTemplate).convertAndSend(
+            eq(RabbitMQConfig.EXCHANGE),
+            eq(RabbitMQConfig.ROUTING_KEY),
+            any(EnrollmentCreatedEvent.class)
+        );
+    }
 
     @Test
     void createRejectsDuplicateAcademicPlacementForStudent() {

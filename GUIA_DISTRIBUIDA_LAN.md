@@ -1,6 +1,19 @@
-# 🌐 GUIA DE ARRANQUE: DESPLIEGUE DISTRIBUIDO (RED LOCAL)
+# 🌐 GUIA DE ARRANQUE: DESPLIEGUE DISTRIBUIDO
 
-Esta guía detalla los pasos exactos para levantar el sistema Vanguard-U utilizando **varias laptops conectadas a un switch físico** o la misma red WiFi/LAN.
+Existen dos formas de conectar las máquinas del equipo para trabajar de forma distribuida: **Red Virtual (Recomendada)** y **Red Local LAN**.
+
+## 🚀 Método Recomendado: Tailscale (Red Virtual)
+
+La forma más sencilla, segura y que funciona sin importar si están en la misma casa o en diferentes ciudades es usando **Tailscale**.
+👉 **[Ver la Guía Rápida de Tailscale (TAILSCALE_GUIDE.md)](./TAILSCALE_GUIDE.md)**
+
+Si usan Tailscale, **ignoren el resto de este documento**, ya que la conexión se maneja automáticamente a través de las IPs asignadas (`100.x.x.x`).
+
+---
+
+## ⚠️ Método Alternativo: Red Local LAN (Física/WiFi)
+
+Esta guía detalla los pasos exactos para levantar el sistema Vanguard-U utilizando **varias laptops conectadas a un switch físico** o la misma red WiFi/LAN. *Solo usen esto si no pueden instalar Tailscale.*
 
 ## 📋 Requisitos Previos
 

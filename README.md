@@ -161,6 +161,25 @@ Uso recomendado de Redis en este proyecto:
 - Cache temporal de validaciones frecuentes.
 - No usar Redis para datos criticos como pagos, notas o inscripciones sin persistir primero en PostgreSQL.
 
+## Mensajería, Monitoreo y Red Virtual
+
+El sistema ahora cuenta con infraestructura avanzada de soporte:
+
+### Mensajería (RabbitMQ)
+- Facilita la comunicación asíncrona entre microservicios.
+- **Flujo implementado:** Al crearse una inscripción en `student-and-enrollment-ms`, se emite un evento `EnrollmentCreatedEvent`. El `billing-ms` lo consume y procesa automáticamente el pago inicial.
+- **Panel de control:** Disponible en el puerto `15672` del nodo de infraestructura.
+
+### Monitoreo (Prometheus y Grafana)
+- Todos los microservicios exponen métricas de salud y rendimiento mediante Spring Boot Actuator (`/actuator/prometheus`).
+- **Prometheus** recolecta estas métricas en el puerto `9090`.
+- **Grafana** permite visualizarlas mediante dashboards en el puerto `3000`.
+
+### Red Virtual (Tailscale)
+- Para facilitar el desarrollo distribuido sin complicaciones de red local (LAN) o routers, se utiliza **Tailscale**.
+- Permite a todos los miembros del equipo conectarse a una IP privada segura (`100.x.x.x`), simulando que están en la misma máquina física.
+- Revisar `TAILSCALE_GUIDE.md` para las instrucciones de conexión.
+
 Pendiente antes de prometer mas de 5,000 peticiones:
 
 - Pruebas de carga con escenarios reales.

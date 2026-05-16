@@ -10,6 +10,10 @@ import com.vanguard.studentenrollment.domain.model.Student;
 import com.vanguard.studentenrollment.domain.repository.EnrollmentRepository;
 import com.vanguard.studentenrollment.domain.repository.StudentRepository;
 import com.vanguard.studentenrollment.infrastructure.persistence.ExternalReferenceValidator;
+import com.vanguard.studentenrollment.application.dto.events.EnrollmentCreatedEvent;
+import com.vanguard.studentenrollment.infrastructure.messaging.RabbitMQConfig;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -23,15 +27,18 @@ public class EnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
     private final StudentRepository studentRepository;
     private final ExternalReferenceValidator externalReferenceValidator;
+    private final RabbitTemplate rabbitTemplate;
 
     public EnrollmentService(
             EnrollmentRepository enrollmentRepository,
             StudentRepository studentRepository,
-            ExternalReferenceValidator externalReferenceValidator
+            ExternalReferenceValidator externalReferenceValidator,
+            RabbitTemplate rabbitTemplate
     ) {
         this.enrollmentRepository = enrollmentRepository;
         this.studentRepository = studentRepository;
         this.externalReferenceValidator = externalReferenceValidator;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +83,16 @@ public class EnrollmentService {
         Student student = getStudent(request.studentId());
         Enrollment enrollment = StudentEnrollmentMapper.toEntity(request, student);
         Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
+
+        // Notificar a Billing vía RabbitMQ
+        EnrollmentCreatedEvent event = new EnrollmentCreatedEvent(
+            savedEnrollment.getId(),
+            savedEnrollment.getStudent().getId(),
+            savedEnrollment.getCycleId(),
+            new BigDecimal("150.00") // Monto de inscripción por defecto
+        );
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, event);
+
         return StudentEnrollmentMapper.toResponse(savedEnrollment);
     }
 
