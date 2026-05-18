@@ -7,7 +7,7 @@ services:
       - "8081:8081"
     environment:
       - SERVER_PORT=8081
-      - DB_HOST=vps.wissegt.com
+      - DB_HOST=${DB_HOST}
       - DB_PASSWORD=${DB_PASSWORD}
     env_file:
       - ./env/.env
@@ -18,8 +18,8 @@ services:
       - "8082:8082"
     environment:
       - ACADEMIC_PORT=8082
-      - DB_HOST=vps.wissegt.com
-      - REDIS_HOST=vps.wissegt.com
+      - DB_HOST=${DB_HOST}
+      - REDIS_HOST=${REDIS_HOST}
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     env_file:
@@ -31,7 +31,7 @@ services:
       - "8083:8083"
     environment:
       - STUDENT_PORT=8083
-      - DB_HOST=vps.wissegt.com
+      - DB_HOST=${DB_HOST}
       - DB_PASSWORD=${DB_PASSWORD}
     env_file:
       - ./env/.env
@@ -42,7 +42,7 @@ services:
       - "8084:8084"
     environment:
       - BILLING_PORT=8084
-      - DB_HOST=vps.wissegt.com
+      - DB_HOST=${DB_HOST}
       - DB_PASSWORD=${DB_PASSWORD}
     env_file:
       - ./env/.env
@@ -53,11 +53,12 @@ services:
       - "8080:8080"
     environment:
       - GATEWAY_PORT=8080
-      - USERS_MS_URL=http://users-ms:8081
-      - ACADEMIC_MS_URL=http://academic-ms:8082
-      - STUDENT_MS_URL=http://student-and-enrollment-ms:8083
-      - BILLING_MS_URL=http://billing-ms:8084
-      - REDIS_HOST=vps.wissegt.com
+      # CAMBIO: Reemplazar con IP Tailscale de cada maquina
+      - USERS_MS_URL=${USERS_MS_URL:-http://localhost:8081}
+      - ACADEMIC_MS_URL=${ACADEMIC_MS_URL:-http://localhost:8082}
+      - STUDENT_MS_URL=${STUDENT_MS_URL:-http://localhost:8083}
+      - BILLING_MS_URL=${BILLING_MS_URL:-http://100.119.91.28:8084}
+      - REDIS_HOST=${REDIS_HOST}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     env_file:
       - ./env/.env

@@ -7,8 +7,13 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets:
-        - 'users-ms:8081'
-        - 'academic-ms:8082'
-        - 'student-and-enrollment-ms:8083'
-        - 'billing-ms:8084'
-        - 'gateway-ms:8080'
+        # CAMBIO REQUERIDO: Reemplazar con IP Tailscale de USERS
+        - '127.0.0.1:8081' 
+        # CAMBIO REQUERIDO: Reemplazar con IP Tailscale de ACADEMIC
+        - '127.0.0.1:8082'
+        # CAMBIO REQUERIDO: Reemplazar con IP Tailscale de STUDENT
+        - '127.0.0.1:8083'
+        # CONFIGURADO: IP Tailscale de BILLING
+        - '100.119.91.28:8084'
+        # CONFIGURADO: IP Tailscale de GATEWAY (Esta Maquina)
+        - '100.70.253.58:8080'
