@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   users-ms:
-    image: vanguardu/users-ms:latest
+    image: vanguard12s/users-ms:lab
     deploy:
       replicas: 2
       restart_policy:
@@ -18,7 +18,7 @@ services:
       - vanguard-net
 
   academic-ms:
-    image: vanguardu/academic-ms:latest
+    image: vanguard12s/academic-ms:lab
     deploy:
       replicas: 2
       restart_policy:
@@ -38,7 +38,7 @@ services:
       - vanguard-net
 
   student-and-enrollment-ms:
-    image: vanguardu/student-and-enrollment-ms:latest
+    image: vanguard12s/student-and-enrollment-ms:lab
     deploy:
       replicas: 2
       restart_policy:
@@ -54,7 +54,7 @@ services:
       - vanguard-net
 
   billing-ms:
-    image: vanguardu/billing-ms:latest
+    image: vanguard12s/billing-ms:lab
     deploy:
       replicas: 2
       restart_policy:
@@ -70,7 +70,7 @@ services:
       - vanguard-net
 
   gateway-ms:
-    image: vanguardu/gateway-ms:latest
+    image: vanguard12s/gateway-ms:lab
     ports:
       - "80:8080"
     deploy:
