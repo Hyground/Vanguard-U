@@ -8,9 +8,9 @@ Este documento centraliza la configuración de red y los pasos para levantar el 
 | :--- | :--- | :--- | :--- |
 | **Infraestructura (DB/Redis/Rabbit/Prometheus/Gateway)** | `100.70.253.58` | Varios | Máquina Principal |
 | **Billing Microservice** | `100.119.91.28` | `8084` | Máquina Billing |
-| **Users Microservice** | `REEMPLAZAR_IP` | `8081` | Máquina Users |
-| **Academic Microservice** | `REEMPLAZAR_IP` | `8082` | Máquina Academic |
-| **Student Microservice** | `REEMPLAZAR_IP` | `8083` | Máquina Student |
+| **Users Microservice** | `100.125.236.96` | `8081` | Máquina Users |
+| **Academic Microservice** | `100.91.4.45` | `8082` | Máquina Academic |
+| **Student Microservice** | `100.105.17.78` | `8083` | Máquina Student |
 
 ---
 
@@ -40,7 +40,7 @@ Este documento centraliza la configuración de red y los pasos para levantar el 
    ./mvnw spring-boot:run
    ```
 
-### PASO 3: Máquina de Usuarios (IP Tailscale por definir)
+### PASO 3: Máquina de Usuarios (100.125.236.96)
 **Responsabilidad:** Autenticación y Seguridad.
 1. Abrir la carpeta raíz del proyecto.
 2. Navegar a la carpeta específica:
@@ -49,7 +49,7 @@ Este documento centraliza la configuración de red y los pasos para levantar el 
    ./mvnw spring-boot:run
    ```
 
-### PASO 4: Máquina Académica (IP Tailscale por definir)
+### PASO 4: Máquina Académica (100.91.4.45)
 **Responsabilidad:** Catálogos y Docentes.
 1. Abrir la carpeta raíz del proyecto.
 2. Navegar a la carpeta específica:
@@ -58,7 +58,7 @@ Este documento centraliza la configuración de red y los pasos para levantar el 
    ./mvnw spring-boot:run
    ```
 
-### PASO 5: Máquina Estudiantil (IP Tailscale por definir)
+### PASO 5: Máquina Estudiantil (100.105.17.78)
 **Responsabilidad:** Estudiantes, Inscripciones y Notas.
 1. Abrir la carpeta raíz del proyecto.
 2. Navegar a la carpeta específica:
