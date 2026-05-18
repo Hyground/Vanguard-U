@@ -3,6 +3,7 @@ services:
   pg-master:
     image: bitnami/postgresql:latest
     container_name: pg-master
+    user: root
     restart: always
     ports:
       - "5432:5432"
@@ -20,6 +21,7 @@ services:
   pg-replica:
     image: bitnami/postgresql:latest
     container_name: pg-replica
+    user: root
     restart: always
     depends_on:
       - pg-master

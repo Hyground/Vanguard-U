@@ -2,30 +2,25 @@
 
 Este documento centraliza la configuración de red y los pasos para levantar el sistema en 5 máquinas distintas conectadas vía Tailscale.
 
-## 🌐 Mapa de Red (IPs Tailscale)
+## 🌐 Mapa de Red
 
-| Servicio | IP Tailscale | Puerto | Responsable |
+| Servicio | Ubicación | IP / Host | Puerto |
 | :--- | :--- | :--- | :--- |
-| **Infraestructura (DB/Redis/Rabbit/Prometheus/Gateway)** | `100.70.253.58` | Varios | Máquina Principal |
-| **Billing Microservice** | `100.119.91.28` | `8084` | Máquina Billing |
-| **Users Microservice** | `100.125.236.96` | `8081` | Máquina Users |
-| **Academic Microservice** | `100.91.4.45` | `8082` | Máquina Academic |
-| **Student Microservice** | `100.105.17.78` | `8083` | Máquina Student |
+| **Infraestructura (DB/Redis/Rabbit)** | **NUBE (VPS)** | `207.231.111.45` | Varios |
+| **Gateway (Punto de Entrada)** | **Máquina 1** | `100.70.253.58` | `8080` |
+| **Billing Microservice** | **Máquina 2** | `100.119.91.28` | `8084` |
+| **Users Microservice** | **Máquina 3** | `100.125.236.96` | `8081` |
+| **Academic Microservice** | **Máquina 4** | `100.91.4.45` | `8082` |
+| **Student Microservice** | **Máquina 5** | `100.105.17.78` | `8083` |
 
 ---
 
 ## 🚀 Pasos de Ejecución (Orden Estricto)
 
-**NOTA IMPORTANTE:** Aunque todas las máquinas tienen el proyecto completo, cada una debe ejecutar **SOLO** el microservicio que le corresponde. No ejecute múltiples servicios en la misma máquina si no es la principal.
-
-### PASO 1: Máquina Principal (100.70.253.58)
-**Responsabilidad:** Base de Datos, Mensajería, Monitoreo y Gateway.
-1. **Levantar Infraestructura:**
-   ```powershell
-   cd infrastructure
-   docker-compose up -d
-   ```
-2. **Levantar Gateway (Punto de Entrada):**
+### PASO 1: Máquina 1 (100.70.253.58)
+**Responsabilidad:** API Gateway.
+1. **NO es necesario levantar la carpeta `infrastructure`**, ya está en la nube.
+2. **Levantar Gateway:**
    ```powershell
    cd services/gateway-ms
    ./mvnw spring-boot:run
