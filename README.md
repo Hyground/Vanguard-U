@@ -1,119 +1,101 @@
 # Vanguard-U
 
-Sistema académico integral basado en microservicios, diseñado para alta disponibilidad y escalabilidad.
+Sistema academico integral basado en microservicios Spring Boot, desplegado para laboratorio de alta disponibilidad con Docker Swarm en VPS de Google Cloud.
 
-## 📑 Guía de Documentación
+## Documentacion Principal
 
-Para facilitar la administración y el desarrollo, el proyecto se ha documentado de forma modular:
+- [deploy/GUIA_VPS_SWARM.md](./deploy/GUIA_VPS_SWARM.md): guia operativa actual para VPS, firewall, Docker Swarm, DNS, despliegue y pruebas.
+- [deploy/docker-stack.yml](./deploy/docker-stack.yml): stack usado por Docker Swarm para levantar los microservicios.
+- [infrastructure/DOCUMENTACION_INFRAESTRUCTURA.md](./infrastructure/DOCUMENTACION_INFRAESTRUCTURA.md): PostgreSQL, Redis, RabbitMQ, Prometheus y Grafana.
+- [services/gateway-ms/DOCUMENTACION.md](./services/gateway-ms/DOCUMENTACION.md): gateway y rutas de entrada.
+- [CONFIGURACION_DISTRIBUIDA.md](./CONFIGURACION_DISTRIBUIDA.md): documento historico de despliegue con Tailscale. No es la ruta activa del laboratorio Swarm.
 
-- **[CONFIGURACION_DISTRIBUIDA.md](./CONFIGURACION_DISTRIBUIDA.md)**: Guía paso a paso para el despliegue en múltiples máquinas usando **Tailscale**.
-- **[Infraestructura](./infrastructure/DOCUMENTACION_INFRAESTRUCTURA.md)**: Detalles sobre PostgreSQL, Redis, RabbitMQ y Monitoreo.
-- **[Gateway (Punto de Entrada)](./services/gateway-ms/DOCUMENTACION.md)**: Rutas y control de tráfico.
+## Arquitectura Actual
 
-### Referencia de Microservicios (APIs y JSONs)
-- **[Usuarios y Seguridad](./services/users-ms/DOCUMENTACION.md)**
-- **[Gestión Académica](./services/academic-ms/DOCUMENTACION.md)**
-- **[Estudiantes e Inscripciones](./services/student-and-enrollment-ms/DOCUMENTACION.md)**
-- **[Facturación y Pagos](./services/billing-ms/DOCUMENTACION.md)**
-
-## 🚀 Arquitectura Distribuida
-
-El sistema está preparado para ejecutarse en 5 máquinas independientes conectadas por una red privada segura (Tailscale):
-
-1. **Máquina Principal**: Orquestación de infraestructura (DB, Redis, RabbitMQ) y API Gateway.
-2. **Máquina de Facturación**: Procesamiento de pagos.
-3. **Máquina de Usuarios**: Seguridad y autenticación.
-4. **Máquina Académica**: Catálogos y docentes.
-5. **Máquina Estudiantil**: Inscripciones y vida académica.
-
-## 🛠️ Tecnologías Principales
-
-- **Lenguaje**: Java 21 (Spring Boot 3.x)
-- **Base de Datos**: PostgreSQL (con replicación Master-Slave)
-- **Caché**: Redis
-- **Mensajería**: RabbitMQ (Comunicación asíncrona)
-- **Monitoreo**: Prometheus & Grafana
-- **Red**: Tailscale (VPN Mesh)
-
-## 📡 Acceso al Sistema
-
-Todo consumo externo debe pasar por el `gateway-ms` en el puerto `8080` de la máquina principal.
-
-```http
-GET http://100.70.253.58:8080/actuator/health
+```text
+Frontend / k6 / usuarios
+  -> api.wissegt.com
+  -> Docker Swarm en 4 VPS Google Cloud
+  -> gateway-ms
+  -> microservicios por red overlay
+  -> vps.wissegt.com para PostgreSQL, Redis y RabbitMQ
 ```
 
-## Avance VPS Docker Swarm
+Infraestructura separada:
 
-Estado actual del laboratorio:
+```text
+vps.wissegt.com      -> 207.231.111.45 -> DB, Redis, RabbitMQ, Prometheus, Grafana
+grafana.wissegt.com  -> 207.231.111.45 -> Grafana
+```
 
-- Se esta preparando el despliegue en 4 VPS con Docker Engine.
-- Las VPS estan en cuentas/proyectos/redes distintas de Google Cloud.
-- Por esa razon, cuando se cree el Swarm se usaran IPs publicas, no IPs privadas `10.x.x.x`.
-- Todavia no se ha ejecutado `docker swarm init` ni `docker swarm join`.
-- Primero se esta validando que Docker quede instalado correctamente en cada VPS.
-- Manager elegido para Swarm: `vps` con IP publica `104.197.126.0`.
-- Workers previstos: `daniel-s`, `node2` y `vps4`.
-- La VPS de infraestructura separada es `vps.wissegt.com`; ahi viven PostgreSQL, Redis, RabbitMQ, Prometheus y Grafana.
-- DNS creado: `api.wissegt.com` apunta a las 4 VPS del Swarm.
-- DNS creado: `vps.wissegt.com` y `grafana.wissegt.com` apuntan a la VPS de infraestructura `207.231.111.45`.
-- Swarm inicializado en el manager `vps` con `--advertise-addr 104.197.126.0`.
-- Nodo manager actual: `vps`.
-- Pendiente unir workers con el token generado por `docker swarm join-token worker`.
-- Bloqueo actual: `daniel-s` no puede conectar al manager `104.197.126.0:2377`; la prueba devolvio `CERRADO`.
+Frontend:
 
-VPS ya validadas:
+```text
+daniel-s -> 34.29.45.128 -> pagina/frontend, fuera del Swarm
+```
 
-| VPS | Sistema | IP privada | IP publica | Docker | Swarm |
-| --- | --- | --- | --- | --- | --- |
-| daniel-s | Debian GNU/Linux | 10.128.0.29 | 34.29.45.128 | OK, Docker 29.5.1 | inactive |
-| node2 | Linux | 10.128.0.7 | 34.41.23.205 | OK, Docker 29.5.1 | inactive |
-| vps | Debian GNU/Linux | 10.128.0.8 | 104.197.126.0 | OK, Docker 29.5.1 | inactive |
-| vps4 | Ubuntu 22.04.5 LTS | 10.224.0.3 | 34.51.123.84 | OK, Docker 29.5.1 | inactive |
+## Estado Del Swarm
 
-Comandos usados para validar cada VPS:
+Cluster Swarm actual:
+
+| VPS | IP publica | Rol | Estado |
+| --- | --- | --- | --- |
+| vps | 104.197.126.0 | manager | Ready, Leader |
+| node2 | 34.41.23.205 | worker | Ready |
+| vps4 | 34.51.123.84 | worker | Ready |
+| vps5 | 35.208.149.96 | worker | Ready |
+
+Validacion ejecutada en manager:
 
 ```bash
-docker version
-docker info | grep Swarm
-hostname -I
-curl -4 ifconfig.me
+docker node ls
 ```
 
-Pendiente:
-
-- Abrir firewall entre las IPs publicas de las 4 VPS para `2377/tcp`, `7946/tcp`, `7946/udp` y `4789/udp`.
-- Abrir `80/tcp` para el gateway.
-- Unir `daniel-s`, `node2` y `vps4` como workers.
-- Validar el cluster con `docker node ls`.
-- Reintentar `docker swarm join` despues de abrir firewall.
-
-Estado al pausar:
+Resultado esperado:
 
 ```text
-Manager Swarm:
-- Host: vps
-- IP publica: 104.197.126.0
-- Estado: Leader
-- Puerto 2377: Docker escucha localmente
-
-Prueba desde daniel-s:
-- Comando: timeout 5 bash -c '</dev/tcp/104.197.126.0/2377' && echo ABIERTO || echo CERRADO
-- Resultado: CERRADO
-- Diagnostico: falta regla de firewall de entrada hacia el manager.
+node2  Ready  Active
+vps    Ready  Active  Leader
+vps4   Ready  Active
+vps5   Ready  Active
 ```
 
-Regla de firewall pendiente en el proyecto/cuenta donde vive `vps`:
+## Imagenes Docker
+
+Las VPS no compilan el proyecto. Docker Swarm descarga las imagenes desde Docker Hub:
 
 ```text
-Nombre sugerido: allow-docker-swarm
-Direccion: Ingress / Entrada
-Destino: VM manager vps, o todas las instancias si no se usan tags
+vanguard12s/gateway-ms:lab
+vanguard12s/users-ms:lab
+vanguard12s/academic-ms:lab
+vanguard12s/student-and-enrollment-ms:lab
+vanguard12s/billing-ms:lab
+```
+
+El archivo [deploy/docker-stack.yml](./deploy/docker-stack.yml) ya apunta a esas imagenes.
+
+## Firewall Google Cloud
+
+Como las VPS estan en cuentas/proyectos/redes distintas, Swarm usa IPs publicas.
+
+En cada VPS del Swarm deben existir estas etiquetas de red:
+
+```text
+docker-swarm
+vanguard-http
+```
+
+En cada proyecto/cuenta de Google Cloud donde vive una VPS del Swarm debe existir una regla:
+
+```text
+Nombre: allow-docker-swarm
+Direccion: Entrada / Ingress
+Destino: VMs con etiqueta docker-swarm
 Origen:
 104.197.126.0/32
-34.29.45.128/32
 34.41.23.205/32
 34.51.123.84/32
+35.208.149.96/32
 
 Puertos:
 tcp:2377
@@ -122,26 +104,63 @@ udp:7946
 udp:4789
 ```
 
-Regla adicional para exponer el gateway:
+Para entrada publica al gateway:
 
 ```text
 Origen: 0.0.0.0/0
 Puerto: tcp:80
+Destino: VMs con etiqueta vanguard-http o http-server
 ```
 
-Infraestructura externa al Swarm:
+No incluir `daniel-s` en la regla de Swarm si queda solo como frontend. Para `daniel-s` basta abrir HTTP/HTTPS segun lo que use la pagina.
 
-| Host | Rol |
-| --- | --- |
-| vps.wissegt.com | PostgreSQL master/replica, Redis, RabbitMQ, Prometheus y Grafana |
+## DNS
 
-DNS configurado:
+Registros actuales o esperados:
 
 | Dominio | Tipo | Destino | Uso |
 | --- | --- | --- | --- |
-| api.wissegt.com | A | 104.197.126.0 | Entrada publica al gateway en Swarm |
-| api.wissegt.com | A | 34.29.45.128 | Entrada publica al gateway en Swarm |
-| api.wissegt.com | A | 34.41.23.205 | Entrada publica al gateway en Swarm |
-| api.wissegt.com | A | 34.51.123.84 | Entrada publica al gateway en Swarm |
-| vps.wissegt.com | A | 207.231.111.45 | Infraestructura externa: DB, Redis, RabbitMQ, Prometheus y Grafana |
-| grafana.wissegt.com | A | 207.231.111.45 | Acceso web a Grafana |
+| api.wissegt.com | A | 104.197.126.0 | Gateway Swarm |
+| api.wissegt.com | A | 34.41.23.205 | Gateway Swarm |
+| api.wissegt.com | A | 34.51.123.84 | Gateway Swarm |
+| api.wissegt.com | A | 35.208.149.96 | Gateway Swarm |
+| frontend pendiente | A | 34.29.45.128 | Pagina/frontend |
+| vps.wissegt.com | A | 207.231.111.45 | Infraestructura externa |
+| grafana.wissegt.com | A | 207.231.111.45 | Grafana |
+
+## Siguiente Paso
+
+Desde la manager `vps`, con el repo disponible:
+
+```bash
+cd Vanguard-U
+docker stack deploy -c deploy/docker-stack.yml vanguard
+```
+
+Verificar servicios:
+
+```bash
+docker service ls
+docker service ps vanguard_gateway-ms
+docker service ps vanguard_users-ms
+docker service ps vanguard_academic-ms
+docker service ps vanguard_student-and-enrollment-ms
+docker service ps vanguard_billing-ms
+```
+
+Si una imagen no descarga, probar manualmente:
+
+```bash
+docker pull vanguard12s/gateway-ms:lab
+```
+
+## Flujo De Demo
+
+1. Confirmar `docker node ls` con 4 nodos Ready.
+2. Desplegar `docker stack deploy`.
+3. Confirmar `docker service ls`.
+4. Probar `http://api.wissegt.com/actuator/health`.
+5. Ejecutar carga con k6.
+6. Apagar o detener un worker y mostrar que Swarm reubica servicios.
+7. Mostrar metricas en Grafana.
+

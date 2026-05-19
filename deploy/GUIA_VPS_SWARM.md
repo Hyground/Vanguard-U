@@ -53,6 +53,50 @@ IP_PUBLICA_VPS4=
 
 ## 2. Firewall En Google Cloud
 
+Importante para este laboratorio:
+
+```text
+Las 4 VPS estan en cuentas/proyectos/redes distintas de Google Cloud.
+Por eso Docker Swarm debe usar IPs publicas, no IPs privadas 10.x.x.x.
+Cada companero debe crear la regla de firewall en su propio proyecto.
+```
+
+IPs publicas actuales del laboratorio:
+
+```text
+vps      -> 104.197.126.0  -> manager
+node2    -> 34.41.23.205   -> worker
+vps4     -> 34.51.123.84   -> worker
+vps5     -> 35.208.149.96  -> worker
+daniel-s -> 34.29.45.128   -> frontend/pagina, fuera del Swarm
+```
+
+En cada proyecto/cuenta de Google Cloud:
+
+1. Ir a `Compute Engine > VM instances`.
+2. Editar la VM.
+3. En `Etiquetas de red`, agregar:
+
+```text
+docker-swarm
+vanguard-http
+```
+
+4. Ir a `Red de VPC > Firewall > Crear regla de firewall`.
+5. Crear la regla para Swarm:
+
+```text
+Nombre: allow-docker-swarm
+Red: default
+Direccion del trafico: Entrada
+Accion en caso de coincidencia: Permitir
+Destinos: Etiquetas de destino especificadas
+Etiquetas de destino: docker-swarm
+Filtro de origen: Rangos de IPv4
+Rangos de IPv4 de origen:
+104.197.126.0/32,34.41.23.205/32,34.51.123.84/32,35.208.149.96/32
+```
+
 Abrir entre las 4 VPS:
 
 ```text
@@ -68,7 +112,11 @@ Abrir para usuarios/k6:
 80/tcp
 ```
 
-Para demo rapida puede abrirse a `0.0.0.0/0`, pero lo correcto es restringir los puertos Swarm solo a las IPs publicas de las otras VPS.
+Para HTTP se puede usar la regla automatica de Google Cloud `http-server` si la VM tiene marcada la opcion `Allow HTTP traffic`.
+
+No incluir `daniel-s` en la regla de Swarm si queda solo como frontend. Para `daniel-s` basta abrir HTTP/HTTPS segun lo que use la pagina.
+
+No abrir los puertos de Swarm a `0.0.0.0/0` salvo emergencia. Lo correcto es restringirlos a las 4 IPs publicas del Swarm con `/32`.
 
 ## 3. Instalar Docker En Cada VPS
 
@@ -124,6 +172,14 @@ vps.wissegt.com
 
 ## 5. Crear El Swarm
 
+Estado actual:
+
+```text
+El Swarm ya fue creado.
+Manager: vps -> 104.197.126.0
+Workers unidos: node2, vps4, vps5
+```
+
 En VPS1:
 
 ```bash
@@ -139,6 +195,14 @@ docker swarm join-token worker
 Copiar el comando que devuelve Docker.
 
 ## 6. Unir Workers
+
+Estado actual:
+
+```text
+node2 -> Ready
+vps4  -> Ready
+vps5  -> Ready
+```
 
 En VPS2, VPS3 y VPS4 ejecutar el comando que devolvio VPS1:
 
@@ -186,18 +250,20 @@ docker service logs -f vanguard_gateway-ms
 
 ## 8. DNS Del Dominio
 
-Para `vanguard.wissegt.com`, crear registros A.
+Para `api.wissegt.com`, crear registros A.
 
 Opcion demo:
 
 ```text
-vanguard.wissegt.com -> IP_PUBLICA_VPS1
-vanguard.wissegt.com -> IP_PUBLICA_VPS2
-vanguard.wissegt.com -> IP_PUBLICA_VPS3
-vanguard.wissegt.com -> IP_PUBLICA_VPS4
+api.wissegt.com -> 104.197.126.0
+api.wissegt.com -> 34.41.23.205
+api.wissegt.com -> 34.51.123.84
+api.wissegt.com -> 35.208.149.96
 ```
 
 Como Swarm publica el puerto 80 en los nodos, el gateway puede responder desde cualquier VPS viva.
+
+`daniel-s` queda fuera del Swarm para la pagina/frontend. El dominio del frontend debe apuntar a `34.29.45.128`.
 
 ## 9. Preparar vps.wissegt.com
 
@@ -281,7 +347,7 @@ export const options = {
 };
 
 export default function () {
-  const res = http.get('http://vanguard.wissegt.com/actuator/health');
+  const res = http.get('http://api.wissegt.com/actuator/health');
   check(res, {
     'status 200': (r) => r.status === 200,
   });
