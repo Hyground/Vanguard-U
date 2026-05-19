@@ -263,7 +263,7 @@ api.wissegt.com -> 35.208.149.96
 
 Como Swarm publica el puerto 80 en los nodos, el gateway puede responder desde cualquier VPS viva.
 
-`daniel-s` queda fuera del Swarm para la pagina/frontend. El dominio del frontend debe apuntar a `34.29.45.128`.
+`daniel-s` queda fuera del Swarm para la pagina/frontend. `vanguard.wissegt.com` apunta a `34.29.45.128`.
 
 ## 9. Preparar vps.wissegt.com
 
@@ -459,7 +459,71 @@ Bajar stack:
 docker stack rm vanguard
 ```
 
-## 14. Explicacion Para El Ingeniero
+## 14. Apagar Y Encender El Laboratorio
+
+Para ahorrar credito se puede apagar todo el laboratorio. Mientras este apagado, `api.wissegt.com` no responde.
+
+### Apagar
+
+Desde la manager `vps`:
+
+```bash
+cd ~/Vanguard-U
+docker stack rm vanguard
+docker service ls
+```
+
+Esperar a que `docker service ls` ya no muestre servicios `vanguard_*`.
+
+Luego apagar en Google Cloud:
+
+```text
+1. Workers: node2, vps4, vps5
+2. Manager: vps
+3. Frontend si aplica: daniel-s
+4. Infraestructura vps.wissegt.com solo si se acepta apagar DB/Redis/RabbitMQ/Grafana
+```
+
+No apagar primero `vps` si todavia se quiere administrar el Swarm, porque es el unico manager.
+
+### Encender
+
+Encender en este orden:
+
+```text
+1. Infraestructura: vps.wissegt.com
+2. Manager: vps
+3. Workers: node2, vps4, vps5
+4. Frontend: daniel-s
+```
+
+Validar desde la manager:
+
+```bash
+docker node ls
+cd ~/Vanguard-U
+docker stack deploy -c deploy/docker-stack.yml vanguard
+docker service ls
+curl http://api.wissegt.com/actuator/health
+```
+
+Resultado esperado:
+
+```text
+Los nodos vuelven a Ready.
+Los servicios quedan 2/2.
+La API responde {"status":"UP"}.
+```
+
+Si un nodo no vuelve:
+
+```bash
+sudo systemctl status docker
+sudo systemctl start docker
+docker info | grep Swarm
+```
+
+## 15. Explicacion Para El Ingeniero
 
 Resumen:
 

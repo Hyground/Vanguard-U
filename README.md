@@ -31,7 +31,7 @@ grafana.wissegt.com  -> 207.231.111.45 -> Grafana
 Frontend:
 
 ```text
-daniel-s -> 34.29.45.128 -> pagina/frontend, fuera del Swarm
+vanguard.wissegt.com -> 34.29.45.128 -> daniel-s, pagina/frontend, fuera del Swarm
 ```
 
 ## Estado Del Swarm
@@ -124,7 +124,7 @@ Registros actuales o esperados:
 | api.wissegt.com | A | 34.41.23.205 | Gateway Swarm |
 | api.wissegt.com | A | 34.51.123.84 | Gateway Swarm |
 | api.wissegt.com | A | 35.208.149.96 | Gateway Swarm |
-| frontend pendiente | A | 34.29.45.128 | Pagina/frontend |
+| vanguard.wissegt.com | A | 34.29.45.128 | Pagina/frontend en daniel-s |
 | vps.wissegt.com | A | 207.231.111.45 | Infraestructura externa |
 | grafana.wissegt.com | A | 207.231.111.45 | Grafana |
 
@@ -164,3 +164,63 @@ docker pull vanguard12s/gateway-ms:lab
 6. Apagar o detener un worker y mostrar que Swarm reubica servicios.
 7. Mostrar metricas en Grafana.
 
+## Apagar Y Encender El Laboratorio
+
+Para ahorrar credito se puede apagar el laboratorio completo. Esto causa caida total de `api.wissegt.com` mientras las VPS esten apagadas.
+
+Antes de apagar, desde la manager `vps`:
+
+```bash
+cd ~/Vanguard-U
+docker service ls
+docker stack rm vanguard
+```
+
+Esperar a que desaparezcan los servicios:
+
+```bash
+docker service ls
+```
+
+Orden recomendado para apagar en Google Cloud:
+
+```text
+1. Workers del Swarm: node2, vps4, vps5
+2. Manager del Swarm: vps
+3. Frontend si tambien se quiere ahorrar: daniel-s
+4. Infraestructura vps.wissegt.com solo si se acepta apagar DB/Redis/RabbitMQ/Grafana
+```
+
+Orden recomendado para encender:
+
+```text
+1. Infraestructura vps.wissegt.com
+2. Manager del Swarm: vps
+3. Workers del Swarm: node2, vps4, vps5
+4. Frontend: daniel-s
+```
+
+Despues de encender, entrar a la manager `vps` y validar:
+
+```bash
+docker node ls
+cd ~/Vanguard-U
+docker stack deploy -c deploy/docker-stack.yml vanguard
+docker service ls
+curl http://api.wissegt.com/actuator/health
+```
+
+Resultado esperado:
+
+```text
+Los 4 nodos del Swarm vuelven a Ready.
+Los servicios vuelven a 2/2.
+api.wissegt.com responde UP.
+```
+
+Si algun worker vuelve como `Down`, revisar que la VM este encendida y que Docker este activo:
+
+```bash
+sudo systemctl status docker
+sudo systemctl start docker
+```
