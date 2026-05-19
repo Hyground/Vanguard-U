@@ -55,7 +55,12 @@ Estado actual del laboratorio:
 - Manager elegido para Swarm: `vps` con IP publica `104.197.126.0`.
 - Workers previstos: `daniel-s`, `node2` y `vps4`.
 - La VPS de infraestructura separada es `vps.wissegt.com`; ahi viven PostgreSQL, Redis, RabbitMQ, Prometheus y Grafana.
-- DNS inicial creado: `api.wissegt.com` apunta al manager `104.197.126.0`.
+- DNS creado: `api.wissegt.com` apunta a las 4 VPS del Swarm.
+- DNS creado: `vps.wissegt.com` y `grafana.wissegt.com` apuntan a la VPS de infraestructura `207.231.111.45`.
+- Swarm inicializado en el manager `vps` con `--advertise-addr 104.197.126.0`.
+- Nodo manager actual: `vps`.
+- Pendiente unir workers con el token generado por `docker swarm join-token worker`.
+- Bloqueo actual: `daniel-s` no puede conectar al manager `104.197.126.0:2377`; la prueba devolvio `CERRADO`.
 
 VPS ya validadas:
 
@@ -79,7 +84,50 @@ Pendiente:
 
 - Abrir firewall entre las IPs publicas de las 4 VPS para `2377/tcp`, `7946/tcp`, `7946/udp` y `4789/udp`.
 - Abrir `80/tcp` para el gateway.
-- Inicializar Swarm solo cuando las 4 VPS esten listas.
+- Unir `daniel-s`, `node2` y `vps4` como workers.
+- Validar el cluster con `docker node ls`.
+- Reintentar `docker swarm join` despues de abrir firewall.
+
+Estado al pausar:
+
+```text
+Manager Swarm:
+- Host: vps
+- IP publica: 104.197.126.0
+- Estado: Leader
+- Puerto 2377: Docker escucha localmente
+
+Prueba desde daniel-s:
+- Comando: timeout 5 bash -c '</dev/tcp/104.197.126.0/2377' && echo ABIERTO || echo CERRADO
+- Resultado: CERRADO
+- Diagnostico: falta regla de firewall de entrada hacia el manager.
+```
+
+Regla de firewall pendiente en el proyecto/cuenta donde vive `vps`:
+
+```text
+Nombre sugerido: allow-docker-swarm
+Direccion: Ingress / Entrada
+Destino: VM manager vps, o todas las instancias si no se usan tags
+Origen:
+104.197.126.0/32
+34.29.45.128/32
+34.41.23.205/32
+34.51.123.84/32
+
+Puertos:
+tcp:2377
+tcp:7946
+udp:7946
+udp:4789
+```
+
+Regla adicional para exponer el gateway:
+
+```text
+Origen: 0.0.0.0/0
+Puerto: tcp:80
+```
 
 Infraestructura externa al Swarm:
 
@@ -91,15 +139,9 @@ DNS configurado:
 
 | Dominio | Tipo | Destino | Uso |
 | --- | --- | --- | --- |
-| api.wissegt.com | A | 104.197.126.0 | Entrada publica inicial al gateway en Swarm |
+| api.wissegt.com | A | 104.197.126.0 | Entrada publica al gateway en Swarm |
+| api.wissegt.com | A | 34.29.45.128 | Entrada publica al gateway en Swarm |
+| api.wissegt.com | A | 34.41.23.205 | Entrada publica al gateway en Swarm |
+| api.wissegt.com | A | 34.51.123.84 | Entrada publica al gateway en Swarm |
 | vps.wissegt.com | A | 207.231.111.45 | Infraestructura externa: DB, Redis, RabbitMQ, Prometheus y Grafana |
-
-Nota: para alta disponibilidad publica completa, `api.wissegt.com` puede tener tambien registros A hacia los otros nodos:
-
-```text
-34.29.45.128
-34.41.23.205
-34.51.123.84
-```
-
-Por ahora se deja apuntando solo al manager para simplificar la demo inicial.
+| grafana.wissegt.com | A | 207.231.111.45 | Acceso web a Grafana |
