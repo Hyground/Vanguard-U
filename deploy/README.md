@@ -64,5 +64,6 @@ Validar:
 
 ```bash
 curl -m 10 http://127.0.0.1/actuator/health
+curl -m 10 https://api.wissegt.com/actuator/health
 docker service ps vanguard_gateway-ms
 ```

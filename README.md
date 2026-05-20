@@ -95,6 +95,7 @@ Validar API:
 
 ```bash
 curl -m 10 http://127.0.0.1/actuator/health
+curl -m 10 https://api.wissegt.com/actuator/health
 ```
 
 Login de prueba:

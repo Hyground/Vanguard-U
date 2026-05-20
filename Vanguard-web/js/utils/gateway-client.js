@@ -1,7 +1,7 @@
 class GatewayClient {
     constructor() {
-        // La URL apunta ahora al subdominio configurado para la API
-        this.baseUrl = 'http://api.wissegt.com/api/v1';
+        // API publica por HTTPS para evitar mixed content en el frontend.
+        this.baseUrl = 'https://api.wissegt.com/api/v1';
     }
 
     async request(endpoint, options = {}) {

@@ -79,8 +79,6 @@ services:
 
   gateway-ms:
     image: vanguard12s/gateway-ms:lab
-    ports:
-      - "80:8080"
     deploy:
       replicas: 2
       restart_policy:
@@ -98,6 +96,29 @@ services:
     networks:
       - vanguard-net
 
+  api-proxy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+    command: caddy reverse-proxy --from api.wissegt.com --to gateway-ms:8080
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - vanguard-net
+
 networks:
   vanguard-net:
     driver: overlay
+
+volumes:
+  caddy_data:
+  caddy_config:

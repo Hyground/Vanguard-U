@@ -22,13 +22,7 @@ carpeta publica: /var/www/html
 La API usada por el frontend esta configurada en:
 
 ```text
-Vanguard-web/js/utils/gateway-client.js
-```
-
-Valor actual:
-
-```text
-http://api.wissegt.com/api/v1
+https://api.wissegt.com/api/v1
 ```
 
 ## Preparar Servidor `daniel-s`

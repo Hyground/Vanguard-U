@@ -162,6 +162,7 @@ Health por dominio:
 
 ```bash
 curl -m 10 http://api.wissegt.com/actuator/health
+curl -m 10 https://api.wissegt.com/actuator/health
 ```
 
 Login:
@@ -205,7 +206,15 @@ docker service ls
 
 ## DNS
 
-`api.wissegt.com` puede apuntar a las 4 VPS del Swarm:
+`api.wissegt.com` debe apuntar al manager mientras el TLS lo maneja `api-proxy`:
+
+```text
+104.197.126.0
+```
+
+Si se agregan mas registros A para workers, tambien debe existir un proxy TLS con certificados en esos nodos.
+
+Configuracion anterior de balanceo DNS, solo si el proxy TLS esta preparado en todos los nodos:
 
 ```text
 104.197.126.0
