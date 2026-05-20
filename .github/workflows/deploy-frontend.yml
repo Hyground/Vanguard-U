@@ -25,7 +25,7 @@ jobs:
           host: ${{ secrets.FRONTEND_HOST }}
           username: ${{ secrets.FRONTEND_USER }}
           key: ${{ secrets.FRONTEND_SSH_KEY }}
-          port: ${{ secrets.FRONTEND_PORT || 22 }}
+          port: 22
           source: 'Vanguard-web/*'
           target: '/tmp/vanguard-web-release'
           rm: true
@@ -37,7 +37,7 @@ jobs:
           host: ${{ secrets.FRONTEND_HOST }}
           username: ${{ secrets.FRONTEND_USER }}
           key: ${{ secrets.FRONTEND_SSH_KEY }}
-          port: ${{ secrets.FRONTEND_PORT || 22 }}
+          port: 22
           script: |
             sudo mkdir -p /var/www/html
             sudo rsync -a --delete /tmp/vanguard-web-release/ /var/www/html/

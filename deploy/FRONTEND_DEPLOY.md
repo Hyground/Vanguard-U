@@ -63,7 +63,6 @@ Crear estos secretos en el repo:
 FRONTEND_HOST=34.29.45.128
 FRONTEND_USER=daniel
 FRONTEND_SSH_KEY=<llave-privada-ssh-en-formato-openssh>
-FRONTEND_PORT=22
 ```
 
 Si usas PuTTY con `.ppk`, exporta la llave en PuTTYgen:
