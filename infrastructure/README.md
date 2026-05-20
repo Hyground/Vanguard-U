@@ -74,3 +74,17 @@ replica -> lecturas no criticas donde el atraso sea aceptable
 ```
 
 El failover automatico real de PostgreSQL requiere otra capa, por ejemplo Patroni, repmgr o un servicio administrado. No esta incluido en este compose.
+
+## Backups
+
+Para la parte de BD de la demo, el respaldo y la restauracion estan documentados en:
+
+- [infrastructure/BACKUP_RESTORE.md](./BACKUP_RESTORE.md)
+- [infrastructure/scripts/pg_backup.sh](./scripts/pg_backup.sh)
+- [infrastructure/scripts/pg_restore.sh](./scripts/pg_restore.sh)
+
+## Dashboard Limpio
+
+La version limpia del tablero de demo esta descrita aqui:
+
+- [infrastructure/DASHBOARD_DEMO.md](./DASHBOARD_DEMO.md)
