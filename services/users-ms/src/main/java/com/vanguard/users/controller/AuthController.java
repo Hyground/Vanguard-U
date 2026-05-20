@@ -1,16 +1,17 @@
 package com.vanguard.users.controller;
 
 import com.vanguard.users.dto.request.AuthRequest;
+import com.vanguard.users.dto.request.ChangePasswordRequest;
 import com.vanguard.users.dto.request.RegisterRequest;
 import com.vanguard.users.dto.response.AuthResponse;
 import com.vanguard.users.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -31,5 +32,14 @@ public class AuthController {
             @Valid @RequestBody AuthRequest request
     ) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication
+    ) {
+        authService.changePassword(authentication.getName(), request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
     }
 }

@@ -1,5 +1,6 @@
 package com.vanguard.users.controller;
 
+import com.vanguard.users.dto.request.UpdateUserRequest;
 import com.vanguard.users.dto.response.UserResponse;
 import com.vanguard.users.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,22 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Integer id) {
         return ResponseEntity.ok(userService.getUserById(id));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Integer id,
+            @RequestBody UpdateUserRequest request
+    ) {
+        return ResponseEntity.ok(userService.updateUser(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/status")
