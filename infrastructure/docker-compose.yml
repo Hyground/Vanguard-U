@@ -61,6 +61,18 @@ services:
       - RABBITMQ_DEFAULT_USER=vanguard_user
       - RABBITMQ_DEFAULT_PASS=Kj82_mP91_Xz77_Rt
 
+  # Monitoreo - PostgreSQL Exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    restart: always
+    depends_on:
+      - pg-master
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://bd2equipomari:Kj82_mP91_Xz77_Rt@pg-master:5432/bdedu?sslmode=disable
+
   # Monitoreo - Prometheus
   prometheus:
     image: prom/prometheus:latest
