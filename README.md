@@ -210,6 +210,39 @@ docker service ls
 curl http://api.wissegt.com/actuator/health
 ```
 
+## Monitoreo Actual
+
+Prometheus y Grafana deben vivir en la VPS de infraestructura `vps.wissegt.com`, no dentro del Swarm de aplicaciones.
+
+```text
+Prometheus -> http://vps.wissegt.com:9090
+Grafana    -> http://vps.wissegt.com:3000
+```
+
+El Swarm solo publica endpoints de metricas para que Prometheus los consulte:
+
+```text
+gateway-ms                  -> 104.197.126.0:80/actuator/prometheus
+users-ms                    -> 104.197.126.0:8081/actuator/prometheus
+academic-ms                 -> 104.197.126.0:8082/actuator/prometheus
+student-and-enrollment-ms   -> 104.197.126.0:8083/actuator/prometheus
+billing-ms                  -> 104.197.126.0:8084/actuator/prometheus
+```
+
+Por seguridad, los puertos `8081-8084` deben abrirse en firewall solo desde la IP de infraestructura:
+
+```text
+207.231.111.45/32
+```
+
+Grafana:
+
+```text
+Usuario: admin
+Password: admin
+Datasource Prometheus: http://prometheus:9090
+```
+
 Resultado esperado:
 
 ```text

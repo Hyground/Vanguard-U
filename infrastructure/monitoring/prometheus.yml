@@ -3,17 +3,32 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'vanguard-services'
+  - job_name: 'gateway-ms'
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets:
-        # CONFIGURADO: IP Tailscale de USERS
-        - '100.125.236.96:8081' 
-        # CONFIGURADO: IP Tailscale de ACADEMIC
-        - '100.91.4.45:8082'
-        # CONFIGURADO: IP Tailscale de STUDENT
-        - '100.105.17.78:8083'
-        # CONFIGURADO: IP Tailscale de BILLING
-        - '100.119.91.28:8084'
-        # CONFIGURADO: IP Tailscale de GATEWAY (Esta Maquina)
-        - '100.70.253.58:8080'
+        - '104.197.126.0:80'
+
+  - job_name: 'users-ms'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+        - '104.197.126.0:8081'
+
+  - job_name: 'academic-ms'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+        - '104.197.126.0:8082'
+
+  - job_name: 'student-and-enrollment-ms'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+        - '104.197.126.0:8083'
+
+  - job_name: 'billing-ms'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+        - '104.197.126.0:8084'

@@ -3,6 +3,8 @@ version: '3.8'
 services:
   users-ms:
     image: vanguard12s/users-ms:lab
+    ports:
+      - "8081:8081"
     deploy:
       replicas: 2
       restart_policy:
@@ -19,6 +21,8 @@ services:
 
   academic-ms:
     image: vanguard12s/academic-ms:lab
+    ports:
+      - "8082:8082"
     deploy:
       replicas: 2
       restart_policy:
@@ -39,6 +43,8 @@ services:
 
   student-and-enrollment-ms:
     image: vanguard12s/student-and-enrollment-ms:lab
+    ports:
+      - "8083:8083"
     deploy:
       replicas: 2
       restart_policy:
@@ -55,6 +61,8 @@ services:
 
   billing-ms:
     image: vanguard12s/billing-ms:lab
+    ports:
+      - "8084:8084"
     deploy:
       replicas: 2
       restart_policy:
