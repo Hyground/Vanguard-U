@@ -1,70 +1,61 @@
-# Guía de Pruebas (Test Suite) - Vanguard-U Distribuido
+# Pruebas Rapidas
 
-Este archivo contiene comandos `curl` y peticiones HTTP listas para copiar y pegar para verificar que la red distribuida a través de Tailscale funciona correctamente.
+Este archivo contiene comandos actuales para validar el despliegue Swarm + Patroni.
 
-## 📡 1. Pruebas de Salud (Health Checks) Directas
-Estas pruebas se hacen directo a la máquina (sin pasar por el gateway) para validar que la red de Tailscale conecta las computadoras correctamente y que tienen acceso a la base de datos de la máquina principal.
+## API
+
+Desde la manager `vps`:
 
 ```bash
-# 1. Gateway (Máquina Principal)
-curl -X GET http://100.70.253.58:8080/actuator/health
-
-# 2. Users Microservice (Máquina Users)
-curl -X GET http://100.125.236.96:8081/actuator/health
-
-# 3. Academic Microservice (Máquina Academic)
-curl -X GET http://100.91.4.45:8082/actuator/health
-
-# 4. Student Microservice (Máquina Student)
-curl -X GET http://100.105.17.78:8083/actuator/health
-
-# 5. Billing Microservice (Máquina Billing)
-curl -X GET http://100.119.91.28:8084/actuator/health
-```
-*(Todas deben responder `{"status":"UP"}` o algo similar indicando salud positiva).*
-
----
-
-## 🚪 2. Pruebas a través del Gateway
-El flujo real del sistema siempre entra por el Gateway (`100.70.253.58:8080`).
-
-### A) Prueba de Roles (Apunta a Users-ms)
-Debería devolver la lista de roles si la base de datos tiene datos iniciales.
-```bash
-curl -X GET http://100.70.253.58:8080/api/v1/roles
+curl -m 10 http://127.0.0.1/actuator/health
 ```
 
-### B) Prueba de Métodos de Pago (Apunta a Billing-ms)
+Desde fuera:
+
 ```bash
-curl -X GET http://100.70.253.58:8080/api/v1/billing/payment-methods
+curl -m 10 http://api.wissegt.com/actuator/health
 ```
 
-### C) Prueba de Docentes (Apunta a Academic-ms)
+## Login
+
 ```bash
-curl -X GET http://100.70.253.58:8080/api/v1/teachers
+curl -m 15 -X POST http://127.0.0.1/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"load_admin","password":"Demo123!"}'
 ```
 
----
+## Servicios Swarm
 
-## 🔐 3. Flujo Completo (Crear Usuario, Obtener Token)
-
-### 1. Registrar un Administrador
 ```bash
-curl -X POST http://100.70.253.58:8080/api/v1/auth/register \
--H "Content-Type: application/json" \
--d '{
-  "username": "admin_test",
-  "password": "password123",
-  "roleId": 5
-}'
+docker service ls
+docker service ps vanguard_gateway-ms
+docker service ps vanguard_users-ms
+docker service ps vanguard_academic-ms
+docker service ps vanguard_student-and-enrollment-ms
+docker service ps vanguard_billing-ms
 ```
 
-### 2. Hacer Login (Copiar el "token" devuelto)
+## Base De Datos Patroni
+
+Desde una maquina con acceso a `bd1`:
+
 ```bash
-curl -X POST http://100.70.253.58:8080/api/v1/auth/login \
--H "Content-Type: application/json" \
--d '{
-  "username": "admin_test",
-  "password": "password123"
-}'
+PGPASSWORD='Kj82_mP91_Xz77_Rt' psql -h 34.68.197.98 -p 5000 -U bd2equipomari -d bdedu -c "select inet_server_addr(), pg_is_in_recovery();"
+PGPASSWORD='Kj82_mP91_Xz77_Rt' psql -h 34.68.197.98 -p 5001 -U bd2equipomari -d bdedu -c "select inet_server_addr(), pg_is_in_recovery();"
+```
+
+Esperado:
+
+```text
+5000 -> false
+5001 -> true
+```
+
+## Monitoreo
+
+En `vps.wissegt.com`:
+
+```bash
+curl -m 10 http://127.0.0.1:9187/metrics | grep pg_up
+curl -m 10 http://127.0.0.1:9090/-/ready
 ```

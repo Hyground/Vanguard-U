@@ -1,42 +1,4 @@
 services:
-  # Nodo Principal
-  pg-master:
-    image: bitnami/postgresql:latest
-    container_name: pg-master
-    restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRESQL_REPLICATION_MODE=master
-      - POSTGRESQL_REPLICATION_USER=repl_user_svc
-      - POSTGRESQL_REPLICATION_PASSWORD=Kj82_mP91_Xz77_Rt
-      - POSTGRESQL_USERNAME=bd2equipomari
-      - POSTGRESQL_PASSWORD=Kj82_mP91_Xz77_Rt
-      - POSTGRESQL_DATABASE=bdedu
-    volumes:
-      - ./master_data:/bitnami/postgresql
-
-  # Nodo Replica
-  pg-replica:
-    image: bitnami/postgresql:latest
-    container_name: pg-replica
-    restart: always
-    depends_on:
-      - pg-master
-    ports:
-      - "5433:5432"
-    environment:
-      - POSTGRESQL_REPLICATION_MODE=slave
-      - POSTGRESQL_MASTER_HOST=pg-master
-      - POSTGRESQL_MASTER_PORT_NUMBER=5432
-      - POSTGRESQL_REPLICATION_USER=repl_user_svc
-      - POSTGRESQL_REPLICATION_PASSWORD=Kj82_mP91_Xz77_Rt
-      - POSTGRESQL_MASTER_USER=bd2equipomari
-      - POSTGRESQL_MASTER_PASSWORD=Kj82_mP91_Xz77_Rt
-      - POSTGRESQL_PASSWORD=Kj82_mP91_Xz77_Rt
-    volumes:
-      - ./replica_data:/bitnami/postgresql
-
   # Cache
   redis-cache:
     image: bitnami/redis:latest
@@ -66,12 +28,10 @@ services:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter
     restart: always
-    depends_on:
-      - pg-master
     ports:
       - "9187:9187"
     environment:
-      - DATA_SOURCE_NAME=postgresql://bd2equipomari:Kj82_mP91_Xz77_Rt@pg-master:5432/bdedu?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://bd2equipomari:Kj82_mP91_Xz77_Rt@34.68.197.98:5000/bdedu?sslmode=disable
 
   # Monitoreo - Prometheus
   prometheus:

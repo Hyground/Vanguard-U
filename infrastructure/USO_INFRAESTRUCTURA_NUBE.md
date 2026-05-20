@@ -4,18 +4,18 @@ Este documento define como los microservicios deben aprovechar la infraestructur
 
 No describe como crear la infraestructura otra vez. El objetivo es conectar correctamente los microservicios a los recursos existentes:
 
-- PostgreSQL master
-- PostgreSQL replica
+- PostgreSQL Patroni
 - Redis
 
 ## Infraestructura Actual
 
-Segun `infrastructure/docker-compose.yml`, la nube expone:
+La nube expone:
 
 ```text
-PostgreSQL master  -> vps.wissegt.com:5432
-PostgreSQL replica -> vps.wissegt.com:5433
-Redis              -> vps.wissegt.com:6379
+PostgreSQL escritura -> 34.68.197.98:5000
+PostgreSQL lectura   -> 34.68.197.98:5001
+Redis                -> vps.wissegt.com:6379
+RabbitMQ             -> vps.wissegt.com:5672
 ```
 
 ## Regla Principal
@@ -24,25 +24,25 @@ Los microservicios no deben usar toda la infraestructura igual.
 
 Cada tecnologia debe tener un uso claro:
 
-- PostgreSQL master: escrituras y lecturas que requieren consistencia inmediata.
-- PostgreSQL replica: lecturas pesadas, listados, reportes y consultas repetidas.
+- PostgreSQL escritura: escrituras y lecturas que requieren consistencia inmediata.
+- PostgreSQL lectura: lecturas pesadas, listados, reportes y consultas repetidas.
 - Redis: cache, rate limiting, datos temporales y validaciones frecuentes.
 
-Redis y la replica no son reemplazos entre si:
+Redis y la ruta de lectura no son reemplazos entre si:
 
 - Redis responde desde memoria cuando existe una clave cacheada o un contador temporal.
-- La replica responde consultas SQL reales sin cargar el master.
-- El master sigue siendo la fuente de verdad y recibe las escrituras.
+- La ruta de lectura responde consultas SQL reales sin cargar el lider.
+- El lider Patroni sigue siendo la fuente de verdad y recibe las escrituras.
 
 ## Variables Recomendadas
 
 Separar la conexion de escritura y lectura:
 
 ```properties
-DB_WRITE_HOST=vps.wissegt.com
-DB_WRITE_PORT=5432
-DB_READ_HOST=vps.wissegt.com
-DB_READ_PORT=5433
+DB_WRITE_HOST=34.68.197.98
+DB_WRITE_PORT=5000
+DB_READ_HOST=34.68.197.98
+DB_READ_PORT=5001
 DB_NAME=bdedu
 DB_USERNAME=bd2equipomari
 DB_PASSWORD=...
@@ -56,17 +56,17 @@ REDIS_PORT=6379
 REDIS_PASSWORD=...
 ```
 
-Mientras un microservicio no tenga separacion real de datasources, debe seguir usando el master para evitar lecturas atrasadas en flujos criticos.
+Mientras un microservicio no tenga separacion real de datasources, debe seguir usando la ruta de escritura para evitar lecturas atrasadas en flujos criticos.
 
 ## Uso Por Microservicio
 
-| Microservicio | Master | Replica | Redis | Motivo |
+| Microservicio | Escritura | Lectura | Redis | Motivo |
 | --- | --- | --- | --- | --- |
 | `gateway-ms` | No | No | Si | Rate limiting, bloqueo temporal, control de abuso y estado efimero. |
 | `users-ms` | Si | Limitado | Si, limitado | Login, usuarios y roles requieren consistencia. Redis puede cachear roles o intentos de login. |
-| `academic-ms` | Si | Si | Si | Catalogos academicos cambian poco y son buenos candidatos para replica y cache. |
-| `student-and-enrollment-ms` | Si | Si | Limitado | Inscripciones, notas y asistencia escriben en master. Listados y consultas pueden leer de replica. |
-| `billing-ms` | Si | Limitado | No por ahora | Pagos requieren consistencia fuerte. Reportes pueden usar replica despues de validar desfase aceptable. |
+| `academic-ms` | Si | Si | Si | Catalogos academicos cambian poco y son buenos candidatos para lectura separada y cache. |
+| `student-and-enrollment-ms` | Si | Si | Limitado | Inscripciones, notas y asistencia escriben en la ruta de escritura. Listados y consultas pueden leer de la ruta de lectura. |
+| `billing-ms` | Si | Limitado | No por ahora | Pagos requieren consistencia fuerte. Reportes pueden usar la ruta de lectura despues de validar desfase aceptable. |
 
 ## `gateway-ms`
 
@@ -83,7 +83,7 @@ No debe conectarse a PostgreSQL.
 
 ## `users-ms`
 
-Debe usar PostgreSQL master para:
+Debe usar la ruta de escritura para:
 
 - registro de usuarios
 - login
@@ -97,16 +97,16 @@ Puede usar Redis para:
 - bloqueo temporal de cuenta o IP
 - cache corto de roles si se mide beneficio
 
-Uso de replica:
+Uso de ruta de lectura:
 
 - solo para consultas administrativas no criticas, por ejemplo listados de usuarios.
-- no usar replica para login ni validaciones donde un usuario recien creado debe existir inmediatamente.
+- no usar la ruta de lectura para login ni validaciones donde un usuario recien creado debe existir inmediatamente.
 
 ## `academic-ms`
 
-Es el mejor candidato para aprovechar Redis y replica.
+Es el mejor candidato para aprovechar Redis y la ruta de lectura.
 
-Debe usar master para:
+Debe usar la ruta de escritura para:
 
 - crear o actualizar grados
 - crear o actualizar secciones
@@ -115,7 +115,7 @@ Debe usar master para:
 - crear o actualizar docentes
 - crear o actualizar ciclos escolares
 
-Debe usar replica para:
+Debe usar la ruta de lectura para:
 
 - listar grados
 - listar secciones
@@ -141,7 +141,7 @@ La invalidacion de cache debe ejecutarse cuando se crea, edita o elimina un cata
 
 ## `student-and-enrollment-ms`
 
-Debe usar master para:
+Debe usar la ruta de escritura para:
 
 - crear tutores
 - crear estudiantes
@@ -151,7 +151,7 @@ Debe usar master para:
 - registrar notas
 - registrar asistencia
 
-Puede usar replica para:
+Puede usar la ruta de lectura para:
 
 - listados de estudiantes
 - consulta de horarios
@@ -169,14 +169,14 @@ No debe usar Redis como almacenamiento principal de notas, asistencia o inscripc
 
 ## `billing-ms`
 
-Debe usar master para:
+Debe usar la ruta de escritura para:
 
 - crear pagos
 - anular pagos
 - cambiar estado de pagos
 - registrar metodo de pago
 
-Puede usar replica para:
+Puede usar la ruta de lectura para:
 
 - reportes historicos
 - listados administrativos
@@ -195,15 +195,15 @@ No debe cachear confirmaciones de pago como fuente de verdad.
 
 1. Configurar Redis en `gateway-ms` para rate limiting.
 2. Configurar Redis en `academic-ms` para cache de catalogos.
-3. Agregar datasource de lectura en `academic-ms` hacia la replica.
+3. Agregar datasource de lectura en `academic-ms` hacia la ruta de lectura.
 4. Agregar datasource de lectura en `student-and-enrollment-ms` para reportes y listados.
-5. Evaluar replica en `users-ms` solo para listados administrativos.
-6. Evaluar replica en `billing-ms` solo para reportes historicos.
+5. Evaluar ruta de lectura en `users-ms` solo para listados administrativos.
+6. Evaluar ruta de lectura en `billing-ms` solo para reportes historicos.
 7. Medir carga con pruebas reales antes de prometer capacidad final.
 
 ## Consideraciones Para 50 Mil Consultas
 
-Tener master, replica y Redis ayuda, pero no garantiza por si solo soportar 50 mil consultas.
+Tener ruta de escritura, ruta de lectura y Redis ayuda, pero no garantiza por si solo soportar 50 mil consultas.
 
 Antes de afirmar esa capacidad se necesita:
 
@@ -221,10 +221,10 @@ Antes de afirmar esa capacidad se necesita:
 
 Cuando los microservicios tambien esten en la nube, el orquestador debe encargarse de:
 
-- levantar otra replica si un contenedor cae
-- distribuir replicas entre maquinas
+- levantar otra replica de servicio si un contenedor cae
+- distribuir replicas de servicios entre maquinas
 - reiniciar servicios no saludables
 - mantener una entrada estable al `gateway-ms`
 - permitir escalar microservicios de forma independiente
 
-Eso corresponde al despliegue posterior de microservicios. No cambia la infraestructura cloud existente de PostgreSQL y Redis.
+Eso corresponde al despliegue de microservicios. No cambia la infraestructura cloud existente de PostgreSQL Patroni, Redis y RabbitMQ.

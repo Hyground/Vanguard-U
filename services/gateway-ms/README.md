@@ -98,6 +98,6 @@ Variables de rate limiting:
 - `GATEWAY_RATE_LIMIT_BURST_CAPACITY`: maximo de tokens acumulados.
 - `GATEWAY_RATE_LIMIT_REQUESTED_TOKENS`: tokens consumidos por request.
 
-No le corresponde conectarse a PostgreSQL master ni replica.
+No le corresponde conectarse a PostgreSQL.
 
-Cuando los microservicios se ejecuten en contenedores, las rutas `USERS_MS_URL`, `ACADEMIC_MS_URL`, `STUDENT_MS_URL` y `BILLING_MS_URL` deben apuntar a nombres de servicio del orquestador, no a `localhost`.
+En Swarm, las rutas `USERS_MS_URL`, `ACADEMIC_MS_URL`, `STUDENT_MS_URL` y `BILLING_MS_URL` apuntan a nombres de servicio del overlay, por ejemplo `http://users-ms:8081`.

@@ -8,6 +8,9 @@ services:
     environment:
       - SERVER_PORT=8081
       - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_WRITE_HOST=${DB_WRITE_HOST}
+      - DB_WRITE_PORT=${DB_WRITE_PORT}
       - DB_PASSWORD=${DB_PASSWORD}
     env_file:
       - ./env/.env
@@ -19,6 +22,11 @@ services:
     environment:
       - ACADEMIC_PORT=8082
       - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_WRITE_HOST=${DB_WRITE_HOST}
+      - DB_WRITE_PORT=${DB_WRITE_PORT}
+      - DB_READ_HOST=${DB_READ_HOST}
+      - DB_READ_PORT=${DB_READ_PORT}
       - REDIS_HOST=${REDIS_HOST}
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -32,6 +40,9 @@ services:
     environment:
       - STUDENT_PORT=8083
       - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_WRITE_HOST=${DB_WRITE_HOST}
+      - DB_WRITE_PORT=${DB_WRITE_PORT}
       - DB_PASSWORD=${DB_PASSWORD}
     env_file:
       - ./env/.env
@@ -43,6 +54,9 @@ services:
     environment:
       - BILLING_PORT=8084
       - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_WRITE_HOST=${DB_WRITE_HOST}
+      - DB_WRITE_PORT=${DB_WRITE_PORT}
       - DB_PASSWORD=${DB_PASSWORD}
     env_file:
       - ./env/.env
@@ -53,11 +67,10 @@ services:
       - "8080:8080"
     environment:
       - GATEWAY_PORT=8080
-      # CONFIGURADO: IP Tailscale de cada maquina
-      - USERS_MS_URL=${USERS_MS_URL:-http://100.125.236.96:8081}
-      - ACADEMIC_MS_URL=${ACADEMIC_MS_URL:-http://100.91.4.45:8082}
-      - STUDENT_MS_URL=${STUDENT_MS_URL:-http://100.105.17.78:8083}
-      - BILLING_MS_URL=${BILLING_MS_URL:-http://100.119.91.28:8084}
+      - USERS_MS_URL=${USERS_MS_URL:-http://users-ms:8081}
+      - ACADEMIC_MS_URL=${ACADEMIC_MS_URL:-http://academic-ms:8082}
+      - STUDENT_MS_URL=${STUDENT_MS_URL:-http://student-and-enrollment-ms:8083}
+      - BILLING_MS_URL=${BILLING_MS_URL:-http://billing-ms:8084}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     env_file:

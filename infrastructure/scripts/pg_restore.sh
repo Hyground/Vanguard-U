@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
-CONTAINER_NAME="${CONTAINER_NAME:-pg-master}"
+DB_HOST="${DB_HOST:-34.68.197.98}"
+DB_PORT="${DB_PORT:-5000}"
 DB_NAME="${DB_NAME:-bdedu}"
 DB_USER="${DB_USER:-bd2equipomari}"
 BACKUP_FILE="${1:-}"
@@ -16,6 +17,10 @@ if [ ! -f "$BACKUP_FILE" ]; then
   exit 1
 fi
 
-gunzip -c "$BACKUP_FILE" | docker exec -i "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME"
+gunzip -c "$BACKUP_FILE" | PGPASSWORD="${DB_PASSWORD:-Kj82_mP91_Xz77_Rt}" psql \
+  -h "$DB_HOST" \
+  -p "$DB_PORT" \
+  -U "$DB_USER" \
+  -d "$DB_NAME"
 
 echo "Restore completed from: $BACKUP_FILE"

@@ -1,22 +1,41 @@
-# Documentación: API Gateway (gateway-ms)
+# Documentacion: API Gateway
 
-El Gateway es el único punto de entrada para los clientes externos. Se encarga del enrutamiento y el control de tráfico (Rate Limiting).
+El gateway es el punto de entrada HTTP para clientes externos. Enruta solicitudes hacia los microservicios y aplica rate limiting con Redis.
 
-## 🛣️ Rutas de Enrutamiento
+## Rutas
 
-El Gateway redirige las peticiones según el prefijo de la URL:
+- `/api/v1/auth/**`, `/api/v1/users/**`, `/api/v1/roles/**` -> `users-ms`
+- `/api/v1/school-cycles/**`, `/api/v1/teachers/**`, catalogos academicos -> `academic-ms`
+- `/api/v1/students/**`, `/api/v1/enrollments/**`, notas, asistencia y horarios -> `student-and-enrollment-ms`
+- `/api/v1/billing/**` -> `billing-ms`
 
-- **Auth/Users/Roles:** `/api/v1/auth/**`, `/api/v1/users/**`, `/api/v1/roles/**` -> Hacia `users-ms`
-- **Académico:** `/api/v1/school-cycles/**`, `/api/v1/teachers/**`, etc. -> Hacia `academic-ms`
-- **Estudiantes/Inscripciones:** `/api/v1/students/**`, `/api/v1/enrollments/**`, etc. -> Hacia `student-and-enrollment-ms`
-- **Facturación:** `/api/v1/billing/**` -> Hacia `billing-ms`
+## Variables En Swarm
 
-## 🚦 Rate Limiting
+```text
+USERS_MS_URL=http://users-ms:8081
+ACADEMIC_MS_URL=http://academic-ms:8082
+STUDENT_MS_URL=http://student-and-enrollment-ms:8083
+BILLING_MS_URL=http://billing-ms:8084
+REDIS_HOST=vps.wissegt.com
+REDIS_PORT=6379
+```
 
-Implementado con Redis. Por defecto:
-- **Replenish Rate:** 50 peticiones/segundo.
-- **Burst Capacity:** 100 peticiones.
+El gateway no se conecta a PostgreSQL. La base la usan los microservicios de negocio.
 
-## 🔧 Configuración de Red
+## Rate Limiting
 
-En un entorno distribuido con Tailscale, las URLs de destino de los microservicios se configuran en el archivo `application.properties` o mediante variables de entorno.
+Implementado con Redis.
+
+Valores por defecto:
+
+```text
+GATEWAY_RATE_LIMIT_REPLENISH_RATE=50
+GATEWAY_RATE_LIMIT_BURST_CAPACITY=100
+GATEWAY_RATE_LIMIT_REQUESTED_TOKENS=1
+```
+
+## Validacion
+
+```bash
+curl -m 10 http://127.0.0.1/actuator/health
+```

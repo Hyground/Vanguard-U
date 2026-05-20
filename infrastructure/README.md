@@ -12,12 +12,22 @@ Esta VPS no forma parte del Docker Swarm de microservicios.
 
 `docker-compose.yml` levanta:
 
-- PostgreSQL master: `5432`
-- PostgreSQL replica de lectura: `5433`
 - Redis: `6379`
 - RabbitMQ: `5672`, panel `15672`
+- PostgreSQL exporter: `9187`, apuntando al cluster Patroni en `34.68.197.98:5000`
 - Prometheus: `9090`
 - Grafana: `3000`
+
+PostgreSQL ya no se levanta en esta VPS. La base oficial esta en Patroni:
+
+```text
+bd1 / HAProxy escritura -> 34.68.197.98:5000
+bd1 / HAProxy lectura   -> 34.68.197.98:5001
+bd2 lider PostgreSQL    -> 34.45.194.127
+bd3 replica PostgreSQL  -> 34.29.234.240
+```
+
+La PostgreSQL anterior de `vps.wissegt.com` quedo apagada.
 
 Los microservicios se despliegan aparte en `deploy/docker-stack.yml`.
 
@@ -47,12 +57,12 @@ En Google Cloud, los puertos `8081-8084` deben estar abiertos solo desde:
 
 ## Levantar O Actualizar
 
-Para agregar solo Prometheus y Grafana sin tocar los contenedores actuales de base de datos, Redis y RabbitMQ:
+Para actualizar monitoreo sin tocar Redis y RabbitMQ:
 
 ```bash
 cd /root/infra-wave
 mkdir -p monitoring
-docker compose up -d prometheus grafana
+docker compose up -d postgres-exporter prometheus grafana
 ```
 
 Para levantar toda la infraestructura desde cero:
@@ -62,18 +72,10 @@ cd /root/infra-wave
 docker compose up -d
 ```
 
-## Sobre La Replica De PostgreSQL
+## Sobre PostgreSQL
 
-La replica actual es de lectura. Sirve para consultas y reportes, pero no reemplaza automaticamente al master si el master cae.
-
-Por ahora la decision recomendada para la demo es:
-
-```text
-master -> escrituras y operaciones criticas
-replica -> lecturas no criticas donde el atraso sea aceptable
-```
-
-El failover automatico real de PostgreSQL requiere otra capa, por ejemplo Patroni, repmgr o un servicio administrado. No esta incluido en este compose.
+El failover de PostgreSQL vive fuera de este compose y esta documentado en
+`infrastructure/HA_PATRONI.md`.
 
 ## Backups
 
@@ -82,6 +84,8 @@ Para la parte de BD de la demo, el respaldo y la restauracion estan documentados
 - [infrastructure/BACKUP_RESTORE.md](./BACKUP_RESTORE.md)
 - [infrastructure/scripts/pg_backup.sh](./scripts/pg_backup.sh)
 - [infrastructure/scripts/pg_restore.sh](./scripts/pg_restore.sh)
+
+Pendiente importante: automatizar backups de Patroni. Por ahora los scripts existen para ejecucion manual.
 
 ## Dashboard Limpio
 

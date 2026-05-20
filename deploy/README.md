@@ -1,23 +1,37 @@
 # Deploy Vanguard-U
 
-Esta carpeta contiene los archivos activos para desplegar los microservicios en Docker Swarm.
+Esta carpeta contiene el despliegue activo de microservicios en Docker Swarm.
 
 ## Archivos
 
 - [docker-stack.yml](./docker-stack.yml): definicion del stack Swarm.
-- [GUIA_VPS_SWARM.md](./GUIA_VPS_SWARM.md): guia paso a paso para Google Cloud, firewall, Swarm, DNS, despliegue y failover.
+- [GUIA_VPS_SWARM.md](./GUIA_VPS_SWARM.md): guia operativa para firewall, despliegue, validacion y failover.
 
 ## Modelo Actual
 
 ```text
 api.wissegt.com
-  -> 4 VPS Google Cloud en Docker Swarm
+  -> Docker Swarm
   -> gateway-ms
   -> users-ms / academic-ms / student-and-enrollment-ms / billing-ms
-  -> vps.wissegt.com para PostgreSQL, Redis y RabbitMQ
+  -> PostgreSQL Patroni por 34.68.197.98:5000/5001
+  -> Redis y RabbitMQ en vps.wissegt.com
 ```
 
-Las imagenes se descargan desde Docker Hub:
+El gateway no se conecta a PostgreSQL. Los microservicios de negocio usan:
+
+```text
+DB_WRITE_HOST=34.68.197.98
+DB_WRITE_PORT=5000
+DB_READ_HOST=34.68.197.98
+DB_READ_PORT=5001
+REDIS_HOST=vps.wissegt.com
+RABBITMQ_HOST=vps.wissegt.com
+```
+
+## Imagenes
+
+Las VPS no compilan el proyecto. Docker Swarm descarga:
 
 ```text
 vanguard12s/gateway-ms:lab
@@ -27,20 +41,27 @@ vanguard12s/student-and-enrollment-ms:lab
 vanguard12s/billing-ms:lab
 ```
 
-No se compila ni se construyen imagenes en las VPS del Swarm.
+## Comandos
 
-## Comando Principal
-
-Ejecutar desde la VPS manager, dentro del repo:
+Desde la manager `vps`:
 
 ```bash
+cd ~/Vanguard-U
+docker stack deploy -c deploy/docker-stack.yml vanguard
+docker service ls
+```
+
+Reiniciar limpio:
+
+```bash
+docker stack rm vanguard
+docker service ls
 docker stack deploy -c deploy/docker-stack.yml vanguard
 ```
 
-Verificar:
+Validar:
 
 ```bash
-docker service ls
+curl -m 10 http://127.0.0.1/actuator/health
 docker service ps vanguard_gateway-ms
 ```
-

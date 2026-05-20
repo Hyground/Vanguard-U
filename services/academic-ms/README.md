@@ -143,32 +143,32 @@ Request para crear docente/director/admin academico:
 
 ## Tareas De Infraestructura Cloud
 
-Este microservicio es el principal candidato para aprovechar Redis y PostgreSQL replica, porque administra catalogos que cambian poco y se consultan mucho.
+Este microservicio es el principal candidato para aprovechar Redis y la ruta de lectura de Patroni, porque administra catalogos que cambian poco y se consultan mucho.
 
 Le corresponde:
 
-1. Hecho: mantener escrituras contra PostgreSQL master usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
-2. Hecho: usar PostgreSQL replica con `DB_READ_HOST` y `DB_READ_PORT` para transacciones marcadas como solo lectura.
+1. Hecho: mantener escrituras contra la ruta de escritura usando `DB_WRITE_HOST` y `DB_WRITE_PORT`.
+2. Hecho: usar la ruta de lectura con `DB_READ_HOST` y `DB_READ_PORT` para transacciones marcadas como solo lectura.
 3. Hecho: configurar Redis con `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD`.
 4. Hecho: cachear catalogos de alta lectura: grados, secciones, jornadas, cursos, carreras, planes de estudio, ciclos escolares, salones y unidades bimestrales.
 5. Hecho: invalidar cache cuando se cree, edite o elimine un catalogo.
-6. Hecho: mantener en master las operaciones que no esten marcadas como `readOnly`.
+6. Hecho: mantener en la ruta de escritura las operaciones que no esten marcadas como `readOnly`.
 7. Pendiente: agregar paginacion o filtros en listados que puedan crecer.
 
 No debe usar Redis como fuente principal de datos. PostgreSQL sigue siendo la fuente de verdad.
 
-## Funcion De Redis Y Replica
+## Funcion De Redis Y Ruta De Lectura
 
-Redis y PostgreSQL replica no cumplen la misma funcion.
+Redis y la ruta de lectura de Patroni no cumplen la misma funcion.
 
 - Redis guarda respuestas temporales de catalogos frecuentes. Si el dato esta en cache, el servicio evita consultar PostgreSQL.
-- PostgreSQL replica atiende lecturas reales cuando el dato no esta en Redis o cuando el endpoint no esta cacheado.
-- PostgreSQL master recibe escrituras y cualquier operacion que no este marcada como solo lectura.
+- La ruta de lectura atiende consultas SQL reales cuando el dato no esta en Redis o cuando el endpoint no esta cacheado.
+- La ruta de escritura recibe escrituras y cualquier operacion que no este marcada como solo lectura.
 
 Variables relacionadas:
 
 - `ACADEMIC_READ_REPLICA_ENABLED`: activa o desactiva el routing hacia replica.
-- `DB_WRITE_HOST` y `DB_WRITE_PORT`: conexion al master.
-- `DB_READ_HOST` y `DB_READ_PORT`: conexion a la replica.
+- `DB_WRITE_HOST` y `DB_WRITE_PORT`: conexion a HAProxy para escritura.
+- `DB_READ_HOST` y `DB_READ_PORT`: conexion a HAProxy para lectura.
 - `REDIS_HOST`, `REDIS_PORT` y `REDIS_PASSWORD`: conexion a Redis.
 - `ACADEMIC_CACHE_TTL_MS`: tiempo de vida de cache para catalogos.

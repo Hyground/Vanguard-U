@@ -1,235 +1,137 @@
-# Guia De Despliegue En VPS Con Docker Swarm
+# Guia VPS Swarm
 
-## Objetivo
+Guia operativa para levantar Vanguard-U en Docker Swarm con la base de datos actual en Patroni.
 
-Levantar Vanguard-U en 4 VPS Ubuntu usando Docker Swarm para tener failover de microservicios.
-
-Arquitectura:
+## Arquitectura
 
 ```text
-Tu PC
-  -> k6
-
-4 VPS Google Cloud
-  -> Docker Swarm
+Usuarios / k6 / frontend
+  -> api.wissegt.com
+  -> Docker Swarm en 4 VPS
+  -> gateway-ms
   -> microservicios
-
-vps.wissegt.com
-  -> PostgreSQL master
-  -> PostgreSQL replica
-  -> Redis
-  -> RabbitMQ
-  -> Prometheus
-  -> Grafana
+  -> PostgreSQL Patroni por bd1
+  -> Redis/RabbitMQ en vps.wissegt.com
 ```
 
-## 1. Crear Las VPS
+## VPS Del Swarm
 
-Crear 4 VPS Ubuntu:
+| Nombre | IP publica | Rol |
+| --- | --- | --- |
+| vps | `104.197.126.0` | manager |
+| node2 | `34.41.23.205` | worker |
+| vps4 | `34.51.123.84` | worker |
+| vps5 | `35.208.149.96` | worker |
+
+## Base De Datos
+
+Los microservicios no se conectan directo a `bd2` ni `bd3`.
 
 ```text
-VPS1 -> manager Swarm
-VPS2 -> worker
-VPS3 -> worker
-VPS4 -> worker
+DB_WRITE_HOST=34.68.197.98
+DB_WRITE_PORT=5000
+DB_READ_HOST=34.68.197.98
+DB_READ_PORT=5001
 ```
 
-Recomendado:
+HAProxy en `bd1` decide el nodo real:
 
 ```text
-Ubuntu 22.04 o 24.04
-minimo 1 GB RAM para prueba
-mejor 2 GB RAM o mas
+5000 -> lider Patroni
+5001 -> replica Patroni
 ```
 
-Anotar:
+Estado validado:
 
 ```text
-IP_PUBLICA_VPS1=
-IP_PUBLICA_VPS2=
-IP_PUBLICA_VPS3=
-IP_PUBLICA_VPS4=
+bd2 -> Leader / running
+bd3 -> Replica / streaming / lag 0
 ```
 
-## 2. Firewall En Google Cloud
-
-Importante para este laboratorio:
+Redis y RabbitMQ siguen en:
 
 ```text
-Las 4 VPS estan en cuentas/proyectos/redes distintas de Google Cloud.
-Por eso Docker Swarm debe usar IPs publicas, no IPs privadas 10.x.x.x.
-Cada companero debe crear la regla de firewall en su propio proyecto.
+REDIS_HOST=vps.wissegt.com
+RABBITMQ_HOST=vps.wissegt.com
 ```
 
-IPs publicas actuales del laboratorio:
+## Firewall
 
-```text
-vps      -> 104.197.126.0  -> manager
-node2    -> 34.41.23.205   -> worker
-vps4     -> 34.51.123.84   -> worker
-vps5     -> 35.208.149.96  -> worker
-daniel-s -> 34.29.45.128   -> frontend/pagina, fuera del Swarm
-```
+### Swarm
 
-En cada proyecto/cuenta de Google Cloud:
-
-1. Ir a `Compute Engine > VM instances`.
-2. Editar la VM.
-3. En `Etiquetas de red`, agregar:
+En las 4 VPS del Swarm usar tags:
 
 ```text
 docker-swarm
 vanguard-http
 ```
 
-4. Ir a `Red de VPC > Firewall > Crear regla de firewall`.
-5. Crear la regla para Swarm:
+Regla `allow-docker-swarm`:
 
 ```text
-Nombre: allow-docker-swarm
-Red: default
-Direccion del trafico: Entrada
-Accion en caso de coincidencia: Permitir
-Destinos: Etiquetas de destino especificadas
-Etiquetas de destino: docker-swarm
-Filtro de origen: Rangos de IPv4
-Rangos de IPv4 de origen:
-104.197.126.0/32,34.41.23.205/32,34.51.123.84/32,35.208.149.96/32
-```
+Origen:
+104.197.126.0/32
+34.41.23.205/32
+34.51.123.84/32
+35.208.149.96/32
 
-Abrir entre las 4 VPS:
-
-```text
+Puertos:
 2377/tcp
 7946/tcp
 7946/udp
 4789/udp
 ```
 
-Abrir para usuarios/k6:
+Entrada publica al gateway:
 
 ```text
-80/tcp
+Puerto: 80/tcp
+Destino: vanguard-http o http-server
+Origen: 0.0.0.0/0
 ```
 
-Para HTTP se puede usar la regla automatica de Google Cloud `http-server` si la VM tiene marcada la opcion `Allow HTTP traffic`.
+### Patroni
 
-No incluir `daniel-s` en la regla de Swarm si queda solo como frontend. Para `daniel-s` basta abrir HTTP/HTTPS segun lo que use la pagina.
-
-No abrir los puertos de Swarm a `0.0.0.0/0` salvo emergencia. Lo correcto es restringirlos a las 4 IPs publicas del Swarm con `/32`.
-
-## 3. Instalar Docker En Cada VPS
-
-Ejecutar en VPS1, VPS2, VPS3 y VPS4:
-
-```bash
-sudo apt update
-sudo apt install -y ca-certificates curl gnupg git
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-```
-
-Cerrar sesion SSH y volver a entrar.
-
-Validar:
-
-```bash
-docker version
-docker info
-```
-
-## 4. Preparar La VPS Manager
-
-En VPS1 clonar o copiar el proyecto:
-
-```bash
-git clone <URL_DEL_REPO>
-cd Vanguard-U
-```
-
-Si no se clona todo el proyecto, minimo deben existir:
+En los proyectos donde viven `bd1`, `bd2`, `bd3`, la regla `allow-patroni-internal` debe permitir:
 
 ```text
-deploy/docker-stack.yml
-env/.env
+Origen:
+34.68.197.98/32
+34.45.194.127/32
+34.29.234.240/32
+104.197.126.0/32
+34.41.23.205/32
+34.51.123.84/32
+35.208.149.96/32
+207.231.111.45/32
+
+Puertos:
+2379/tcp
+2380/tcp
+5432/tcp
+8008/tcp
+5000/tcp
+5001/tcp
 ```
 
-Validar que el stack use las imagenes:
+## Despliegue
 
-```text
-vanguard12s/gateway-ms:lab
-vanguard12s/users-ms:lab
-vanguard12s/academic-ms:lab
-vanguard12s/student-and-enrollment-ms:lab
-vanguard12s/billing-ms:lab
-```
-
-Validar que `env/.env` apunte a:
-
-```text
-vps.wissegt.com
-```
-
-## 5. Crear El Swarm
-
-Estado actual:
-
-```text
-El Swarm ya fue creado.
-Manager: vps -> 104.197.126.0
-Workers unidos: node2, vps4, vps5
-```
-
-En VPS1:
+En la manager `vps`:
 
 ```bash
-docker swarm init --advertise-addr <IP_PUBLICA_VPS1>
-```
-
-Obtener comando para workers:
-
-```bash
-docker swarm join-token worker
-```
-
-Copiar el comando que devuelve Docker.
-
-## 6. Unir Workers
-
-Estado actual:
-
-```text
-node2 -> Ready
-vps4  -> Ready
-vps5  -> Ready
-```
-
-En VPS2, VPS3 y VPS4 ejecutar el comando que devolvio VPS1:
-
-```bash
-docker swarm join --token <TOKEN> <IP_PUBLICA_VPS1>:2377
-```
-
-Validar desde VPS1:
-
-```bash
-docker node ls
-```
-
-Debe mostrar 4 nodos.
-
-## 7. Desplegar Vanguard-U
-
-En VPS1, dentro del repo:
-
-```bash
+cd ~/Vanguard-U
 docker stack deploy -c deploy/docker-stack.yml vanguard
+docker service ls
 ```
 
-Ver servicios:
+Resultado esperado:
 
-```bash
-docker service ls
+```text
+vanguard_gateway-ms                  2/2
+vanguard_users-ms                    2/2
+vanguard_academic-ms                 2/2
+vanguard_student-and-enrollment-ms   2/2
+vanguard_billing-ms                  2/2
 ```
 
 Ver tareas:
@@ -242,308 +144,160 @@ docker service ps vanguard_student-and-enrollment-ms
 docker service ps vanguard_billing-ms
 ```
 
-Ver logs de un servicio:
-
-```bash
-docker service logs -f vanguard_gateway-ms
-```
-
-## 8. DNS Del Dominio
-
-Para `api.wissegt.com`, crear registros A.
-
-Opcion demo:
-
-```text
-api.wissegt.com -> 104.197.126.0
-api.wissegt.com -> 34.41.23.205
-api.wissegt.com -> 34.51.123.84
-api.wissegt.com -> 35.208.149.96
-```
-
-Como Swarm publica el puerto 80 en los nodos, el gateway puede responder desde cualquier VPS viva.
-
-`daniel-s` queda fuera del Swarm para la pagina/frontend. `vanguard.wissegt.com` apunta a `34.29.45.128`.
-
-## 9. Preparar vps.wissegt.com
-
-Confirmar que esten vivos:
-
-```text
-PostgreSQL master  :5432
-PostgreSQL replica :5433
-Redis              :6379
-RabbitMQ           :5672
-Prometheus         :9090
-Grafana            :3000
-```
-
-Desde una VPS del Swarm probar conectividad:
-
-```bash
-nc -vz vps.wissegt.com 5432
-nc -vz vps.wissegt.com 5433
-nc -vz vps.wissegt.com 6379
-nc -vz vps.wissegt.com 5672
-```
-
-Si `nc` no existe:
-
-```bash
-sudo apt install -y netcat-openbsd
-```
-
-## 10. Prometheus Y Grafana
-
-Prometheus vive en:
-
-```text
-vps.wissegt.com:9090
-```
-
-Grafana vive en:
-
-```text
-vps.wissegt.com:3000
-```
-
-Para la demo se deben monitorear:
-
-```text
-/actuator/health
-/actuator/prometheus
-```
-
-Metricas a mostrar:
-
-```text
-latencia
-errores HTTP
-memoria
-CPU
-servicios vivos
-recuperacion despues de caida
-```
-
-## 11. k6 Desde Tu PC
-
-Instalar k6 en tu PC o usar Docker.
-
-Script ejemplo `k6-50000.js`:
-
-```javascript
-import http from 'k6/http';
-import { check } from 'k6';
-
-export const options = {
-  scenarios: {
-    fixed_requests: {
-      executor: 'shared-iterations',
-      vus: 100,
-      iterations: 50000,
-      maxDuration: '10m',
-    },
-  },
-};
-
-export default function () {
-  const res = http.get('http://api.wissegt.com/actuator/health');
-  check(res, {
-    'status 200': (r) => r.status === 200,
-  });
-}
-```
-
-Ejecutar:
-
-```bash
-k6 run k6-50000.js
-```
-
-Si se usa Docker:
-
-```bash
-docker run --rm -i grafana/k6 run - < k6-50000.js
-```
-
-## 12. Prueba De Failover
-
-### Matar Un Contenedor
-
-En cualquier VPS:
-
-```bash
-docker ps
-docker kill <CONTAINER_ID>
-```
-
-Validar en VPS1:
-
-```bash
-docker service ps vanguard_users-ms
-```
-
-Resultado esperado:
-
-```text
-Swarm crea otro contenedor.
-```
-
-### Apagar Una VPS Worker
-
-Apagar VPS2 desde Google Cloud.
-
-Validar en VPS1:
-
-```bash
-docker node ls
-docker service ps vanguard_gateway-ms
-docker service ps vanguard_users-ms
-```
-
-Resultado esperado:
-
-```text
-El nodo aparece Down.
-Los servicios se recrean en VPS disponibles.
-```
-
-### Durante k6
-
-Ejecutar k6 y apagar una VPS worker.
-
-Observar:
-
-```text
-errores temporales
-tiempo de recuperacion
-servicios movidos por Swarm
-metricas en Grafana
-```
-
-## 13. Comandos Utiles
-
-Estado del cluster:
-
-```bash
-docker node ls
-```
-
-Servicios:
-
-```bash
-docker service ls
-```
-
-Tareas por servicio:
-
-```bash
-docker service ps <SERVICIO>
-```
-
 Logs:
 
 ```bash
-docker service logs -f <SERVICIO>
+docker service logs --tail 100 vanguard_gateway-ms
 ```
 
-Actualizar stack:
+## Validaciones
+
+Health del gateway:
 
 ```bash
-docker stack deploy -c deploy/docker-stack.yml vanguard
+curl -m 10 http://127.0.0.1/actuator/health
 ```
 
-Bajar stack:
+Health por dominio:
 
 ```bash
-docker stack rm vanguard
+curl -m 10 http://api.wissegt.com/actuator/health
 ```
 
-## 14. Apagar Y Encender El Laboratorio
+Login:
 
-Para ahorrar credito se puede apagar todo el laboratorio. Mientras este apagado, `api.wissegt.com` no responde.
+```bash
+curl -m 15 -X POST http://127.0.0.1/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"load_admin","password":"Demo123!"}'
+```
 
-### Apagar
+Conectividad a Patroni desde la manager:
 
-Desde la manager `vps`:
+```bash
+nc -vz -w 5 34.68.197.98 5000
+nc -vz -w 5 34.68.197.98 5001
+```
+
+Confirmar rutas PostgreSQL:
+
+```bash
+PGPASSWORD='Kj82_mP91_Xz77_Rt' psql -h 34.68.197.98 -p 5000 -U bd2equipomari -d bdedu -c "select inet_server_addr(), pg_is_in_recovery();"
+PGPASSWORD='Kj82_mP91_Xz77_Rt' psql -h 34.68.197.98 -p 5001 -U bd2equipomari -d bdedu -c "select inet_server_addr(), pg_is_in_recovery();"
+```
+
+Esperado:
+
+```text
+5000 -> pg_is_in_recovery = false
+5001 -> pg_is_in_recovery = true
+```
+
+## Reinicio Limpio Del Stack
 
 ```bash
 cd ~/Vanguard-U
 docker stack rm vanguard
 docker service ls
+docker stack deploy -c deploy/docker-stack.yml vanguard
+docker service ls
 ```
 
-Esperar a que `docker service ls` ya no muestre servicios `vanguard_*`.
+## DNS
 
-Luego apagar en Google Cloud:
+`api.wissegt.com` puede apuntar a las 4 VPS del Swarm:
+
+```text
+104.197.126.0
+34.41.23.205
+34.51.123.84
+35.208.149.96
+```
+
+Frontend:
+
+```text
+vanguard.wissegt.com -> 34.29.45.128
+```
+
+Infraestructura auxiliar:
+
+```text
+vps.wissegt.com -> 207.231.111.45
+grafana.wissegt.com -> 207.231.111.45
+```
+
+## Monitoreo
+
+Prometheus y Grafana viven en `vps.wissegt.com`.
+
+```text
+Prometheus -> http://vps.wissegt.com:9090
+Grafana    -> http://vps.wissegt.com:3000
+```
+
+Prometheus consulta:
+
+```text
+postgres-exporter:9187
+104.197.126.0:80/actuator/prometheus
+104.197.126.0:8081/actuator/prometheus
+104.197.126.0:8082/actuator/prometheus
+104.197.126.0:8083/actuator/prometheus
+104.197.126.0:8084/actuator/prometheus
+```
+
+## Pruebas De Failover
+
+Microservicio:
+
+```bash
+docker service ps vanguard_users-ms
+docker kill <CONTAINER_ID>
+docker service ps vanguard_users-ms
+```
+
+PostgreSQL:
+
+```bash
+patronictl -c /etc/patroni/config.yml list
+```
+
+Si se detiene el lider, Patroni debe promover la replica y HAProxy debe seguir respondiendo por `34.68.197.98:5000`.
+
+## Apagar Y Encender
+
+Apagar aplicacion:
+
+```bash
+cd ~/Vanguard-U
+docker stack rm vanguard
+```
+
+Orden recomendado para apagar VPS:
 
 ```text
 1. Workers: node2, vps4, vps5
 2. Manager: vps
-3. Frontend si aplica: daniel-s
-4. Infraestructura vps.wissegt.com solo si se acepta apagar DB/Redis/RabbitMQ/Grafana
+3. Frontend si aplica
+4. Infraestructura auxiliar si se acepta apagar Redis/RabbitMQ/Grafana
+5. Base Patroni: bd3, bd2, bd1
 ```
 
-No apagar primero `vps` si todavia se quiere administrar el Swarm, porque es el unico manager.
-
-### Encender
-
-Encender en este orden:
+Orden recomendado para encender:
 
 ```text
-1. Infraestructura: vps.wissegt.com
-2. Manager: vps
-3. Workers: node2, vps4, vps5
-4. Frontend: daniel-s
+1. bd1, bd2, bd3
+2. vps.wissegt.com
+3. Manager: vps
+4. Workers: node2, vps4, vps5
+5. Frontend
 ```
 
-Validar desde la manager:
+Validar despues de encender:
 
 ```bash
 docker node ls
-cd ~/Vanguard-U
-docker stack deploy -c deploy/docker-stack.yml vanguard
 docker service ls
-curl http://api.wissegt.com/actuator/health
-```
-
-Resultado esperado:
-
-```text
-Los nodos vuelven a Ready.
-Los servicios quedan 2/2.
-La API responde {"status":"UP"}.
-```
-
-Si un nodo no vuelve:
-
-```bash
-sudo systemctl status docker
-sudo systemctl start docker
-docker info | grep Swarm
-```
-
-## 15. Explicacion Para El Ingeniero
-
-Resumen:
-
-```text
-Docker Hub guarda las imagenes.
-Docker Swarm orquesta las VPS.
-El manager recibe el deploy.
-Los workers ejecutan contenedores.
-El gateway recibe las peticiones.
-Los microservicios se comunican por nombres internos.
-La base, Redis y RabbitMQ viven en vps.wissegt.com.
-Prometheus recolecta metricas.
-Grafana muestra metricas.
-k6 genera 50,000 peticiones totales.
-```
-
-Frase clave:
-
-```text
-No levantamos servicios manualmente por maquina.
-Declaramos el estado deseado en docker-stack.yml.
-Swarm mantiene ese estado y recrea servicios si un nodo falla.
+curl -m 10 http://127.0.0.1/actuator/health
 ```
