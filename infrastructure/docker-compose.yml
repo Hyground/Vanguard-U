@@ -3,7 +3,6 @@ services:
   pg-master:
     image: bitnami/postgresql:latest
     container_name: pg-master
-    user: root
     restart: always
     ports:
       - "5432:5432"
@@ -17,11 +16,10 @@ services:
     volumes:
       - ./master_data:/bitnami/postgresql
 
-  # Nodo Réplica
+  # Nodo Replica
   pg-replica:
     image: bitnami/postgresql:latest
     container_name: pg-replica
-    user: root
     restart: always
     depends_on:
       - pg-master
@@ -51,14 +49,14 @@ services:
     volumes:
       - ./redis_data:/bitnami/redis
 
-  # Mensajería
+  # Mensajeria
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     restart: always
     ports:
-      - "5672:5672"   # Puerto AMQP
-      - "15672:15672" # Panel de control
+      - "5672:5672"
+      - "15672:15672"
     environment:
       - RABBITMQ_DEFAULT_USER=vanguard_user
       - RABBITMQ_DEFAULT_PASS=Kj82_mP91_Xz77_Rt
