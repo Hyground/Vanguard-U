@@ -6,6 +6,7 @@ Esta carpeta contiene el despliegue activo de microservicios en Docker Swarm.
 
 - [docker-stack.yml](./docker-stack.yml): definicion del stack Swarm.
 - [GUIA_VPS_SWARM.md](./GUIA_VPS_SWARM.md): guia operativa para firewall, despliegue, validacion y failover.
+- [FRONTEND_DEPLOY.md](./FRONTEND_DEPLOY.md): despliegue del frontend en `vanguard.wissegt.com`.
 
 ## Modelo Actual
 

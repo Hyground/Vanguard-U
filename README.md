@@ -64,6 +64,7 @@ La PostgreSQL vieja de `vps.wissegt.com` fue apagada y ya no forma parte de la a
 
 - [deploy/docker-stack.yml](./deploy/docker-stack.yml): stack activo de microservicios Swarm.
 - [deploy/GUIA_VPS_SWARM.md](./deploy/GUIA_VPS_SWARM.md): operacion del Swarm.
+- [deploy/FRONTEND_DEPLOY.md](./deploy/FRONTEND_DEPLOY.md): despliegue del frontend en `vanguard.wissegt.com`.
 - [env/.env](./env/.env): variables usadas por los servicios.
 - [infrastructure/docker-compose.yml](./infrastructure/docker-compose.yml): Redis, RabbitMQ, Prometheus, Grafana y postgres-exporter.
 - [infrastructure/HA_PATRONI.md](./infrastructure/HA_PATRONI.md): Patroni, Etcd, HAProxy y estado validado.

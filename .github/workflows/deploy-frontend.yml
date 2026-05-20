@@ -1,0 +1,50 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'Vanguard-web/**'
+      - '.github/workflows/deploy-frontend.yml'
+      - 'deploy/FRONTEND_DEPLOY.md'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload frontend to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.FRONTEND_HOST }}
+          username: ${{ secrets.FRONTEND_USER }}
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          port: ${{ secrets.FRONTEND_PORT || 22 }}
+          source: 'Vanguard-web/*'
+          target: '/tmp/vanguard-web-release'
+          rm: true
+          strip_components: 1
+
+      - name: Publish frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FRONTEND_HOST }}
+          username: ${{ secrets.FRONTEND_USER }}
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          port: ${{ secrets.FRONTEND_PORT || 22 }}
+          script: |
+            sudo mkdir -p /var/www/html
+            sudo rsync -a --delete /tmp/vanguard-web-release/ /var/www/html/
+            sudo chown -R www-data:www-data /var/www/html
+            sudo find /var/www/html -type d -exec chmod 755 {} \;
+            sudo find /var/www/html -type f -exec chmod 644 {} \;
+            if command -v apache2ctl >/dev/null 2>&1; then
+              sudo apache2ctl configtest
+              sudo systemctl reload apache2
+            fi
