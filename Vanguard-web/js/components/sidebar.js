@@ -83,19 +83,36 @@ const Sidebar = {
 
     getMenuItems(role) {
         const items = [
-            { view: 'tablero', label: 'Tablero', icon: 'tablero' },
-            { view: 'cursos', label: 'Cursos', icon: 'cursos' },
-            { view: 'calendario', label: 'Calendario', icon: 'calendario' }
+            { view: 'tablero', label: 'Inicio', icon: 'tablero' }
         ];
 
-        if (role === 'STUDENT') {
-            items.push({ view: 'finanzas', label: 'Finanzas', icon: 'finanzas' });
-            items.push({ view: 'asistencia', label: 'Asistencia', icon: 'asistencia' });
+        if (role === 'ADMIN') {
+            items.push(
+                { view: 'usuarios', label: 'Usuarios', icon: 'usuarios' },
+                { view: 'personas', label: 'Personas', icon: 'perfil' },
+                { view: 'inscripciones', label: 'Inscripciones', icon: 'cursos' },
+                { view: 'finanzas_admin', label: 'Pagos Globales', icon: 'finanzas' },
+                { view: 'auditoria', label: 'Auditoría', icon: 'tablero' }
+            );
         } else if (role === 'TEACHER') {
-            items.push({ view: 'asistencia', label: 'Control Asistencia', icon: 'asistencia' });
-        } else if (role === 'ADMIN') {
-            items.push({ view: 'usuarios', label: 'Usuarios', icon: 'usuarios' });
-            items.push({ view: 'auditoria', label: 'Auditoría', icon: 'tablero' });
+            items.push(
+                { view: 'cursos', label: 'Mis Cursos', icon: 'cursos' },
+                { view: 'asistencia', label: 'Control Asistencia', icon: 'asistencia' },
+                { view: 'calendario', label: 'Calendario', icon: 'calendario' }
+            );
+        } else if (role === 'STUDENT') {
+            items.push(
+                { view: 'cursos', label: 'Cursos', icon: 'cursos' },
+                { view: 'asistencia', label: 'Mi Asistencia', icon: 'asistencia' },
+                { view: 'finanzas', label: 'Finanzas', icon: 'finanzas' },
+                { view: 'calendario', label: 'Calendario', icon: 'calendario' }
+            );
+        } else if (role === 'TUTOR') {
+            items.push(
+                { view: 'estudiantes_tutorados', label: 'Mis Estudiantes', icon: 'usuarios' },
+                { view: 'asistencia_tutorados', label: 'Asistencia', icon: 'asistencia' },
+                { view: 'finanzas_tutorados', label: 'Pagos y Becas', icon: 'finanzas' }
+            );
         }
 
         items.push({ view: 'perfil', label: 'Mi Perfil', icon: 'perfil' });

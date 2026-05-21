@@ -76,6 +76,18 @@ const App = {
                 case 'auditoria':
                     await Auditoria.render(contentArea);
                     break;
+                case 'usuarios':
+                    await Usuarios.render(contentArea);
+                    break;
+                case 'personas':
+                    await Personas.render(contentArea);
+                    break;
+                case 'inscripciones':
+                    contentArea.innerHTML = '<div class="card"><h2>Control de Inscripciones</h2><p class="text-muted">Próximamente...</p></div>';
+                    break;
+                case 'estudiantes_tutorados':
+                    await Tablero.render(contentArea); // El tablero del tutor mostrará sus estudiantes
+                    break;
                 default:
                     await Tablero.render(contentArea);
             }
