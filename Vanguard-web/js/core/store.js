@@ -4,11 +4,31 @@
  */
 const Store = {
     state: {
-        user: JSON.parse(localStorage.getItem('vanguard_user')) || null,
+        user: null,
         token: localStorage.getItem('vanguard_token') || null,
-        academicProfile: JSON.parse(localStorage.getItem('vanguard_academic')) || null,
+        academicProfile: null,
         theme: localStorage.getItem('vanguard_theme') || 'dark',
         currentCourse: null
+    },
+
+    init() {
+        // Safe JSON parsing to avoid "undefined" or malformed strings errors
+        const safeParse = (key) => {
+            try {
+                const val = localStorage.getItem(key);
+                if (!val || val === "undefined") return null;
+                return JSON.parse(val);
+            } catch (e) {
+                console.error(`Error parsing localStorage key "${key}":`, e);
+                return null;
+            }
+        };
+
+        this.state.user = safeParse('vanguard_user');
+        this.state.academicProfile = safeParse('vanguard_academic');
+        
+        document.documentElement.setAttribute('data-theme', this.state.theme);
+        console.log("Store initialized:", this.state);
     },
 
     // Getters
@@ -55,7 +75,6 @@ const Store = {
         Store.notify();
     },
 
-    // Simple observer pattern to notify views of state changes
     listeners: [],
     subscribe(fn) {
         Store.listeners.push(fn);
@@ -68,6 +87,6 @@ const Store = {
     }
 };
 
-window.Store = Store; // Global access
-// Initialize theme
-document.documentElement.setAttribute('data-theme', Store.state.theme);
+// Initialize immediately
+Store.init();
+window.Store = Store;

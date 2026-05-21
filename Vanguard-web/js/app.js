@@ -7,6 +7,12 @@ const App = {
         this.appElement = document.getElementById('app');
         this.loadingScreen = document.getElementById('loading-screen');
         
+        // Ensure Store is initialized
+        if (typeof Store === 'undefined') {
+            console.error("Store not found, retrying initialization...");
+            return setTimeout(() => this.init(), 100);
+        }
+
         // Listen to state changes
         Store.subscribe((state) => {
             console.log("State updated:", state);
@@ -19,12 +25,10 @@ const App = {
         this.showLoading(true);
 
         if (!Store.isAuthenticated()) {
-            // Render Login (Assuming Login is still in js/pages/login.js for now, but I'll move it soon)
             if (window.Login) {
                 Login.render(this.appElement);
             } else {
-                console.error("Login component not found");
-                this.appElement.innerHTML = '<div style="padding: 2rem; text-align: center;">Error: Cargando módulos principales...</div>';
+                this.appElement.innerHTML = '<div style="padding: 2rem; text-align: center;">Iniciando sistema...</div>';
             }
         } else {
             await this.renderLayout();
@@ -83,10 +87,10 @@ const App = {
                     await Personas.render(contentArea);
                     break;
                 case 'inscripciones':
-                    contentArea.innerHTML = '<div class="card"><h2>Control de Inscripciones</h2><p class="text-muted">Próximamente...</p></div>';
+                    await Inscripciones.render(contentArea);
                     break;
-                case 'estudiantes_tutorados':
-                    await Tablero.render(contentArea); // El tablero del tutor mostrará sus estudiantes
+                case 'academic_config': // Mapeado desde el sidebar si es necesario o manual
+                    await Academic.render(contentArea);
                     break;
                 default:
                     await Tablero.render(contentArea);
