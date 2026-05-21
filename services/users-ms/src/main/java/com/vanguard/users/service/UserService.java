@@ -7,10 +7,9 @@ import com.vanguard.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.vanguard.users.model.User;
@@ -23,25 +22,15 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(user -> UserResponse.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .role(user.getRole().getName())
-                        .status(user.getStatus())
-                        .build())
-                .collect(Collectors.toList());
+    public List<UserResponse> getAllUsers(Pageable pageable) {
+        return userRepository.findAllByOrderByIdDesc(pageable).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public UserResponse getUserById(Integer id) {
         return userRepository.findById(id)
-                .map(user -> UserResponse.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .role(user.getRole().getName())
-                        .status(user.getStatus())
-                        .build())
+                .map(this::toResponse)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
@@ -73,12 +62,7 @@ public class UserService {
         }
         
         userRepository.save(user);
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .role(user.getRole().getName())
-                .status(user.getStatus())
-                .build();
+        return toResponse(user);
     }
 
     @Transactional
@@ -94,10 +78,14 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setStatus(status);
         userRepository.save(user);
+        return toResponse(user);
+    }
+
+    private UserResponse toResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .role(user.getRole().getName())
+                .role(user.getRole() != null ? user.getRole().getName() : null)
                 .status(user.getStatus())
                 .build();
     }

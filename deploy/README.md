@@ -67,3 +67,36 @@ curl -m 10 http://127.0.0.1/actuator/health
 curl -m 10 https://api.wissegt.com/actuator/health
 docker service ps vanguard_gateway-ms
 ```
+
+## Actualizar Un Microservicio
+
+Las imagenes del stack usan el tag `lab`. Si solo cambia un servicio, no hace falta reconstruir todo.
+
+En una maquina con Docker login al namespace `vanguard12s`:
+
+```powershell
+.\scripts\build-images.ps1 -Only users-ms -Push
+```
+
+El comando anterior construye y sube:
+
+```text
+vanguard12s/users-ms:lab
+```
+
+En la manager `vps`, forzar que Swarm descargue la imagen nueva y haga rolling update:
+
+```bash
+cd ~/Vanguard-U
+docker service update --with-registry-auth --force vanguard_users-ms
+docker service ps vanguard_users-ms
+```
+
+Si tambien cambio `deploy/docker-stack.yml`, volver a desplegar el stack completo:
+
+```bash
+cd ~/Vanguard-U
+git pull
+docker stack deploy --with-registry-auth -c deploy/docker-stack.yml vanguard
+docker service ls
+```

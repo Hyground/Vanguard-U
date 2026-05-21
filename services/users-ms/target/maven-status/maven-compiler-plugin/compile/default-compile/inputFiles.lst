@@ -1,24 +1,33 @@
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\ApplicationConfig.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\AuditAspect.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\JwtAuthenticationFilter.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\SecurityConfig.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\controller\AuthController.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\controller\RoleController.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\controller\UserController.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\AuthRequest.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\RegisterRequest.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\response\AuthResponse.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\response\UserResponse.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\exception\GlobalExceptionHandler.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\PasswordRecovery.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\Role.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\SystemLog.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\User.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\PasswordRecoveryRepository.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\RoleRepository.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\SystemLogRepository.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\UserRepository.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\AuthService.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\JwtService.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\UserService.java
-C:\Users\hygro\Desktop\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\UsersApplication.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\ApplicationConfig.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\AuditAspect.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\JwtAuthenticationFilter.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\config\SecurityConfig.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\controller\AuthController.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\controller\RoleController.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\controller\SystemLogController.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\controller\UserController.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\AuthRequest.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\ChangePasswordRequest.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\ForgotPasswordRequest.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\RegisterRequest.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\ResetPasswordRequest.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\RoleRequest.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\request\UpdateUserRequest.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\response\AuthResponse.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\response\SystemLogResponse.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\dto\response\UserResponse.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\exception\GlobalExceptionHandler.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\PasswordRecovery.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\Role.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\SystemLog.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\model\User.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\PasswordRecoveryRepository.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\RoleRepository.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\SystemLogRepository.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\repository\UserRepository.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\AuthService.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\JwtService.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\RoleService.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\SystemLogService.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\service\UserService.java
+D:\proyecot bd\Vanguard-U\services\users-ms\src\main\java\com\vanguard\users\UsersApplication.java

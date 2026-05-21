@@ -1,6 +1,7 @@
 param(
-    [string]$Registry = "vanguardu",
-    [string]$Tag = "latest",
+    [string]$Registry = "vanguard12s",
+    [string]$Tag = "lab",
+    [string[]]$Only,
     [switch]$Push
 )
 
@@ -17,6 +18,10 @@ $services = @(
 )
 
 foreach ($service in $services) {
+    if ($Only -and $service.Name -notin $Only) {
+        continue
+    }
+
     $image = "{0}/{1}:{2}" -f $Registry, $service.Name, $Tag
     Write-Host "Building $image"
     docker build -t $image $service.Path
@@ -24,6 +29,10 @@ foreach ($service in $services) {
 
 if ($Push) {
     foreach ($service in $services) {
+        if ($Only -and $service.Name -notin $Only) {
+            continue
+        }
+
         $image = "{0}/{1}:{2}" -f $Registry, $service.Name, $Tag
         Write-Host "Pushing $image"
         docker push $image

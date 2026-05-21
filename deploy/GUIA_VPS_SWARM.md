@@ -124,6 +124,19 @@ docker stack deploy -c deploy/docker-stack.yml vanguard
 docker service ls
 ```
 
+Para actualizar solo un servicio cuando ya se subio una imagen nueva a Docker Hub:
+
+```bash
+docker service update --with-registry-auth --force vanguard_users-ms
+docker service ps vanguard_users-ms
+```
+
+Para este cambio de paginacion de usuarios, la imagen que debe estar subida es:
+
+```text
+vanguard12s/users-ms:lab
+```
+
 Resultado esperado:
 
 ```text
