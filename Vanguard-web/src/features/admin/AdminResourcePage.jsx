@@ -111,76 +111,110 @@ export function AdminResourcePage({ group }) {
   }
 
   return (
-    <section className="space-y-5">
-      <header className="border-b border-border pb-4 flex items-start justify-between gap-4">
+    <section className="space-y-6 animate-in fade-in duration-500">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/50 pb-6">
         <div>
-          <p className="text-sm text-accent font-mono">{group.toUpperCase()}</p>
-          <h2 className="text-2xl font-bold mt-1">{activeResource.title}</h2>
-          <p className="text-sm text-sec mt-2">Gestion y visualizacion de registros institucionales.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex flex-col items-end mr-4">
-            <span className="text-[10px] uppercase tracking-wider text-sec mb-1">
-              Total: <span className="text-main font-mono">{totalElements}</span> registros
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-bold tracking-widest uppercase border border-accent/20">
+              {group}
             </span>
-            <div className="flex items-center bg-card border border-border rounded-lg p-1">
-              <button
-                type="button"
-                disabled={page === 0 || isLoading}
-                onClick={() => loadRows(page - 1)}
-                className="p-1.5 rounded-md hover:bg-white/5 disabled:opacity-30 transition-colors"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <span className="px-3 text-xs font-mono text-sec">
-                Pag. {page + 1} / {totalPages}
-              </span>
-              <button
-                type="button"
-                disabled={page >= totalPages - 1 || isLoading}
-                onClick={() => loadRows(page + 1)}
-                className="p-1.5 rounded-md hover:bg-white/5 disabled:opacity-30 transition-colors"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+            <span className="h-px w-8 bg-border/50" />
+            <span className="text-sec text-[10px] font-mono tracking-tighter uppercase">
+              Infraestructura v1.0
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={() => loadRows(page)}
-            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-sec hover:text-main hover:border-accent/40"
-          >
-            <RefreshCcw size={16} />
-            Actualizar
-          </button>
+          <h2 className="text-3xl font-extrabold tracking-tight text-main">{activeResource.title}</h2>
+          <p className="text-sm text-sec mt-1 max-w-md">
+            Gestion y supervisión de registros institucionales sincronizados con el nucleo académico.
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => loadRows(page)}
+          className="flex items-center gap-2 self-start md:self-end rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-sec hover:text-main hover:border-accent/50 hover:bg-accent/5 transition-all duration-200"
+        >
+          <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+          Sincronizar
+        </button>
       </header>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 py-1">
         {resources.map((resource) => (
           <button
             key={resource.id}
             type="button"
             onClick={() => setActiveId(resource.id)}
-            className={`rounded-lg px-3 py-2 text-sm border transition-colors ${
+            className={`relative rounded-full px-5 py-1.5 text-xs font-semibold tracking-wide transition-all duration-300 border ${
               activeId === resource.id
-                ? 'border-accent/40 bg-accent/10 text-accent'
-                : 'border-border text-sec hover:text-main hover:border-accent/30'
+                ? 'border-accent bg-accent text-white shadow-[0_0_15px_rgba(99,102,241,0.3)]'
+                : 'border-border text-sec hover:text-main hover:border-accent/40 bg-card'
             }`}
           >
             {resource.title}
+            {activeId === resource.id && (
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white shadow-[0_0_8px_white]" />
+            )}
           </button>
         ))}
       </div>
 
-      {error && <div className="border border-warning/30 bg-warning/10 text-warning rounded-lg p-3 text-sm">{error}</div>}
+      {error && (
+        <div className="border border-warning/30 bg-warning/5 text-warning rounded-xl p-4 text-sm flex items-center gap-3 backdrop-blur-sm">
+          <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+          {error}
+        </div>
+      )}
 
-      <div className="cyber-panel p-4">
-        {isLoading ? (
-          <div className="py-12 text-center text-sec">Cargando registros...</div>
-        ) : (
-          <DataTable columns={activeResource.columns} rows={rows} actions={userActions} references={references} />
-        )}
+      <div className="space-y-4">
+        <div className="cyber-panel overflow-hidden border-none shadow-2xl">
+          <div className="bg-black/20 backdrop-blur-md p-1">
+            {isLoading ? (
+              <div className="py-24 text-center">
+                <div className="inline-block w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-sec text-sm font-medium animate-pulse tracking-widest uppercase">Consultando base de datos...</p>
+              </div>
+            ) : (
+              <DataTable columns={activeResource.columns} rows={rows} actions={userActions} references={references} />
+            )}
+          </div>
+        </div>
+
+        {/* Footer con Paginación - Ubicación Orgánica */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-2">
+          <div className="flex items-center gap-4 text-xs text-sec font-medium order-2 sm:order-1">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-success" />
+              <span>{totalElements} registros totales</span>
+            </div>
+            <span className="hidden sm:inline text-border">|</span>
+            <span className="font-mono">Página {page + 1} de {totalPages}</span>
+          </div>
+
+          <div className="flex items-center bg-card border border-border rounded-xl p-1.5 shadow-lg order-1 sm:order-2">
+            <button
+              type="button"
+              disabled={page === 0 || isLoading}
+              onClick={() => loadRows(page - 1)}
+              className="p-2 rounded-lg hover:bg-white/5 disabled:opacity-20 transition-all text-sec hover:text-accent"
+              title="Página anterior"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            
+            <div className="h-6 w-px bg-border/50 mx-1" />
+            
+            <button
+              type="button"
+              disabled={page >= totalPages - 1 || isLoading}
+              onClick={() => loadRows(page + 1)}
+              className="p-2 rounded-lg hover:bg-white/5 disabled:opacity-20 transition-all text-sec hover:text-accent"
+              title="Página siguiente"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -10,33 +10,45 @@ function formatValue(value, column, references = {}) {
 
 export function DataTable({ columns, rows, actions, references }) {
   return (
-    <div className="overflow-auto border border-border rounded-lg">
-      <table className="w-full min-w-[44rem] text-left border-collapse">
-        <thead className="bg-base">
-          <tr className="border-b border-border text-sec text-xs uppercase tracking-wider">
+    <div className="overflow-auto custom-scrollbar">
+      <table className="w-full min-w-[50rem] text-left border-separate border-spacing-0">
+        <thead>
+          <tr className="text-sec text-[10px] uppercase tracking-[0.2em] font-bold">
             {columns.map((column) => (
-              <th key={column.key} className="px-4 py-3 font-semibold">
+              <th key={column.key} className="px-6 py-4 border-b border-border/30 bg-black/40 sticky top-0 z-10">
                 {column.label}
               </th>
             ))}
-            {actions && <th className="px-4 py-3 font-semibold text-right">Acciones</th>}
+            {actions && <th className="px-6 py-4 border-b border-border/30 bg-black/40 sticky top-0 z-10 text-right">Acciones</th>}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-border/20">
           {rows.map((row, index) => (
-            <tr key={row.id ?? row.idUser ?? row.idRole ?? index} className="border-b border-border/60 hover:bg-white/5">
+            <tr 
+              key={row.id ?? row.idUser ?? row.idRole ?? index} 
+              className="group hover:bg-accent/[0.03] transition-colors duration-150"
+            >
               {columns.map((column) => (
-                <td key={column.key} className="px-4 py-3 text-sm">
+                <td key={column.key} className="px-6 py-4 text-sm font-medium text-main/90 group-hover:text-main">
                   {formatValue(row[column.key], column, references)}
                 </td>
               ))}
-              {actions && <td className="px-4 py-3 text-right">{actions(row)}</td>}
+              {actions && (
+                <td className="px-6 py-4 text-right opacity-60 group-hover:opacity-100 transition-opacity">
+                  {actions(row)}
+                </td>
+              )}
             </tr>
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-10 text-center text-sm text-sec">
-                No hay registros para mostrar.
+              <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-20 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-border/20 flex items-center justify-center text-sec/40">
+                    <span className="text-xl">!</span>
+                  </div>
+                  <p className="text-sm text-sec font-medium">No se encontraron registros en esta vista.</p>
+                </div>
               </td>
             </tr>
           )}
