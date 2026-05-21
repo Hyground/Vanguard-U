@@ -85,7 +85,7 @@ const Profile = {
         const user = AuthManager.getUser();
         if (!user) return;
 
-        document.getElementById('account-id').value = user.id;
+        document.getElementById('account-id').value = user.id || user.idUser;
         document.getElementById('account-username').value = user.username;
         document.getElementById('account-password').value = '';
         document.getElementById('account-modal').style.display = 'flex';
