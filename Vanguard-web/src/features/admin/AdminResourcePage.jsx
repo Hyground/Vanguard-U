@@ -86,13 +86,6 @@ export function AdminResourcePage({ group }) {
   }, [resources]);
 
   useEffect(() => {
-    if (activeResource?.manualLoad && page === 0 && rows.length === 0) {
-      setRows([]);
-      setReferences({});
-      setError('');
-      return;
-    }
-
     loadRows(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, token]);
@@ -183,12 +176,7 @@ export function AdminResourcePage({ group }) {
       {error && <div className="border border-warning/30 bg-warning/10 text-warning rounded-lg p-3 text-sm">{error}</div>}
 
       <div className="cyber-panel p-4">
-        {activeResource.manualLoad && rows.length === 0 && !isLoading ? (
-          <div className="py-12 text-center">
-            <p className="text-main font-medium">Carga manual requerida</p>
-            <p className="text-sm text-sec mt-2">Este recurso puede contener muchos registros. Usa actualizar para cargar la pagina solicitada.</p>
-          </div>
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="py-12 text-center text-sec">Cargando registros...</div>
         ) : (
           <DataTable columns={activeResource.columns} rows={rows} actions={userActions} references={references} />

@@ -13,7 +13,6 @@ export const adminResources = [
     group: 'Seguridad',
     title: 'Usuarios',
     endpoint: '/users',
-    manualLoad: true,
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'username', label: 'Usuario' },
