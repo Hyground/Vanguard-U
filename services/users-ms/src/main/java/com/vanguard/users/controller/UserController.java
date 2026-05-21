@@ -4,6 +4,7 @@ import com.vanguard.users.dto.request.UpdateUserRequest;
 import com.vanguard.users.dto.response.UserResponse;
 import com.vanguard.users.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +22,7 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllUsers(Pageable pageable) {
+    public ResponseEntity<Page<UserResponse>> getAllUsers(Pageable pageable) {
         return ResponseEntity.ok(userService.getAllUsers(pageable));
     }
 

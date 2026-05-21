@@ -3,10 +3,13 @@ package com.vanguard.academic.domain.service;
 import com.vanguard.academic.domain.model.Teacher;
 import com.vanguard.academic.domain.repository.TeacherRepository;
 import com.vanguard.academic.infrastructure.persistence.ExternalReferenceValidator;
-import java.util.List;
-import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -21,8 +24,8 @@ public class TeacherService {
     }
 
     @Transactional(readOnly = true)
-    public List<Teacher> findAll() {
-        return teacherRepository.findAll();
+    public Page<Teacher> findAll(Pageable pageable) {
+        return teacherRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
@@ -36,8 +39,8 @@ public class TeacherService {
     }
 
     @Transactional(readOnly = true)
-    public List<Teacher> searchByName(String name) {
-        return teacherRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name);
+    public Page<Teacher> searchByName(String name, Pageable pageable) {
+        return teacherRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name, pageable);
     }
 
     public Teacher save(Teacher teacher) {
