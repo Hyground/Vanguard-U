@@ -5,13 +5,13 @@ Scripts k6 para generar carga externa contra `api.wissegt.com` y observar el imp
 ## Linea base
 
 ```bash
-docker run --rm -i -e BASE_URL=http://api.wissegt.com grafana/k6 run - < load-tests/vanguard-read-baseline.js
+docker run --rm -i -e BASE_URL=https://api.wissegt.com grafana/k6 run - < load-tests/vanguard-read-baseline.js
 ```
 
 ## Estres progresivo
 
 ```bash
-docker run --rm -i -e BASE_URL=http://api.wissegt.com grafana/k6 run - < load-tests/vanguard-stress.js
+docker run --rm -i -e BASE_URL=https://api.wissegt.com grafana/k6 run - < load-tests/vanguard-stress.js
 ```
 
 ## Dashboards a observar

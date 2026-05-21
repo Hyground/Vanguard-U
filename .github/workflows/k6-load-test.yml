@@ -14,7 +14,7 @@ on:
       base_url:
         description: "API base URL"
         required: true
-        default: "http://api.wissegt.com"
+        default: "https://api.wissegt.com"
 
 jobs:
   k6:

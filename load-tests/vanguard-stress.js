@@ -14,7 +14,7 @@ export const options = {
   },
 };
 
-const BASE_URL = __ENV.BASE_URL || 'http://api.wissegt.com';
+const BASE_URL = __ENV.BASE_URL || 'https://api.wissegt.com';
 
 const readEndpoints = [
   '/api/v1/courses',

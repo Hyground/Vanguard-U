@@ -29,7 +29,7 @@ jobs:
       - name: Build frontend
         run: |
           cd Vanguard-web
-          npm install
+          npm ci
           npm run build
 
       - name: Upload frontend to server
@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.FRONTEND_USER }}
           key: ${{ secrets.FRONTEND_SSH_KEY }}
           port: 22
-          source: 'Vanguard-web/dist/*'
+          source: 'Vanguard-web/dist/*,Vanguard-web/dist/.htaccess'
           target: '/tmp/vanguard-web-release'
           rm: true
           strip_components: 2

@@ -95,7 +95,7 @@ Tambien puede ejecutarse manualmente desde GitHub Actions con `workflow_dispatch
 Despues del deploy:
 
 ```bash
-curl -I http://vanguard.wissegt.com
+curl -I https://vanguard.wissegt.com
 ```
 
 Debe responder `200 OK`.

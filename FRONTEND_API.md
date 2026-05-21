@@ -7,7 +7,7 @@ Guia corta para consumir el backend de Vanguard-U desde frontend, Postman o prue
 Usar siempre el gateway publico:
 
 ```text
-http://api.wissegt.com
+https://api.wissegt.com
 ```
 
 No consumir directamente los microservicios internos:
@@ -393,7 +393,7 @@ GET /api/v1/billing/payments/student/{idStudent}
 ## Ejemplo Fetch
 
 ```js
-const API_URL = "http://api.wissegt.com";
+const API_URL = "https://api.wissegt.com";
 
 async function login() {
   const response = await fetch(`${API_URL}/api/v1/auth/login`, {

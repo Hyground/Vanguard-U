@@ -161,9 +161,10 @@ curl -m 10 http://127.0.0.1/actuator/health
 Health por dominio:
 
 ```bash
-curl -m 10 http://api.wissegt.com/actuator/health
 curl -m 10 https://api.wissegt.com/actuator/health
 ```
+
+`http://api.wissegt.com` redirige a HTTPS.
 
 Login:
 
