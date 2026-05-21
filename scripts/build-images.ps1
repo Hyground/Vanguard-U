@@ -14,7 +14,8 @@ $services = @(
     @{ Name = "users-ms"; Path = "services/users-ms" },
     @{ Name = "academic-ms"; Path = "services/academic-ms" },
     @{ Name = "student-and-enrollment-ms"; Path = "services/student-and-enrollment-ms" },
-    @{ Name = "billing-ms"; Path = "services/billing-ms" }
+    @{ Name = "billing-ms"; Path = "services/billing-ms" },
+    @{ Name = "chaos-proxy"; Path = "services/chaos-proxy" }
 )
 
 foreach ($service in $services) {

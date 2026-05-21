@@ -4,6 +4,7 @@ import { LoginPage } from './auth/LoginPage';
 import { AppShell } from './layout/AppShell';
 import { AdminDashboard } from './features/admin/AdminDashboard';
 import { AdminResourcePage } from './features/admin/AdminResourcePage';
+import { InfrastructureMap } from './features/admin/InfrastructureMap';
 import { RoleHome } from './features/RoleHome';
 
 function AppRoutes() {
@@ -16,6 +17,7 @@ function AppRoutes() {
     if (role !== 'ADMIN') return <RoleHome />;
 
     if (currentView === 'overview') return <AdminDashboard />;
+    if (currentView === 'infra') return <InfrastructureMap />;
     if (currentView === 'users') return <AdminResourcePage group="Seguridad" />;
     if (currentView === 'academic') return <AdminResourcePage group="Academico" />;
     if (currentView === 'people') return <AdminResourcePage group="Personas" />;

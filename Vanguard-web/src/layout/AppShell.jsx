@@ -1,9 +1,10 @@
 import React from 'react';
-import { BookOpen, CreditCard, GraduationCap, LayoutDashboard, LogOut, Users, UserCog } from 'lucide-react';
+import { BookOpen, CreditCard, GraduationCap, LayoutDashboard, LogOut, Users, UserCog, Network } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 
 const adminNavItems = [
   { id: 'overview', label: 'Resumen', icon: LayoutDashboard },
+  { id: 'infra', label: 'Infraestructura', icon: Network },
   { id: 'users', label: 'Usuarios', icon: UserCog },
   { id: 'academic', label: 'Academico', icon: BookOpen },
   { id: 'people', label: 'Personas', icon: Users },

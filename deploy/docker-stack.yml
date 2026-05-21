@@ -96,6 +96,18 @@ services:
     networks:
       - vanguard-net
 
+  chaos-proxy:
+    image: vanguard12s/chaos-proxy:lab
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - vanguard-net
+
   api-proxy:
     image: caddy:2
     ports:
