@@ -1,13 +1,18 @@
 import { apiRequest, asList } from './client';
 
-const PAGE_QUERY = '?page=0&size=50&sort=id,desc';
+const DEFAULT_PAGE_SIZE = 20;
+
+export function buildPagedEndpoint(endpoint, page = 0, size = DEFAULT_PAGE_SIZE) {
+  const separator = endpoint.includes('?') ? '&' : '?';
+  return `${endpoint}${separator}page=${page}&size=${size}&sort=id,desc`;
+}
 
 export const adminResources = [
   {
     id: 'users',
     group: 'Seguridad',
     title: 'Usuarios',
-    endpoint: `/users${PAGE_QUERY}`,
+    endpoint: '/users',
     manualLoad: true,
     columns: [
       { key: 'id', label: 'ID' },
@@ -107,7 +112,7 @@ export const adminResources = [
     id: 'students',
     group: 'Personas',
     title: 'Estudiantes',
-    endpoint: `/students${PAGE_QUERY}`,
+    endpoint: '/students',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'personalCode', label: 'Codigo' },
@@ -120,7 +125,7 @@ export const adminResources = [
     id: 'tutors',
     group: 'Personas',
     title: 'Tutores',
-    endpoint: `/tutors${PAGE_QUERY}`,
+    endpoint: '/tutors',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'cui', label: 'CUI' },
@@ -133,7 +138,7 @@ export const adminResources = [
     id: 'enrollments',
     group: 'Operaciones',
     title: 'Inscripciones',
-    endpoint: `/enrollments${PAGE_QUERY}`,
+    endpoint: '/enrollments',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'studentId', label: 'Estudiante', type: 'ref', ref: 'students' },
@@ -147,7 +152,7 @@ export const adminResources = [
     id: 'teacher-assignments',
     group: 'Operaciones',
     title: 'Asignaciones docentes',
-    endpoint: `/teacher-assignments${PAGE_QUERY}`,
+    endpoint: '/teacher-assignments',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'teacherId', label: 'Docente', type: 'ref', ref: 'teachers' },
@@ -160,7 +165,7 @@ export const adminResources = [
     id: 'schedules',
     group: 'Operaciones',
     title: 'Horarios',
-    endpoint: `/schedules${PAGE_QUERY}`,
+    endpoint: '/schedules',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'dayOfWeek', label: 'Dia' },
@@ -182,8 +187,9 @@ export const adminResources = [
   },
 ];
 
-export function listResource(resource, token) {
-  return apiRequest(resource.endpoint, { token }).then(asList);
+export function listResource(resource, token, page = 0) {
+  const url = buildPagedEndpoint(resource.endpoint, page);
+  return apiRequest(url, { token });
 }
 
 export function getResourceById(resourceId, id, token) {
@@ -206,10 +212,21 @@ export async function getAdminOverview(token) {
   const selected = adminResources.filter((resource) => keys.includes(resource.id));
   const results = await Promise.allSettled(selected.map((resource) => listResource(resource, token)));
 
-  return selected.map((resource, index) => ({
-    id: resource.id,
-    label: resource.title,
-    value: results[index].status === 'fulfilled' ? results[index].value.length : null,
-    error: results[index].status === 'rejected' ? results[index].reason.message : null,
-  }));
+  return selected.map((resource, index) => {
+    const res = results[index];
+    let value = null;
+
+    if (res.status === 'fulfilled') {
+      const payload = res.value;
+      // Intentar extraer el total de elementos de metadatos comunes (Spring Data, etc.)
+      value = payload?.totalElements ?? payload?.total ?? payload?.data?.totalElements ?? asList(payload).length;
+    }
+
+    return {
+      id: resource.id,
+      label: resource.title,
+      value,
+      error: res.status === 'rejected' ? res.reason.message : null,
+    };
+  });
 }

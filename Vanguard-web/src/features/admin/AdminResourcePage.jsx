@@ -1,30 +1,44 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { RefreshCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
 import { adminResources, getResourceById, listResource, updateUserStatus } from '../../api/adminApi';
-import { getErrorMessage } from '../../api/client';
+import { asList, getErrorMessage } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { DataTable } from '../../components/DataTable';
 import { EmptyState } from '../../components/EmptyState';
+
+// Cache simple para evitar peticiones repetidas a los mismos recursos/ids
+const referenceCache = {};
 
 export function AdminResourcePage({ group }) {
   const { token } = useAuth();
   const resources = useMemo(() => adminResources.filter((resource) => resource.group === group), [group]);
   const [activeId, setActiveId] = useState(resources[0]?.id);
   const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [references, setReferences] = useState({});
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const activeResource = resources.find((resource) => resource.id === activeId);
 
-  const loadRows = async () => {
+  const loadRows = async (targetPage = 0) => {
     if (!activeResource) return;
     setIsLoading(true);
     setError('');
-    setReferences({});
 
     try {
-      const nextRows = await listResource(activeResource, token);
+      const response = await listResource(activeResource, token, targetPage);
+      const nextRows = asList(response);
+
+      // Metadatos de paginacion (Spring style)
+      const totalP = response?.totalPages ?? response?.data?.totalPages ?? 1;
+      const totalE = response?.totalElements ?? response?.data?.totalElements ?? nextRows.length;
+
       setRows(nextRows);
+      setPage(targetPage);
+      setTotalPages(totalP);
+      setTotalElements(totalE);
       setReferences(await loadReferences(activeResource, nextRows, token));
     } catch (err) {
       setRows([]);
@@ -41,12 +55,22 @@ export function AdminResourcePage({ group }) {
     const entries = await Promise.all(
       refColumns.map(async (column) => {
         const ids = [...new Set(nextRows.map((row) => row[column.key]).filter(Boolean))];
-        const items = await Promise.allSettled(ids.map((id) => getResourceById(column.ref, id, authToken)));
-        const map = {};
 
-        items.forEach((result, index) => {
-          if (result.status !== 'fulfilled' || !result.value) return;
-          map[ids[index]] = getReferenceLabel(result.value);
+        // Filtrar IDs que ya estan en cache
+        const missingIds = ids.filter((id) => !referenceCache[`${column.ref}:${id}`]);
+
+        if (missingIds.length > 0) {
+          const results = await Promise.allSettled(missingIds.map((id) => getResourceById(column.ref, id, authToken)));
+          results.forEach((result, index) => {
+            if (result.status === 'fulfilled' && result.value) {
+              referenceCache[`${column.ref}:${missingIds[index]}`] = getReferenceLabel(result.value);
+            }
+          });
+        }
+
+        const map = {};
+        ids.forEach((id) => {
+          map[id] = referenceCache[`${column.ref}:${id}`];
         });
 
         return [column.ref, map];
@@ -58,17 +82,18 @@ export function AdminResourcePage({ group }) {
 
   useEffect(() => {
     setActiveId(resources[0]?.id);
+    setPage(0);
   }, [resources]);
 
   useEffect(() => {
-    if (activeResource?.manualLoad) {
+    if (activeResource?.manualLoad && page === 0 && rows.length === 0) {
       setRows([]);
       setReferences({});
       setError('');
       return;
     }
 
-    loadRows();
+    loadRows(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, token]);
 
@@ -79,7 +104,7 @@ export function AdminResourcePage({ group }) {
             type="button"
             onClick={async () => {
               await updateUserStatus(row.id, !row.status, token);
-              await loadRows();
+              await loadRows(page);
             }}
             className="text-xs px-3 py-1 rounded border border-border text-sec hover:text-main hover:border-accent/40"
           >
@@ -100,14 +125,42 @@ export function AdminResourcePage({ group }) {
           <h2 className="text-2xl font-bold mt-1">{activeResource.title}</h2>
           <p className="text-sm text-sec mt-2">Gestion y visualizacion de registros institucionales.</p>
         </div>
-        <button
-          type="button"
-          onClick={loadRows}
-          className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-sec hover:text-main hover:border-accent/40"
-        >
-          <RefreshCcw size={16} />
-          Actualizar
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col items-end mr-4">
+            <span className="text-[10px] uppercase tracking-wider text-sec mb-1">
+              Total: <span className="text-main font-mono">{totalElements}</span> registros
+            </span>
+            <div className="flex items-center bg-card border border-border rounded-lg p-1">
+              <button
+                type="button"
+                disabled={page === 0 || isLoading}
+                onClick={() => loadRows(page - 1)}
+                className="p-1.5 rounded-md hover:bg-white/5 disabled:opacity-30 transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span className="px-3 text-xs font-mono text-sec">
+                Pag. {page + 1} / {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalPages - 1 || isLoading}
+                onClick={() => loadRows(page + 1)}
+                className="p-1.5 rounded-md hover:bg-white/5 disabled:opacity-30 transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadRows(page)}
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-sec hover:text-main hover:border-accent/40"
+          >
+            <RefreshCcw size={16} />
+            Actualizar
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-wrap gap-2">
