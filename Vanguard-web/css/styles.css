@@ -40,7 +40,102 @@ body {
     line-height: 1.5;
     overflow-x: hidden;
     transition: background-color 0.3s ease, color 0.3s ease;
+    background-image: 
+        radial-gradient(var(--border-color) 1px, transparent 1px);
+    background-size: 32px 32px;
 }
+
+/* Hexagon Pattern Overlay */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%236366f1' stroke-width='0.5' stroke-opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* Dashboard Header Enhancement */
+.dashboard-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    color: white;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.dashboard-header h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.dashboard-header p {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* Stat Cards Enhancement */
+.stat-card.glass {
+    border-left: 4px solid var(--primary-color);
+}
+
+.stat-card .icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+}
+
+/* System Health Section */
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.health-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--surface-color);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.status-offline { background: var(--error); box-shadow: 0 0 8px var(--error); }
 
 /* Login Page */
 .login-container {
