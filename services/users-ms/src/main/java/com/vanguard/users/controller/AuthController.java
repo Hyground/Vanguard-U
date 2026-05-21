@@ -2,7 +2,9 @@ package com.vanguard.users.controller;
 
 import com.vanguard.users.dto.request.AuthRequest;
 import com.vanguard.users.dto.request.ChangePasswordRequest;
+import com.vanguard.users.dto.request.ForgotPasswordRequest;
 import com.vanguard.users.dto.request.RegisterRequest;
+import com.vanguard.users.dto.request.ResetPasswordRequest;
 import com.vanguard.users.dto.response.AuthResponse;
 import com.vanguard.users.service.AuthService;
 import jakarta.validation.Valid;
@@ -41,5 +43,24 @@ public class AuthController {
     ) {
         authService.changePassword(authentication.getName(), request.getCurrentPassword(), request.getNewPassword());
         return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        String token = authService.forgotPassword(request);
+        return ResponseEntity.ok(Map.of(
+                "message", "Recovery token generated successfully",
+                "token", token
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 }
