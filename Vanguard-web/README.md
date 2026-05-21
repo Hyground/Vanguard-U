@@ -4,11 +4,11 @@
 Vanguard-web es la interfaz de usuario oficial para el ecosistema Vanguard-U, diseñada para operar bajo una arquitectura de microservicios con un Gateway como punto único de entrada. La web se enfoca en la **Alta Disponibilidad** y la **Seguridad**, heredando las políticas de autenticación y autorización del backend.
 
 ### Arquitectura de Navegación
-La aplicación utiliza un patrón de **Single Page Application (SPA)** simplificado mediante Vanilla JS para minimizar la carga de recursos y maximizar la velocidad de respuesta. Todas las solicitudes al backend se realizan a través de la ruta base del Gateway (`/api/v1/`).
+La aplicación utiliza un patrón de **Single Page Application (SPA)** simplificado mediante Vanilla JS para minimizar la carga de recursos y maximizar la velocidad de respuesta. Todas las solicitudes al backend se realizan a través de la API publica por HTTPS (`https://api.wissegt.com/api/v1`).
 
 ### Flujo de Autenticación
 1. El usuario ingresa sus credenciales en la vista de Login.
-2. La solicitud se envía a `/api/v1/auth/authenticate`.
+2. La solicitud se envía a `https://api.wissegt.com/api/v1/auth/login`.
 3. El backend (`users-ms`) valida y retorna un **JWT**.
 4. El frontend almacena el JWT de forma segura y lo adjunta en el encabezado `Authorization: Bearer <token>` para todas las solicitudes subsecuentes.
 
@@ -36,7 +36,7 @@ Para realizar cambios o expandir la funcionalidad:
 ### Flujo de Datos por Microservicio
 - **users-ms:** Maneja `/auth/` y `/users/`. Es el corazón de la seguridad.
 - **academic-ms:** Catálogos de cursos, maestros y carreras.
-- **student-ms:** Notas, asistencia y actividades (usado para el Calendario).
+- **student-and-enrollment-ms:** Notas, asistencia y actividades (usado para el Calendario).
 - **billing-ms:** Pagos y métodos de pago (usado en la vista de Finanzas).
 
 ## 5. Consideraciones Imprescindibles
