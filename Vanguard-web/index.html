@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vanguard-Udet | Sistema Académico</title>
+    <title>Vanguard-U | Sistema Académico</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/sidebar-navbar.css">
     <link rel="stylesheet" href="css/components.css">
@@ -43,28 +43,27 @@
         </div>
     </div>
 
-    <!-- Scripts Core e Infraestructura -->
-    <script src="js/core/store.js"></script>
-    <script src="js/core/api.js"></script>
+    <!-- Scripts de utilidades y servicios -->
+    <script src="js/utils/gateway-client.js"></script>
+    <script src="js/utils/auth-manager.js"></script>
+    <script src="js/services/auth-service.js"></script>
+    <script src="js/services/academic-service.js"></script>
+    <script src="js/services/billing-service.js"></script>
+    <script src="js/services/student-service.js"></script>
+    <script src="js/services/user-service.js"></script>
 
-    <!-- Componentes Reutilizables -->
+    <!-- Scripts de componentes y páginas -->
+    <script src="js/components/navbar.js"></script>
     <script src="js/components/sidebar.js"></script>
-
-    <!-- Vistas (Views) -->
-    <script src="js/views/tablero.js"></script>
-    <script src="js/views/cursos.js"></script>
-    <script src="js/views/calendario.js"></script>
-    <script src="js/views/finanzas.js"></script>
-    <script src="js/views/perfil.js"></script>
-    <script src="js/views/asistencia.js"></script>
-    <script src="js/views/auditoria.js"></script>
-    <script src="js/views/usuarios.js"></script>
-    <script src="js/views/personas.js"></script>
-    <script src="js/views/inscripciones.js"></script>
-    <script src="js/views/academic.js"></script>
-    
-    <!-- Páginas (Legacy/Pending Refactor) -->
     <script src="js/pages/login.js"></script>
+    <script src="js/pages/dashboard.js"></script>
+    <script src="js/pages/profile.js"></script>
+    <script src="js/pages/calendar.js"></script>
+    <script src="js/pages/finance.js"></script>
+    <script src="js/pages/users.js"></script>
+    <script src="js/pages/people.js"></script>
+    <script src="js/pages/enrollments.js"></script>
+    <script src="js/pages/public-enrollment.js"></script>
 
     <!-- Script principal de la aplicación -->
     <script src="js/app.js"></script>
