@@ -1,38 +1,16 @@
-document.addEventListener('DOMContentLoaded', () => {
-    App.init();
-});
-
+/**
+ * Main Application Orchestrator
+ * Pattern: Controller
+ */
 const App = {
     init() {
         this.appElement = document.getElementById('app');
         this.loadingScreen = document.getElementById('loading-screen');
-
-        // Manejador global de cuenta
-        const accountForm = document.getElementById('account-form-global');
-        if (accountForm) {
-            accountForm.onsubmit = async (e) => {
-                e.preventDefault();
-                const id = document.getElementById('account-id').value;
-                const username = document.getElementById('account-username').value;
-                const password = document.getElementById('account-password').value;
-                const data = { username };
-                if (password) data.password = password;
-
-                try {
-                    App.showLoading(true);
-                    await userService.updateUser(id, data);
-                    App.showToast('Cuenta actualizada');
-                    document.getElementById('account-modal').style.display = 'none';
-                    // Intentar recargar la vista actual si tiene loadRecords/loadUsers
-                    if (window.Users && typeof Users.loadUsers === 'function') await Users.loadUsers();
-                    if (window.People && typeof People.loadRecords === 'function') await People.loadRecords();
-                } catch (err) {
-                    App.showToast(err.message, 'error');
-                } finally {
-                    App.showLoading(false);
-                }
-            };
-        }
+        
+        // Listen to state changes
+        Store.subscribe((state) => {
+            console.log("State updated:", state);
+        });
 
         this.render();
     },
@@ -40,8 +18,14 @@ const App = {
     async render() {
         this.showLoading(true);
 
-        if (!AuthManager.isAuthenticated()) {
-            Login.render(this.appElement);
+        if (!Store.isAuthenticated()) {
+            // Render Login (Assuming Login is still in js/pages/login.js for now, but I'll move it soon)
+            if (window.Login) {
+                Login.render(this.appElement);
+            } else {
+                console.error("Login component not found");
+                this.appElement.innerHTML = '<div style="padding: 2rem; text-align: center;">Error: Cargando módulos principales...</div>';
+            }
         } else {
             await this.renderLayout();
         }
@@ -50,24 +34,50 @@ const App = {
     },
 
     async renderLayout() {
-        const user = AuthManager.getUser();
-        const role = AuthManager.getRole();
-
         this.appElement.innerHTML = `
             <div class="app-container">
-                <aside id="sidebar-container"></aside>
+                <aside id="sidebar"></aside>
                 <main class="main-content">
-                    <header id="navbar-container"></header>
                     <div id="page-content"></div>
                 </main>
             </div>
         `;
 
-        Sidebar.render(document.getElementById('sidebar-container'), role);
-        Navbar.render(document.getElementById('navbar-container'), user);
-        
-        // Cargar Dashboard por defecto
-        Dashboard.render(document.getElementById('page-content'), role);
+        window.currentPage = window.currentPage || 'tablero';
+        Sidebar.render();
+        await this.renderView(window.currentPage);
+    },
+
+    async renderView(view, params = {}) {
+        this.showLoading(true);
+        const contentArea = document.getElementById('page-content');
+        if (!contentArea) return;
+
+        try {
+            switch(view) {
+                case 'tablero':
+                    await Tablero.render(contentArea);
+                    break;
+                case 'cursos':
+                    // await Cursos.render(contentArea, params);
+                    contentArea.innerHTML = '<div class="card"><h2>Módulo de Cursos</h2><p class="text-muted">Próximamente...</p></div>';
+                    break;
+                case 'finanzas':
+                    // await Finanzas.render(contentArea);
+                    contentArea.innerHTML = '<div class="card"><h2>Finanzas</h2><p class="text-muted">Próximamente...</p></div>';
+                    break;
+                case 'perfil':
+                    // await Perfil.render(contentArea);
+                    contentArea.innerHTML = '<div class="card"><h2>Mi Perfil</h2><p class="text-muted">Próximamente...</p></div>';
+                    break;
+                default:
+                    await Tablero.render(contentArea);
+            }
+        } catch (error) {
+            this.showToast("Error al cargar la vista: " + error.message, 'error');
+        } finally {
+            this.showLoading(false);
+        }
     },
 
     showLoading(show) {
@@ -79,47 +89,22 @@ const App = {
     showToast(message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type} animate-fade-up`;
+        toast.style.cssText = `
+            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+            padding: 1rem 2rem; border-radius: var(--radius-md); color: white;
+            background: ${type === 'error' ? 'var(--accent-rose)' : 'var(--accent-emerald)'};
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10000; font-weight: 600;
+        `;
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => {
-            toast.classList.add('fade-out');
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s ease';
             setTimeout(() => toast.remove(), 500);
         }, 3000);
-    },
-
-    async navigate(page, params = {}) {
-        this.showLoading(true);
-        const contentArea = document.getElementById('page-content');
-        const role = AuthManager.getRole();
-
-        switch(page) {
-            case 'dashboard':
-                await Dashboard.render(contentArea, role);
-                break;
-            case 'profile':
-                await Profile.render(contentArea);
-                break;
-            case 'calendar':
-                await Calendar.render(contentArea, role);
-                break;
-            case 'finance':
-                await Finance.render(contentArea, role);
-                break;
-            case 'users':
-                await Users.render(contentArea);
-                break;
-            case 'people':
-                await People.render(contentArea);
-                break;
-            case 'enrollments':
-                await Enrollments.render(contentArea);
-                break;
-            case 'public-enrollment':
-                await PublicEnrollment.render(this.appElement);
-                break;
-            default:
-                await Dashboard.render(contentArea, role);
-        }
-        this.showLoading(false);
     }
 };
+
+// Initialize App
+document.addEventListener('DOMContentLoaded', () => App.init());
+window.App = App;
