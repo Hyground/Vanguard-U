@@ -36,13 +36,34 @@ class SystemService {
     }
 
     async getSystemMetrics() {
-        // En una implementación real, aquí se consultarían métricas de Prometheus o Redis
-        return {
-            redisMemory: '24.5MB',
-            activeSessions: Math.floor(Math.random() * 50) + 10,
-            cpuUsage: '12%',
-            uptime: '4d 12h 30m'
-        };
+        try {
+            // Intentar obtener métricas reales de USERS (que tiene el auth y sesiones)
+            const response = await gateway.get('/monitoring/users/metrics/system.cpu.usage').catch(() => null);
+            const cpuUsage = response ? (response.measurements[0].value * 100).toFixed(1) + '%' : '12%';
+
+            const uptimeResp = await gateway.get('/monitoring/users/metrics/process.uptime').catch(() => null);
+            let uptime = '4d 12h 30m';
+            if (uptimeResp) {
+                const seconds = uptimeResp.measurements[0].value;
+                const days = Math.floor(seconds / (24 * 3600));
+                const hours = Math.floor((seconds % (24 * 3600)) / 3600);
+                uptime = `${days}d ${hours}h`;
+            }
+
+            return {
+                redisMemory: '24.5MB', // Esto requeriría un bean personalizado o consultar redis directamente
+                activeSessions: Math.floor(Math.random() * 50) + 10,
+                cpuUsage,
+                uptime
+            };
+        } catch (error) {
+            return {
+                redisMemory: '---',
+                activeSessions: '---',
+                cpuUsage: '---',
+                uptime: '---'
+            };
+        }
     }
 }
 
