@@ -20,35 +20,12 @@ const App = {
 
                 try {
                     App.showLoading(true);
-                    const updatedUser = await userService.updateUser(id, data);
-                    
-                    // Si el usuario actualizado es el actual, actualizar AuthManager
-                    const currentUser = AuthManager.getUser();
-                    const currentId = currentUser ? (currentUser.id || currentUser.idUser) : null;
-                    
-                    if (currentId && currentId == id) {
-                        const newUserState = { ...currentUser, ...updatedUser };
-                        localStorage.setItem('vanguard_user', JSON.stringify(newUserState));
-                        
-                        // Re-renderizar Sidebar y Navbar para reflejar cambios (ej. username)
-                        const sidebarContainer = document.getElementById('sidebar-container');
-                        const navbarContainer = document.getElementById('navbar-container');
-                        if (sidebarContainer) Sidebar.render(sidebarContainer, newUserState.role);
-                        if (navbarContainer) Navbar.render(navbarContainer, newUserState);
-                    }
-
+                    await userService.updateUser(id, data);
                     App.showToast('Cuenta actualizada');
                     document.getElementById('account-modal').style.display = 'none';
-                    
-                    // Recargar vistas si están activas
+                    // Intentar recargar la vista actual si tiene loadRecords/loadUsers
                     if (window.Users && typeof Users.loadUsers === 'function') await Users.loadUsers();
                     if (window.People && typeof People.loadRecords === 'function') await People.loadRecords();
-                    
-                    // Si estamos en la página de perfil, volver a renderizar
-                    const contentArea = document.getElementById('page-content');
-                    if (contentArea && contentArea.querySelector('.profile-container')) {
-                        await Profile.render(contentArea);
-                    }
                 } catch (err) {
                     App.showToast(err.message, 'error');
                 } finally {

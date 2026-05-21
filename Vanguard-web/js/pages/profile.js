@@ -68,26 +68,13 @@ const Profile = {
                 </div>
 
                 <div class="card glass mt-4">
-                    <h3>Gestión de Credenciales</h3>
-                    <p class="text-secondary mb-4">Actualice su nombre de usuario o cambie su contraseña de acceso.</p>
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-primary" onclick="Profile.openAccountModal()">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            Editar Credenciales
-                        </button>
-                    </div>
+                    <h3>Seguridad</h3>
+                    <p class="text-secondary mb-3">Mantén tu contraseña segura y no la compartas con nadie.</p>
+                    <button class="btn btn-secondary" onclick="alert('Funcionalidad de cambio de contraseña próximamente')">
+                        Cambiar Contraseña
+                    </button>
                 </div>
             </div>
         `;
-    },
-
-    openAccountModal() {
-        const user = AuthManager.getUser();
-        if (!user) return;
-
-        document.getElementById('account-id').value = user.id || user.idUser;
-        document.getElementById('account-username').value = user.username;
-        document.getElementById('account-password').value = '';
-        document.getElementById('account-modal').style.display = 'flex';
     }
 };

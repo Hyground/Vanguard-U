@@ -18,16 +18,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getMe() {
-        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        return ResponseEntity.ok(Map.of(
-                "username", auth.getName(),
-                "authorities", auth.getAuthorities(),
-                "authenticated", auth.isAuthenticated()
-        ));
-    }
-
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {

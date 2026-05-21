@@ -17,7 +17,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
@@ -46,12 +45,8 @@ public class UserService {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        if (request.getUsername() != null && !request.getUsername().isBlank()) {
+        if (request.getUsername() != null) {
             user.setUsername(request.getUsername());
-        }
-
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
         
         if (request.getRoleId() != null) {

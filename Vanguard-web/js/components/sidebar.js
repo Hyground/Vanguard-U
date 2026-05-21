@@ -46,6 +46,7 @@ const Sidebar = {
                     </div>
                     <div class="profile-info">
                         <h4>${user ? user.username : 'Usuario'}</h4>
+                        <p>${role}</p>
                     </div>
                 </div>
 
