@@ -28,13 +28,13 @@ public class Teacher {
     @Column(name = "email", length = 100)
     private String email;
 
-    @Column(name = "id_user", nullable = false)
-    private Long userId;
+    @Column(name = "id_user")
+    private Integer userId;
 
     public Teacher() {
     }
 
-    public Teacher(String cui, String firstName, String lastName, String email, Long userId) {
+    public Teacher(String cui, String firstName, String lastName, String email, Integer userId) {
         this.cui = cui;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -78,11 +78,11 @@ public class Teacher {
         this.email = email;
     }
 
-    public Long getUserId() {
+    public Integer getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(Integer userId) {
         this.userId = userId;
     }
 }

@@ -52,7 +52,7 @@ public class Student {
     @JoinColumn(name = "id_tutor")
     private Tutor tutor;
 
-    @Column(name = "id_user", nullable = false)
+    @Column(name = "id_user")
     private Integer userId;
 
     public Student() {

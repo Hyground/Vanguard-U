@@ -39,7 +39,7 @@ public class Tutor {
     @Column(name = "last_name", length = 100, nullable = false)
     private String lastName;
 
-    @Column(name = "id_user", nullable = false)
+    @Column(name = "id_user")
     private Integer userId;
 
     public Tutor() {
