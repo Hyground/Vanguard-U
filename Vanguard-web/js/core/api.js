@@ -4,7 +4,7 @@
  */
 class ApiClient {
     constructor() {
-        this.baseUrl = 'http://api.wissegt.com/api/v1';
+        this.baseUrl = 'https://api.wissegt.com/api/v1';
     }
 
     async request(endpoint, options = {}) {
