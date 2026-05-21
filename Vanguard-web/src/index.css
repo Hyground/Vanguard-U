@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-base text-main font-sans overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  .cyber-glow {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+  }
+  .cyber-glow-success {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+  }
+  .cyber-border {
+    border: 1px solid theme('colors.border');
+  }
+  .cyber-panel {
+    @apply bg-card cyber-border rounded-xl backdrop-blur-sm bg-opacity-90;
+  }
+}
+
+/* Custom Cyberpunk Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: theme('colors.base');
+}
+::-webkit-scrollbar-thumb {
+  background: theme('colors.border');
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.sec');
+}

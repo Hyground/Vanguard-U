@@ -1,71 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vanguard-U | Sistema Académico</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/sidebar-navbar.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vanguard-U | Cyberpunk Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div id="app">
-        <!-- El contenido se cargará dinámicamente aquí -->
-        <div id="loading-screen" class="loading-screen">
-            <div class="spinner"></div>
-            <p>Iniciando Vanguard-U...</p>
-        </div>
-    </div>
-
-    <!-- Modal Común de Gestión de Cuenta -->
-    <div id="account-modal" class="modal">
-        <div class="modal-content glass animate-scale">
-            <h3>Gestionar Cuenta</h3>
-            <p class="text-secondary mb-4">Actualice las credenciales de acceso para el usuario.</p>
-            <form id="account-form-global">
-                <input type="hidden" id="account-id">
-                <div class="form-group">
-                    <label>Username Actual / Nuevo</label>
-                    <input type="text" id="account-username" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Nueva Contraseña (Dejar en blanco para no cambiar)</label>
-                    <input type="password" id="account-password" class="form-control" placeholder="••••••••">
-                </div>
-                <div class="modal-actions mt-4">
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('account-modal').style.display='none'">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Scripts de utilidades y servicios -->
-    <script src="js/utils/gateway-client.js"></script>
-    <script src="js/utils/auth-manager.js"></script>
-    <script src="js/services/auth-service.js"></script>
-    <script src="js/services/academic-service.js"></script>
-    <script src="js/services/billing-service.js"></script>
-    <script src="js/services/student-service.js"></script>
-    <script src="js/services/user-service.js"></script>
-
-    <!-- Scripts de componentes y páginas -->
-    <script src="js/components/navbar.js"></script>
-    <script src="js/components/sidebar.js"></script>
-    <script src="js/pages/login.js"></script>
-    <script src="js/pages/dashboard.js"></script>
-    <script src="js/pages/profile.js"></script>
-    <script src="js/pages/calendar.js"></script>
-    <script src="js/pages/finance.js"></script>
-    <script src="js/pages/users.js"></script>
-    <script src="js/pages/people.js"></script>
-    <script src="js/pages/enrollments.js"></script>
-    <script src="js/pages/public-enrollment.js"></script>
-
-    <!-- Script principal de la aplicación -->
-    <script src="js/app.js"></script>
-</body>
+  </head>
+  <body class="bg-[#0B0F19] text-[#F9FAFB] antialiased min-h-screen selection:bg-[#6366F1] selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

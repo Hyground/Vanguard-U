@@ -19,6 +19,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'Vanguard-web/package-lock.json'
+
+      - name: Build frontend
+        run: |
+          cd Vanguard-web
+          npm install
+          npm run build
+
       - name: Upload frontend to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -26,10 +39,10 @@ jobs:
           username: ${{ secrets.FRONTEND_USER }}
           key: ${{ secrets.FRONTEND_SSH_KEY }}
           port: 22
-          source: 'Vanguard-web/*'
+          source: 'Vanguard-web/dist/*'
           target: '/tmp/vanguard-web-release'
           rm: true
-          strip_components: 1
+          strip_components: 2
 
       - name: Publish frontend
         uses: appleboy/ssh-action@v1.0.3
