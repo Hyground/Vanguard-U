@@ -122,6 +122,28 @@ const Dashboard = {
             const userList = Array.isArray(users) ? users : users.content;
 
             container.innerHTML = `
+                <div class="card glass animate-fade mb-4">
+                    <h3 class="mb-4">Acciones Rápidas de Administración</h3>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="App.navigate('enrollments')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                            Nueva Inscripción
+                        </button>
+                        <button class="btn btn-secondary" onclick="App.navigate('people')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Registrar Persona
+                        </button>
+                        <button class="btn btn-secondary" onclick="App.navigate('finance')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            Ver Finanzas
+                        </button>
+                        <button class="btn btn-secondary" onclick="App.navigate('users')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            Gestionar Usuarios
+                        </button>
+                    </div>
+                </div>
+
                 <div class="stats-grid mb-4">
                     <div class="stat-card glass animate-scale">
                         <div class="icon-box">
@@ -198,28 +220,6 @@ const Dashboard = {
                                 </p>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="card glass animate-fade">
-                    <h3 class="mb-4">Acciones Rápidas de Administración</h3>
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="App.navigate('enrollments')">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
-                            Nueva Inscripción
-                        </button>
-                        <button class="btn btn-secondary" onclick="App.navigate('people')">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            Registrar Persona
-                        </button>
-                        <button class="btn btn-secondary" onclick="App.navigate('finance')">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                            Ver Finanzas
-                        </button>
-                        <button class="btn btn-secondary" onclick="App.navigate('users')">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                            Gestionar Usuarios
-                        </button>
                     </div>
                 </div>
             `;
