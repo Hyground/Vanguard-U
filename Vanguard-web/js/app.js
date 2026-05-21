@@ -59,16 +59,22 @@ const App = {
                     await Tablero.render(contentArea);
                     break;
                 case 'cursos':
-                    // await Cursos.render(contentArea, params);
-                    contentArea.innerHTML = '<div class="card"><h2>Módulo de Cursos</h2><p class="text-muted">Próximamente...</p></div>';
+                    await Cursos.render(contentArea, params);
+                    break;
+                case 'calendario':
+                    await Calendario.render(contentArea);
                     break;
                 case 'finanzas':
-                    // await Finanzas.render(contentArea);
-                    contentArea.innerHTML = '<div class="card"><h2>Finanzas</h2><p class="text-muted">Próximamente...</p></div>';
+                    await Finanzas.render(contentArea);
                     break;
                 case 'perfil':
-                    // await Perfil.render(contentArea);
-                    contentArea.innerHTML = '<div class="card"><h2>Mi Perfil</h2><p class="text-muted">Próximamente...</p></div>';
+                    await Perfil.render(contentArea);
+                    break;
+                case 'asistencia':
+                    await Asistencia.render(contentArea);
+                    break;
+                case 'auditoria':
+                    await Auditoria.render(contentArea);
                     break;
                 default:
                     await Tablero.render(contentArea);

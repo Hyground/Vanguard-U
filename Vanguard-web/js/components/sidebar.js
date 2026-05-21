@@ -75,9 +75,9 @@ const Sidebar = {
         }
     },
 
-    navigate(view) {
+    navigate(view, params = {}) {
         window.currentPage = view;
-        App.renderView(view);
+        App.renderView(view, params);
         this.render(); // Re-render to update active state
     },
 

@@ -54,55 +54,152 @@ const Tablero = {
     },
 
     async loadData() {
-        const role = Store.getRole();
         const user = Store.getUser();
+        const role = Store.getRole();
         
         try {
+            App.showLoading(true);
             if (role === 'STUDENT') {
-                this.loadStudentDashboard(user.id);
+                await this.loadStudentDashboard(user.id);
             } else if (role === 'TEACHER') {
-                this.loadTeacherDashboard(user.id);
-            } else {
+                await this.loadTeacherDashboard(user.id);
+            } else if (role === 'ADMIN') {
                 this.loadAdminDashboard();
             }
         } catch (error) {
             console.error("Error loading dashboard data:", error);
+            App.showToast("Error al cargar datos del tablero", "error");
+        } finally {
+            App.showLoading(false);
         }
     },
 
     async loadStudentDashboard(userId) {
-        // En un escenario real, primero obtendríamos el perfil del estudiante para tener su ID de estudiante
-        // Pero para este ejemplo, asumiremos que tenemos los endpoints listos
         const coursesGrid = document.getElementById('courses-grid');
-        
-        // Simulación de carga (reemplazar con llamadas reales a API)
-        // const enrollments = await api.get(`/enrollments/student/${studentId}`);
-        
-        const mockCourses = [
-            { id: 1, name: 'Matemática Avanzada', code: 'MAT-201', color: '#6366F1', section: 'A' },
-            { id: 2, name: 'Física Moderna', code: 'FIS-302', color: '#10B981', section: 'B' },
-            { id: 3, name: 'Programación III', code: 'PRO-105', color: '#F59E0B', section: 'A' }
-        ];
+        const todoList = document.getElementById('todo-list');
 
-        coursesGrid.innerHTML = mockCourses.map(course => `
-            <div class="card course-card" onclick="Sidebar.navigate('cursos', {id: ${course.id}})" style="cursor: pointer; position: relative; overflow: hidden;">
-                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${course.color};"></div>
-                <div style="font-weight: 700; font-size: 0.75rem; color: ${course.color}; text-transform: uppercase; margin-bottom: 0.5rem;">${course.code} • SECCIÓN ${course.section}</div>
-                <h4 style="font-size: 1.1rem; margin-bottom: 1.5rem;">${course.name}</h4>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div class="text-muted" style="font-size: 0.8rem;">8 Actividades</div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Ver curso</div>
-                </div>
-            </div>
-        `).join('');
+        try {
+            // 1. Obtener perfil de estudiante por userId
+            const student = await api.get(`/students/user/${userId}`);
+            Store.saveAcademicProfile(student);
+
+            // 2. Obtener inscripciones activas
+            const enrollments = await api.get(`/enrollments/student/${student.id}`);
+            
+            if (!enrollments || enrollments.length === 0) {
+                coursesGrid.innerHTML = '<p class="text-muted">No estás inscrito en ningún curso actualmente.</p>';
+                return;
+            }
+
+            // 3. Cargar detalles de cada curso y renderizar
+            let coursesHtml = '';
+            for (const en of enrollments) {
+                // Asumimos que la inscripción trae los detalles básicos del curso o los pedimos
+                // Si el microservicio de inscripciones no trae el nombre, lo pedimos a academic-ms
+                const assignment = await api.get(`/teacher-assignments/${en.teacherAssignmentId}`);
+                const course = await api.get(`/courses/${assignment.courseId}`);
+                
+                const color = this.getRandomColor(course.id);
+                
+                coursesHtml += `
+                    <div class="card course-card" onclick="Sidebar.navigate('cursos', {id: ${en.teacherAssignmentId}, name: '${course.name}', code: '${course.courseCode}', color: '${color}'})" style="cursor: pointer; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${color};"></div>
+                        <div style="font-weight: 700; font-size: 0.75rem; color: ${color}; text-transform: uppercase; margin-bottom: 0.5rem;">${course.courseCode}</div>
+                        <h4 style="font-size: 1.1rem; margin-bottom: 1.5rem;">${course.name}</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="text-muted" style="font-size: 0.8rem;">Ver Actividades</div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Abrir Hub</div>
+                        </div>
+                    </div>
+                `;
+
+                // Cargar tareas pendientes (To-Do) para este assignment
+                this.loadTodoForAssignment(en.teacherAssignmentId);
+            }
+            coursesGrid.innerHTML = coursesHtml;
+
+        } catch (err) {
+            coursesGrid.innerHTML = '<p class="text-muted">Error al cargar cursos.</p>';
+            throw err;
+        }
     },
 
-    loadTeacherDashboard(userId) {
-        // Lógica para docentes
+    async loadTeacherDashboard(userId) {
+        const coursesGrid = document.getElementById('courses-grid');
+        try {
+            const teacher = await api.get(`/teachers/user/${userId}`);
+            Store.saveAcademicProfile(teacher);
+
+            const assignments = await api.get(`/teacher-assignments/teacher/${teacher.id}`);
+            
+            if (!assignments || assignments.length === 0) {
+                coursesGrid.innerHTML = '<p class="text-muted">No tienes cursos asignados.</p>';
+                return;
+            }
+
+            let coursesHtml = '';
+            for (const ass of assignments) {
+                const course = await api.get(`/courses/${ass.courseId}`);
+                const color = this.getRandomColor(course.id);
+                
+                coursesHtml += `
+                    <div class="card course-card" onclick="Sidebar.navigate('cursos', {id: ${ass.id}, name: '${course.name}', code: '${course.courseCode}', color: '${color}'})" style="cursor: pointer; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${color};"></div>
+                        <div style="font-weight: 700; font-size: 0.75rem; color: ${color}; text-transform: uppercase; margin-bottom: 0.5rem;">${course.courseCode}</div>
+                        <h4 style="font-size: 1.1rem; margin-bottom: 1.5rem;">${course.name}</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="text-muted" style="font-size: 0.8rem;">${ass.sectionName || 'Sección Unica'}</div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Gestionar</div>
+                        </div>
+                    </div>
+                `;
+            }
+            coursesGrid.innerHTML = coursesHtml;
+        } catch (err) {
+            coursesGrid.innerHTML = '<p class="text-muted">Error al cargar asignaciones.</p>';
+        }
+    },
+
+    async loadTodoForAssignment(assignmentId) {
+        const todoList = document.getElementById('todo-list');
+        try {
+            const activities = await api.get(`/activities/teacher-assignment/${assignmentId}`);
+            const now = new Date();
+            
+            // Filtrar actividades futuras o sin entregar
+            const pending = activities.filter(a => new Date(a.dueDate) > now).slice(0, 3);
+            
+            if (pending.length > 0) {
+                if (todoList.querySelector('p')) todoList.innerHTML = ''; // Limpiar el "No hay tareas"
+                
+                pending.forEach(a => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 0.25rem;';
+                    item.innerHTML = `
+                        <div style="font-weight: 600; font-size: 0.85rem;">${a.activityName}</div>
+                        <div style="font-size: 0.7rem; color: var(--accent-amber);">Vence: ${new Date(a.dueDate).toLocaleDateString()}</div>
+                    `;
+                    todoList.appendChild(item);
+                });
+            }
+        } catch (err) {
+            console.warn("Error al cargar To-Do para assignment:", assignmentId);
+        }
+    },
+
+    getRandomColor(seed) {
+        const colors = ['#6366F1', '#10B981', '#F59E0B', '#F43F5E', '#8B5CF6', '#06B6D4'];
+        return colors[seed % colors.length];
     },
 
     loadAdminDashboard() {
-        // Lógica para administradores
+        const coursesGrid = document.getElementById('courses-grid');
+        coursesGrid.innerHTML = `
+            <div class="card" style="grid-column: span 3; padding: 3rem; text-align: center;">
+                <h3>Panel de Administración</h3>
+                <p class="text-muted">Utiliza el menú lateral para gestionar usuarios, inscripciones y auditoría.</p>
+            </div>
+        `;
     }
 };
 
