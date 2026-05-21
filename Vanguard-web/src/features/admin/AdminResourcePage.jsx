@@ -98,7 +98,7 @@ export function AdminResourcePage({ group }) {
         <div>
           <p className="text-sm text-accent font-mono">{group.toUpperCase()}</p>
           <h2 className="text-2xl font-bold mt-1">{activeResource.title}</h2>
-          <p className="text-sm text-sec mt-2">Lectura directa desde {activeResource.endpoint}</p>
+          <p className="text-sm text-sec mt-2">Gestion y visualizacion de registros institucionales.</p>
         </div>
         <button
           type="button"
