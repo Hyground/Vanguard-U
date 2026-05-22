@@ -1,77 +1,63 @@
 const express = require('express');
 const axios = require('axios');
-const cors = require('cors');
-const fs = require('fs');
 
 const app = express();
 const PORT = 3005;
 
-app.use(cors());
 app.use(express.json());
 
-console.log('--- CHAOS PROXY DIAGNOSTIC START ---');
-try {
-  const stats = fs.statSync('/var/run/docker.sock');
-  console.log('Socket exists:', !!stats);
-  console.log('Socket permissions:', stats.mode.toString(8));
-} catch (e) {
-  console.error('Socket access error:', e.message);
-}
+// --- MIDDLEWARE ANTI-DUPLICACIÓN DE CORS ---
+// Este middleware se asegura de que NO se envíen headers duplicados que bloqueen el navegador
+app.use((req, res, next) => {
+  res.on('header', () => {
+    // Si por alguna razón hay múltiples Access-Control-Allow-Origin, los limpiamos
+    const origin = res.getHeader('Access-Control-Allow-Origin');
+    if (Array.isArray(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin[0]);
+    }
+  });
+  next();
+});
 
 const docker = axios.create({
   socketPath: '/var/run/docker.sock',
-  baseURL: 'http://v1.41',
+  baseURL: 'http://localhost', // Usamos localhost para el socket
+  timeout: 5000
 });
 
 app.get('/api/swarm/state', async (req, res) => {
   try {
-    const { data: nodes } = await docker.get('/nodes');
-    const { data: tasks } = await docker.get('/tasks', {
-      params: { filters: JSON.stringify({ 'desired-state': ['running'] }) }
-    });
+    // Intentamos la versión más compatible de la API de Docker
+    const [nodesRes, tasksRes] = await Promise.all([
+      docker.get('/nodes'),
+      docker.get('/tasks?filters={"desired-state":["running"]}')
+    ]);
 
-    const state = nodes.map(node => ({
+    const state = nodesRes.data.map(node => ({
       id: node.ID,
       hostname: node.Description.Hostname,
-      status: node.Status.State.toLowerCase(),
-      availability: node.Spec.Availability.toLowerCase(),
-      role: node.Spec.Role.toLowerCase(),
-      tasks: (tasks || [])
+      status: (node.Status.State || 'unknown').toLowerCase(),
+      availability: (node.Spec.Availability || 'active').toLowerCase(),
+      role: (node.Spec.Role || 'worker').toLowerCase(),
+      tasks: (tasksRes.data || [])
         .filter(task => task.NodeID === node.ID)
         .map(task => {
           const fullImage = task.Spec.ContainerSpec.Image;
-          // Extraer nombre: "vanguard12s/users-ms:lab" -> "users-ms", "caddy:2" -> "caddy"
           const nameWithTag = fullImage.includes('/') ? fullImage.split('/')[1] : fullImage;
-          const name = nameWithTag.split(':')[0] || 'task';
           return {
             id: task.ID,
-            name: name,
+            name: nameWithTag.split(':')[0] || 'task',
             status: 'running'
           };
         })
     }));
     res.json(state);
   } catch (err) {
-    console.error('API Error:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('SWARM ERROR:', err.message);
+    // Retornamos 200 con el error en el cuerpo para evitar que el Gateway 
+    // genere páginas de error 500 que duplican los headers de CORS
+    res.json({ error: true, message: err.message });
   }
-});
-
-// ... endpoints de drain/active/patroni iguales ...
-app.post('/api/swarm/node/:id/drain', async (req, res) => {
-  try {
-    const { data: node } = await docker.get(`/nodes/${req.params.id}`);
-    await docker.post(`/nodes/${req.params.id}/update?version=${node.Version.Index}`, { ...node.Spec, Availability: 'drain' });
-    res.json({ message: 'OK' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.post('/api/swarm/node/:id/active', async (req, res) => {
-  try {
-    const { data: node } = await docker.get(`/nodes/${req.params.id}`);
-    await docker.post(`/nodes/${req.params.id}/update?version=${node.Version.Index}`, { ...node.Spec, Availability: 'active' });
-    res.json({ message: 'OK' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/patroni/state', async (req, res) => {
@@ -82,7 +68,22 @@ app.get('/api/patroni/state', async (req, res) => {
       return res.json(response.data);
     } catch (e) { continue; }
   }
-  res.json({ members: [{name: 'bd2', role: 'leader', state: 'running'}, {name: 'bd3', role: 'replica', state: 'running'}] });
+  res.json({ error: true, message: 'Patroni unreachable' });
 });
 
-app.listen(PORT, () => console.log(`Chaos Proxy READY on ${PORT}`));
+// Endpoints de acción sencillos
+app.post('/api/swarm/node/:id/:action', async (req, res) => {
+  try {
+    const { id, action } = req.params;
+    const { data: node } = await docker.get(`/nodes/${id}`);
+    await docker.post(`/nodes/${id}/update?version=${node.Version.Index}`, {
+      ...node.Spec,
+      Availability: action === 'drain' ? 'drain' : 'active'
+    });
+    res.json({ message: 'OK' });
+  } catch (err) {
+    res.json({ error: true, message: err.message });
+  }
+});
+
+app.listen(PORT, () => console.log(`Chaos Proxy (Clean-Mode) running on ${PORT}`));
