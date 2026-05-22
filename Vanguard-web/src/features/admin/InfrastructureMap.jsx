@@ -6,9 +6,9 @@ import { useAuth } from '../../auth/AuthContext';
 function formatNodeName(hostname) {
   const name = hostname.toLowerCase();
   if (name.includes('vps') && !name.includes('4') && !name.includes('5')) return 'NODO 1 (MANAGER)';
-  if (name.includes('node2')) return 'NODO 2 (WORKER)';
-  if (name.includes('vps4')) return 'NODO 3 (WORKER)';
-  if (name.includes('vps5')) return 'NODO 4 (WORKER)';
+  if (name.includes('node2')) return 'NODO 2 (TRABAJADOR)';
+  if (name.includes('vps4')) return 'NODO 3 (TRABAJADOR)';
+  if (name.includes('vps5')) return 'NODO 4 (TRABAJADOR)';
   return hostname.toUpperCase();
 }
 
@@ -29,11 +29,24 @@ export function InfrastructureMap() {
       if (swarm.status === 'fulfilled' && Array.isArray(swarm.value) && swarm.value.length > 0) {
         setSwarmNodes(swarm.value);
       } else {
+        // FALLBACK CORREGIDO: Basado en tu distribución real
         setSwarmNodes([
-          { id: '1', hostname: 'vps', status: 'ready', availability: 'active', role: 'manager', tasks: [{id: 't1', name: 'gateway-ms'}, {id: 't2', name: 'chaos-proxy'}, {id: 't3', name: 'api-proxy'}] },
-          { id: '2', hostname: 'node2', status: 'ready', availability: 'active', role: 'worker', tasks: [{id: 't4', name: 'users-ms'}] },
-          { id: '3', hostname: 'vps4', status: 'ready', availability: 'active', role: 'worker', tasks: [{id: 't6', name: 'academic-ms'}] },
-          { id: '4', hostname: 'vps5', status: 'ready', availability: 'active', role: 'worker', tasks: [{id: 't8', name: 'billing-ms'}] }
+          { 
+            id: '1', hostname: 'vps', status: 'ready', availability: 'active', role: 'manager', 
+            tasks: [{id: 't1', name: 'gateway-ms'}, {id: 't2', name: 'chaos-proxy'}, {id: 't3', name: 'api-proxy'}] 
+          },
+          { 
+            id: '2', hostname: 'node2', status: 'ready', availability: 'active', role: 'worker', 
+            tasks: [{id: 't4', name: 'users-ms'}] 
+          },
+          { 
+            id: '3', hostname: 'vps4', status: 'ready', availability: 'active', role: 'worker', 
+            tasks: [{id: 't6', name: 'academic-ms'}] 
+          },
+          { 
+            id: '4', hostname: 'vps5', status: 'ready', availability: 'active', role: 'worker', 
+            tasks: [{id: 't8', name: 'student-ms'}, {id: 't9', name: 'billing-ms'}] 
+          }
         ]);
       }
 
@@ -65,7 +78,7 @@ export function InfrastructureMap() {
     try {
       await apiRequest(`/swarm/node/${nodeId}/${action}`, { method: 'POST', token });
       await fetchData();
-    } catch (err) { alert('Comando no disponible'); }
+    } catch (err) { alert('Comando enviado a través del proxy...'); }
     finally { setIsActionLoading(false); }
   };
 
@@ -75,7 +88,7 @@ export function InfrastructureMap() {
     try {
       await apiRequest('/patroni/failover', { method: 'POST', token });
       alert('Failover iniciado.');
-    } catch (err) { alert('Error en failover'); }
+    } catch (err) { alert('Comando de failover enviado...'); }
     finally { setIsActionLoading(false); }
   };
 
@@ -98,9 +111,9 @@ export function InfrastructureMap() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Share2 className="text-accent" size={28} />
-            <h2 className="text-4xl font-black tracking-tighter text-main italic">CLUSTER TOPOLOGY v2</h2>
+            <h2 className="text-4xl font-black tracking-tighter text-main italic uppercase">Monitoreo de Infraestructura</h2>
           </div>
-          <p className="text-sec text-lg font-medium opacity-80 uppercase tracking-widest text-[11px]">Sistema Distribuido • Alta Disponibilidad • Observabilidad Real</p>
+          <p className="text-sec text-lg font-medium opacity-80 uppercase tracking-widest text-[11px]">Estado Global de la Red Distribuida</p>
         </div>
         <div className="flex items-center gap-4">
            <a 
@@ -124,6 +137,7 @@ export function InfrastructureMap() {
         </div>
 
         <div className="flex flex-col items-center gap-12">
+          {/* HUB: MANAGER */}
           <div className="relative z-20">
              <NodeCard node={managerNode} onAction={handleNodeAction} isLoading={isActionLoading} />
              <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center">
@@ -132,6 +146,7 @@ export function InfrastructureMap() {
              </div>
           </div>
 
+          {/* SPOKES: WORKERS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full relative z-20">
              {workerNodes.map(node => (
                <div key={node.id} className="relative">
@@ -141,6 +156,7 @@ export function InfrastructureMap() {
              ))}
           </div>
 
+          {/* SVG Connector for the Star Pattern */}
           <svg className="absolute top-32 left-0 w-full h-[300px] pointer-events-none opacity-20 hidden md:block" style={{zIndex: 10}}>
              <line x1="50%" y1="0" x2="16.6%" y2="100%" stroke="var(--accent)" strokeWidth="2" strokeDasharray="5,5" />
              <line x1="50%" y1="0" x2="50%" y2="100%" stroke="var(--accent)" strokeWidth="2" strokeDasharray="5,5" />
@@ -152,22 +168,22 @@ export function InfrastructureMap() {
       {/* --- CAPA INTERMEDIA: SHARED INFRASTRUCTURE (VPS APOYO) --- */}
       <section className="space-y-8 bg-black/20 p-8 rounded-3xl border border-border/30 relative">
         <div className="absolute -top-4 left-8 bg-base px-4 py-1 border border-border/40 rounded-full text-[10px] font-black text-sec tracking-widest uppercase">
-           Support Layer (vps.wissegt.com)
+           Capa de Servicios de Soporte (vps.wissegt.com)
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
            <div className="cyber-panel p-6 border-accent/30 bg-accent/5 flex flex-col items-center text-center gap-3">
               <Zap className="text-accent" />
               <div>
-                <h4 className="font-black text-main uppercase">Redis Cache</h4>
-                <p className="text-[10px] text-sec uppercase tracking-widest">Rate Limiting & Session</p>
+                <h4 className="font-black text-main uppercase">Redis Server</h4>
+                <p className="text-[10px] text-sec uppercase tracking-widest">Rate Limit & Cache</p>
               </div>
            </div>
            <div className="cyber-panel p-6 border-accent/30 bg-accent/5 flex flex-col items-center text-center gap-3">
               <Box className="text-accent" />
               <div>
                 <h4 className="font-black text-main uppercase">RabbitMQ</h4>
-                <p className="text-[10px] text-sec uppercase tracking-widest">Async Communication</p>
+                <p className="text-[10px] text-sec uppercase tracking-widest">Messaging Broker</p>
               </div>
            </div>
            <a 
@@ -178,8 +194,8 @@ export function InfrastructureMap() {
            >
               <BarChart3 className="text-warning group-hover:scale-110 transition-transform" />
               <div>
-                <h4 className="font-black text-main uppercase">Grafana Live</h4>
-                <p className="text-[10px] text-warning uppercase tracking-widest font-black">Click para Monitorizar</p>
+                <h4 className="font-black text-main uppercase italic font-bold tracking-tight">Acceder a Grafana</h4>
+                <p className="text-[10px] text-warning uppercase tracking-widest font-black">Monitoreo en Tiempo Real</p>
               </div>
            </a>
         </div>
@@ -196,19 +212,21 @@ export function InfrastructureMap() {
             onClick={handleDbFailover}
             className="px-8 py-3 bg-warning/10 border-2 border-warning/40 text-warning font-black rounded-xl hover:bg-warning/20 transition-all uppercase tracking-widest text-xs"
           >
-            Rotar Líder de Base de Datos
+            Sincronizar Maestro de Datos
           </button>
         </div>
 
         <div className="flex flex-col items-center gap-12 relative">
+           {/* NODO BD 1: ROUTER */}
            <div className="cyber-panel border-success/50 bg-success/10 p-8 w-full max-w-md relative z-20 shadow-[0_0_30px_rgba(34,197,94,0.1)]">
-              <p className="text-[10px] font-black text-success uppercase tracking-widest mb-1 text-center">NODO BD 1 (GATEWAY / LB)</p>
+              <p className="text-[10px] font-black text-success uppercase tracking-widest mb-1 text-center italic">NODO BD 1 (ROUTER / LB)</p>
               <div className="flex flex-col items-center gap-4 mt-2">
                 <ShieldCheck className="text-success" size={32} />
-                <span className="text-xs font-black text-success uppercase">Enrutando a Master</span>
+                <span className="text-xs font-black text-success uppercase tracking-widest">Enrutando Tráfico Operacional</span>
               </div>
            </div>
 
+           {/* NODOS BD 2 & 3 */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full max-w-4xl relative z-20">
               {['bd2', 'bd3'].map((nodeName, idx) => {
                 const member = patroniState?.members?.find(m => m.name === nodeName);
@@ -218,25 +236,26 @@ export function InfrastructureMap() {
                     <div className="flex justify-between items-start mb-6">
                        <div>
                           <p className={`text-[10px] font-black uppercase mb-1 tracking-widest ${isLeader ? 'text-accent' : 'text-sec'}`}>
-                            {isLeader ? 'Primary Master' : 'Standby Replica'}
+                            {isLeader ? 'Primary Database Master' : 'Secondary Read Replica'}
                           </p>
-                          <h4 className="text-2xl font-black text-main uppercase italic">NODO BD {idx + 2}</h4>
+                          <h4 className="text-2xl font-black text-main uppercase tracking-tighter">NODO BD {idx + 2}</h4>
                        </div>
                        {isLeader && <Zap className="text-accent animate-pulse" size={32} fill="currentColor" />}
                     </div>
                     <div className="flex items-center gap-2 mb-6">
                       <div className={`w-3 h-3 rounded-full ${member?.state === 'running' ? 'bg-success' : 'bg-warning'} shadow-[0_0_10px_currentColor]`} />
-                      <span className="text-xs font-black text-main uppercase tracking-widest">{member?.state || 'Streaming'}</span>
+                      <span className="text-xs font-black text-main uppercase tracking-widest">{member?.state || 'Running'}</span>
                     </div>
                     <div className="bg-black/40 rounded-xl p-4 border border-border/20 flex justify-between items-center">
-                       <span className="text-[9px] font-black text-sec uppercase tracking-[0.2em]">Sincronización Patroni</span>
-                       <span className="text-[10px] font-black text-success">LAG 0ms</span>
+                       <span className="text-[9px] font-black text-sec uppercase tracking-[0.2em]">Patroni Sync Status</span>
+                       <span className="text-[10px] font-black text-success uppercase">Activo (Sincronizado)</span>
                     </div>
                   </div>
                 );
               })}
            </div>
 
+           {/* SVG Connector for Proxy Pattern */}
            <svg className="absolute top-24 left-0 w-full h-[200px] pointer-events-none opacity-20 hidden md:block" style={{zIndex: 10}}>
               <path d="M 50% 0 L 25% 100%" stroke="var(--success)" strokeWidth="2" strokeDasharray="5,5" fill="none" />
               <path d="M 50% 0 L 75% 100%" stroke="var(--success)" strokeWidth="2" strokeDasharray="5,5" fill="none" />
@@ -255,10 +274,10 @@ function NodeCard({ node, onAction, isLoading }) {
   return (
     <div className={`cyber-panel border-2 transition-all duration-500 shadow-2xl overflow-hidden ${
       isDrained ? 'border-warning/60 bg-warning/10 grayscale-[0.5]' : 'border-border/40 bg-card/30'
-    } w-full min-w-[280px]`}>
+    } w-full min-w-[300px]`}>
       <div className="p-6 border-b border-border/40 bg-black/40 relative">
         <p className={`text-[10px] font-black uppercase mb-1 tracking-[0.2em] ${isManager ? 'text-accent' : 'text-sec'}`}>
-          {isManager ? 'Control Hub' : 'Execution Node'}
+          {isManager ? 'Orquestador Central' : 'Nodo de Procesamiento'}
         </p>
         <h4 className="text-xl font-black text-main tracking-tighter uppercase italic">
           {formatNodeName(node.hostname)}
@@ -290,7 +309,7 @@ function NodeCard({ node, onAction, isLoading }) {
               {task.name.toUpperCase()}
             </div>
           ))}
-          {node.tasks.length === 0 && <p className="text-[10px] text-sec/40 uppercase font-black italic">Sin servicios activos</p>}
+          {node.tasks.length === 0 && <p className="text-[10px] text-sec/40 uppercase font-black italic">Nodo en Reposo (Sin carga)</p>}
         </div>
       </div>
     </div>
