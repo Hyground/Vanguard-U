@@ -36,11 +36,9 @@ function getPatroniHosts() {
 }
 
 async function fetchPatroniCluster() {
-  const errors = [];
-
-  for (const host of getPatroniHosts()) {
+  const attempts = await Promise.allSettled(getPatroniHosts().map(async host => {
     try {
-      const response = await axios.get(`http://${host}:8008/cluster`, { timeout: 4000 });
+      const response = await axios.get(`http://${host}:8008/cluster`, { timeout: 1500 });
       const data = response.data;
       if (data.members) {
         data.members = data.members.map(m => {
@@ -48,13 +46,21 @@ async function fetchPatroniCluster() {
           return { ...m, is_leader: rStr.includes('leader') || rStr.includes('primary') || rStr.includes('master') };
         });
       }
-      return { data: { ...data, source: host }, errors };
+      return { data: { ...data, source: host } };
     } catch (e) {
-      errors.push({ host, message: e.message });
+      return { error: { host, message: e.message } };
     }
-  }
+  }));
 
-  return { data: null, errors };
+  const results = attempts
+    .filter(result => result.status === 'fulfilled')
+    .map(result => result.value);
+  const winner = results.find(result => result.data?.members?.length);
+
+  return {
+    data: winner?.data || null,
+    errors: results.filter(result => result.error).map(result => result.error)
+  };
 }
 
 app.get('/api/swarm/state', async (req, res) => {
@@ -132,7 +138,12 @@ app.post('/api/swarm/rebalance', async (req, res) => {
       const name = service.Spec?.Name || '';
       const mode = service.Spec?.Mode || {};
 
-      if (!name.startsWith('vanguard_') || !mode.Replicated) {
+      if (
+        !name.startsWith('vanguard_') ||
+        !mode.Replicated ||
+        name === 'vanguard_chaos-proxy' ||
+        name === 'vanguard_api-proxy'
+      ) {
         continue;
       }
 

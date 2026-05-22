@@ -6,7 +6,7 @@ import { asList } from '../api/client';
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, role } = useAuth();
   
   // --- ESTADO SINCRONIZADO CON LA API ---
   const [users, setUsers] = useState([]);
@@ -75,8 +75,8 @@ export function DataProvider({ children }) {
   }, [token, isAuthenticated]);
 
   useEffect(() => {
-    if (isAuthenticated) refreshData();
-  }, [isAuthenticated, refreshData]);
+    if (isAuthenticated && role !== 'ADMIN') refreshData();
+  }, [isAuthenticated, role, refreshData]);
 
   // --- ACCIONES CON PERSISTENCIA REAL ---
   
