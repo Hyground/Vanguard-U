@@ -172,7 +172,7 @@ export function AppShell({ currentView, onNavigate, children }) {
               <div className="hidden sm:block text-left">
                 <p className="text-[10px] font-black text-main leading-none uppercase tracking-tighter italic">{user?.username}</p>
                 <p className="text-[8px] font-bold text-accent uppercase tracking-widest mt-0.5 flex items-center gap-1">
-                   <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
+                   <span className="w-1 h-1 rounded-full bg-accent animate-pulse" />
                    {role}
                 </p>
               </div>
