@@ -1,104 +1,105 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { listResource, createResource, updateResource, patchResource, adminResources } from '../api/adminApi';
+import { useAuth } from '../auth/AuthContext';
+import { asList } from '../api/client';
 
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
-  // --- 1. ESTADO DE SEGURIDAD Y USUARIOS ---
-  const [users, setUsers] = useState([
-    { id: 1, username: 'admin', role: 'ADMIN', personId: null, status: true },
-    { id: 2, username: 'mrobles', role: 'TEACHER', personId: 10, status: true },
-    { id: 3, username: 'cmendez', role: 'STUDENT', personId: 101, status: true },
-  ]);
-
-  // --- 2. ESTADO DE PERSONAS (STUDENTS, TEACHERS, TUTORS) ---
-  const [people, setPeople] = useState({
-    students: [
-      { id: 101, firstName: 'Carlos', lastName: 'Méndez', email: 'carlos@vanguard.edu', personalCode: 'ST-88271', tutorId: 301 },
-      { id: 102, firstName: 'Ana', lastName: 'García', email: 'ana@vanguard.edu', personalCode: 'ST-99123', tutorId: 301 },
-      { id: 103, firstName: 'Luis', lastName: 'Rodríguez', email: 'luis@vanguard.edu', personalCode: 'ST-11022', tutorId: 302 },
-    ],
-    teachers: [
-      { id: 10, firstName: 'Mario', lastName: 'Robles', email: 'mario.robles@vanguard.edu', degree: 'Ingeniero en Sistemas' },
-      { id: 11, firstName: 'Lorena', lastName: 'Méndez', email: 'lorena.m@vanguard.edu', degree: 'Magister en Ciencias' },
-    ],
-    tutors: [
-      { id: 301, firstName: 'Roberto', lastName: 'Méndez', email: 'roberto.tutor@mail.com', phone: '5544-3322' },
-      { id: 302, firstName: 'Elena', lastName: 'García', email: 'elena.tutor@mail.com', phone: '4433-2211' },
-    ]
-  });
-
-  // --- 3. ESTADO ACADÉMICO (COURSES, ASSIGNMENTS) ---
-  const [courses, setCourses] = useState([
-    { id: 1, name: 'Análisis de Sistemas I', code: 'AS1', credits: 5 },
-    { id: 2, name: 'Bases de Datos II', code: 'BD2', credits: 4 },
-    { id: 3, name: 'Compiladores', code: 'CMP', credits: 5 },
-    { id: 4, name: 'Sistemas Operativos II', code: 'SO2', credits: 4 },
-    { id: 5, name: 'Arquitectura de Computadoras I', code: 'AR1', credits: 5 },
-  ]);
-
-  const [assignments, setAssignments] = useState([
-    { id: 1, teacherId: 10, courseId: 1, section: 'A', schedule: '07:00 - 09:00' },
-    { id: 2, teacherId: 10, courseId: 2, section: 'B', schedule: '09:00 - 11:00' },
-    { id: 3, teacherId: 11, courseId: 3, section: 'A', schedule: '11:00 - 13:00' },
-  ]);
-
-  // --- 4. ESTADO DE RENDIMIENTO (GRADES, ATTENDANCE) ---
-  // Key: studentId_assignmentId_activityId
-  const [grades, setGrades] = useState({
-    '101_1_act1': 8.5, '101_1_act2': 12, '101_1_exam': 20,
-    '102_1_act1': 10, '102_1_act2': 15, '102_1_exam': 24,
-  });
-
-  // Key: studentId_assignmentId_date
+  const { token, isAuthenticated } = useAuth();
+  
+  // --- ESTADO SINCRONIZADO CON LA API ---
+  const [users, setUsers] = useState([]);
+  const [people, setPeople] = useState({ students: [], teachers: [], tutors: [] });
+  const [courses, setCourses] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [grades, setGrades] = useState({});
   const [attendance, setAttendance] = useState({});
+  const [logs, setLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // --- 5. AUDITORÍA (SYSTEM LOG) ---
-  const [logs, setLogs] = useState([
-    { id: 1, timestamp: new Date().toISOString(), userId: 'System', action: 'NÚCLEO VANGUARD-U INICIADO', type: 'info' },
-  ]);
+  // --- CARGA INICIAL DESDE LA API ---
+  const refreshData = useCallback(async () => {
+    if (!token || !isAuthenticated) return;
+    setIsLoading(true);
+    try {
+      const [uRes, sRes, tRes, tutRes, cRes, aRes, gRes, schRes] = await Promise.all([
+        listResource({ endpoint: '/users' }, token),
+        listResource({ endpoint: '/students' }, token),
+        listResource({ endpoint: '/teachers' }, token),
+        listResource({ endpoint: '/tutors' }, token),
+        listResource({ endpoint: '/courses' }, token),
+        listResource({ endpoint: '/teacher-assignments' }, token),
+        listResource({ endpoint: '/grades' }, token),
+        listResource({ endpoint: '/schedules' }, token),
+      ]);
 
-  // --- ACCIONES CORE ---
+      setUsers(asList(uRes));
+      setPeople({
+        students: asList(sRes),
+        teachers: asList(tRes),
+        tutors: asList(tutRes)
+      });
+      setCourses(asList(cRes));
+      setAssignments(asList(aRes));
+      
+      // Normalizar notas (grades_records)
+      const rawGrades = asList(gRes);
+      const normalizedGrades = {};
+      rawGrades.forEach(g => {
+        // Asumiendo que la API devuelve studentId y teacherAssignmentId
+        // Para el mock, mapeamos a nuestra estructura interna: studentId_assignmentId_activityId
+        // Como no tenemos activityId real en el recurso genérico, usamos 'final' por defecto
+        const key = `${g.studentId}_${g.teacherAssignmentId}_final`;
+        normalizedGrades[key] = g.scoreObtained;
+      });
+      setGrades(normalizedGrades);
 
+      addLog('SYSTEM', 'Sincronización con el Núcleo completada', 'info');
+    } catch (err) {
+      addLog('SYSTEM', `Error de sincronización: ${err.message}`, 'warning');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) refreshData();
+  }, [isAuthenticated, refreshData]);
+
+  // --- ACCIONES CON PERSISTENCIA REAL ---
+  
   const addLog = (user, action, type = 'info') => {
     setLogs(prev => [{ id: Date.now(), timestamp: new Date().toISOString(), userId: user, action, type }, ...prev.slice(0, 99)]);
   };
 
-  // --- ADMIN: USUARIOS Y PERSONAS ---
-  const createUser = (userData) => {
-    const newUser = { ...userData, id: Date.now(), status: true };
-    setUsers(prev => [...prev, newUser]);
-    addLog('ADMIN', `CREÓ USUARIO: ${userData.username}`, 'auth');
-    return newUser;
+  const createUserReal = async (userData) => {
+    const response = await createResource('users', userData, token);
+    await refreshData();
+    return response;
   };
 
-  const updateUser = (id, data) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
-    addLog('ADMIN', `ACTUALIZÓ USUARIO ID: ${id}`, 'update');
+  const updateUserReal = async (id, data) => {
+    await patchResource('users', id, data, token);
+    await refreshData();
   };
 
-  const updatePerson = (type, id, data) => {
-    setPeople(prev => ({
-      ...prev,
-      [type]: prev[type].map(p => p.id === id ? { ...p, ...data } : p)
-    }));
-    addLog('ADMIN', `ACTUALIZÓ DATOS DE ${type.toUpperCase()} ID: ${id}`, 'update');
+  const addPersonReal = async (type, data) => {
+    const response = await createResource(type, data, token);
+    await refreshData();
+    return response;
   };
 
-  const addPerson = (type, data) => {
-    const newId = Date.now();
-    setPeople(prev => ({
-      ...prev,
-      [type]: [...prev[type], { ...data, id: newId }]
-    }));
-    addLog('ADMIN', `REGISTRÓ NUEVA PERSONA (${type}): ${data.firstName}`, 'update');
-    return newId;
+  const updatePersonReal = async (type, id, data) => {
+    await patchResource(type, id, data, token);
+    await refreshData();
   };
 
-  // --- TEACHER: NOTAS Y ASISTENCIA ---
   const setStudentGrade = (studentId, assignmentId, activityId, score, teacherName) => {
     const key = `${studentId}_${assignmentId}_${activityId}`;
     setGrades(prev => ({ ...prev, [key]: parseFloat(score) || 0 }));
-    addLog(teacherName, `MODIFICÓ NOTA [ST:${studentId} | AS:${assignmentId} | ACT:${activityId}] -> ${score}`, 'update');
+    addLog(teacherName, `Nota Registrada (Simulación): ${score}`, 'update');
+    // En producción: await apiRequest('/grades', { method: 'POST', body: ... })
   };
 
   const recordAttendance = (studentId, assignmentId, date, status, teacherName) => {
@@ -106,18 +107,17 @@ export function DataProvider({ children }) {
     setAttendance(prev => ({ ...prev, [key]: status }));
   };
 
-  // --- GETTERS RELACIONALES ---
-  const getTeacherAssignments = (teacherId) => {
+  // --- GETTERS RELACIONALES (Sincronizados) ---
+  const getTeacherAssignments = useCallback((teacherId) => {
     return assignments
       .filter(a => a.teacherId === teacherId)
       .map(a => ({
         ...a,
         course: courses.find(c => c.id === a.courseId)
       }));
-  };
+  }, [assignments, courses]);
 
-  const getStudentCourses = (studentId) => {
-    // Simulando que todos los estudiantes están en las mismas secciones por simplicidad del mock
+  const getStudentCourses = useCallback((studentId) => {
     return assignments.map(a => ({
       ...a,
       course: courses.find(c => c.id === a.courseId),
@@ -125,13 +125,27 @@ export function DataProvider({ children }) {
         .filter(key => key.startsWith(`${studentId}_${a.id}_`))
         .reduce((acc, key) => ({ ...acc, [key.split('_')[2]]: grades[key] }), {})
     }));
-  };
+  }, [assignments, courses, grades]);
+
+  const getStudentGradesForCourse = useCallback((studentId, courseId) => {
+    const result = {};
+    Object.keys(grades).forEach(key => {
+      if (key.startsWith(`${studentId}_${courseId}_`)) {
+        const activityId = key.split('_')[2];
+        result[activityId] = grades[key];
+      }
+    });
+    return result;
+  }, [grades]);
 
   const value = {
-    users, people, courses, assignments, grades, attendance, logs,
-    createUser, updateUser, addPerson, updatePerson,
-    setStudentGrade, recordAttendance, addLog,
-    getTeacherAssignments, getStudentCourses
+    users, people, courses, assignments, grades, attendance, logs, isLoading,
+    createUser: createUserReal, 
+    updateUser: updateUserReal, 
+    addPerson: addPersonReal, 
+    updatePerson: updatePersonReal,
+    setStudentGrade, recordAttendance, addLog, refreshData,
+    getTeacherAssignments, getStudentCourses, getStudentGradesForCourse
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

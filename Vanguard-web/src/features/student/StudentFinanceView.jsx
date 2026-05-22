@@ -10,7 +10,7 @@ export function StudentFinanceView() {
   const { addLog } = useData();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Historial formal de transacciones académicas
+  // Historial formal de transacciones académicas (Simulando lo que vendría de billing-ms)
   const payments = [
     { id: 'VNG-PAY-8841-B', concept: 'Matrícula de Inscripción Ciclo 2026', date: '05 Mayo 2026', amount: 500, method: 'Banca en Línea', status: 'Approved' },
     { id: 'VNG-PAY-9012-C', concept: 'Cuota Universitaria Mensual - Mayo', date: '15 Mayo 2026', amount: 350, method: 'Tarjeta Crédito/Débito', status: 'Approved' },
@@ -44,7 +44,7 @@ export function StudentFinanceView() {
                  Finanzas Auditadas
               </span>
               <span className="h-1 w-1 rounded-full bg-sec/30" />
-              <span className="text-sec text-[10px] font-mono tracking-tighter uppercase italic opacity-40">Billing ID: VNG-USER-5591</span>
+              <span className="text-sec text-[10px] font-mono tracking-tighter uppercase italic opacity-40">Billing ID: VNG-USER-{user?.idUser}</span>
             </div>
             <h2 className="text-7xl font-black tracking-tighter text-main uppercase italic leading-none">
               Gestión <span className="text-accent">Financiera</span>

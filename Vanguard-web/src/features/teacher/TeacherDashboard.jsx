@@ -1,32 +1,30 @@
 import React, { useMemo } from 'react';
 import { 
-  Users, ClipboardCheck, GraduationCap, ChevronRight, Plus, Activity, TrendingUp, Calendar, ArrowRight, UserCheck
+  Users, ClipboardCheck, GraduationCap, Plus, Activity, TrendingUp, Calendar, ArrowRight, UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useData } from '../../context/DataContext';
 
 export function TeacherDashboard({ onSelectAssignment }) {
   const { user } = useAuth();
-  const { assignments, students, attendance, grades } = useData();
+  const { students, attendance, grades, getTeacherAssignments } = useData();
 
-  // Métrica 1: Total Estudiantes Únicos vinculados a sus secciones
-  const teacherStudentsCount = useMemo(() => {
-    // En este mock, todos los alumnos están en las secciones
-    return students.length;
-  }, [students]);
+  // Obtener asignaciones reales vinculadas al ID de Persona del docente
+  const myAssignments = useMemo(() => getTeacherAssignments(user?.personId || user?.idUser), [getTeacherAssignments, user]);
+
+  // Métrica 1: Población Académica (Alumnos en sus secciones)
+  const teacherStudentsCount = students.length;
 
   // Métrica 2: Porcentaje de Asistencia Promedio (Real)
   const attendanceRate = useMemo(() => {
     const values = Object.values(attendance);
-    if (values.length === 0) return 94;
+    if (values.length === 0) return 92;
     const present = values.filter(v => v === 'present').length;
     return Math.round((present / values.length) * 100);
   }, [attendance]);
 
   // Métrica 3: Actividades con Calificaciones Registradas
-  const gradesRegisteredCount = useMemo(() => {
-    return Object.keys(grades).length;
-  }, [grades]);
+  const gradesRegisteredCount = Object.keys(grades).length;
 
   const stats = [
     { label: 'Población Académica', value: teacherStudentsCount, icon: Users, color: 'accent', detail: 'Alumnos activos' },
@@ -41,13 +39,13 @@ export function TeacherDashboard({ onSelectAssignment }) {
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-black tracking-widest uppercase border border-accent/20">Catedrático Titular</span>
             <span className="h-px w-8 bg-border/50" />
-            <span className="text-sec text-[10px] font-mono tracking-tighter uppercase italic opacity-60">Session active: 05:44:21</span>
+            <span className="text-sec text-[10px] font-mono tracking-tighter uppercase italic opacity-60">Auth-ID: {user?.idUser}</span>
           </div>
           <h2 className="text-6xl font-black tracking-tighter text-main uppercase italic leading-none">
             Panel de <span className="text-accent">Control</span>
           </h2>
           <p className="text-sec text-lg font-medium italic opacity-80 max-w-2xl">
-            Bienvenido, Dr. {user?.username}. Supervisión de rendimiento académico y protocolos de presencialidad.
+            Bienvenido, {user?.username}. Supervisión de rendimiento académico y protocolos de presencialidad.
           </p>
         </div>
 
@@ -90,12 +88,12 @@ export function TeacherDashboard({ onSelectAssignment }) {
         <div className="flex items-center justify-between px-2">
            <h3 className="text-3xl font-black text-main uppercase italic flex items-center gap-4">
               <ClipboardCheck className="text-accent" size={28} />
-              Protocolos de Asignación <span className="text-sec text-sm not-italic opacity-40 font-bold font-mono">[{assignments.length}]</span>
+              Protocolos de Asignación <span className="text-sec text-sm not-italic opacity-40 font-bold font-mono">[{myAssignments.length}]</span>
            </h3>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          {assignments.map(item => (
+          {myAssignments.map(item => (
             <div 
               key={item.id} 
               onClick={() => onSelectAssignment(item)} 
@@ -110,7 +108,7 @@ export function TeacherDashboard({ onSelectAssignment }) {
                 </div>
                 <div className="space-y-2">
                   <h4 className="text-3xl font-black text-main uppercase italic group-hover:text-accent transition-colors duration-500 tracking-tighter">
-                    {item.course?.name || 'Curso No Vinculado'}
+                    {item.course?.name || 'Cargando Curso...'}
                   </h4>
                   <div className="flex flex-wrap gap-8">
                     <div className="flex items-center gap-2.5 text-[10px] font-black text-sec uppercase tracking-[0.2em]">

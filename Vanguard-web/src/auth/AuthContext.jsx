@@ -21,12 +21,16 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     const response = await loginRequest(username.trim(), password);
+    // Capturar todos los campos devueltos (incluyendo personId si existe)
     const nextSession = {
       token: response.token,
       user: {
         idUser: response.idUser,
         username: response.username,
         role: response.role,
+        personId: response.personId || null,
+        firstName: response.firstName || '',
+        lastName: response.lastName || '',
       },
     };
 

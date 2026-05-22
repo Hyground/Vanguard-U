@@ -184,6 +184,18 @@ export const adminResources = [
       { key: 'methodName', label: 'Metodo' },
     ],
   },
+  {
+    id: 'grades_records',
+    group: 'Operaciones',
+    title: 'Registro de Notas',
+    endpoint: '/grades',
+    columns: [
+      { key: 'id', label: 'ID' },
+      { key: 'studentId', label: 'Estudiante', type: 'ref', ref: 'students' },
+      { key: 'teacherAssignmentId', label: 'Asignación', type: 'ref', ref: 'teacher-assignments' },
+      { key: 'scoreObtained', label: 'Nota' },
+    ],
+  },
 ];
 
 export function listResource(resource, token, page = 0) {
@@ -203,6 +215,35 @@ export function updateUserStatus(userId, status, token) {
     token,
     method: 'PATCH',
     body: JSON.stringify({ status }),
+  });
+}
+
+export function createResource(resourceId, data, token) {
+  const resource = adminResources.find(r => r.id === resourceId);
+  return apiRequest(resource.endpoint, {
+    token,
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateResource(resourceId, id, data, token) {
+  const resource = adminResources.find(r => r.id === resourceId);
+  const baseEndpoint = resource.endpoint.split('?')[0];
+  return apiRequest(`${baseEndpoint}/${id}`, {
+    token,
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export function patchResource(resourceId, id, data, token) {
+  const resource = adminResources.find(r => r.id === resourceId);
+  const baseEndpoint = resource.endpoint.split('?')[0];
+  return apiRequest(`${baseEndpoint}/${id}`, {
+    token,
+    method: 'PATCH',
+    body: JSON.stringify(data),
   });
 }
 
