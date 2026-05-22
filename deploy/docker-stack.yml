@@ -97,7 +97,7 @@ services:
       - vanguard-net
 
   chaos-proxy:
-    image: vanguard12s/chaos-proxy:real-v1
+    image: vanguard12s/chaos-proxy:vfinal
     deploy:
       replicas: 1
       placement:
