@@ -124,51 +124,52 @@ export function AdminUserManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/10">
-              {activeTab === 'users' ? filteredUsers.map(u => (
-                <tr key={u.id} className="group hover:bg-accent/[0.02] transition-colors">
-                  <td className="p-8 font-mono text-xs text-accent font-black tracking-tighter opacity-40">#00{u.id}</td>
-                  <td className="p-8">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-base premium-border flex items-center justify-center font-black text-main shadow-inner group-hover:bg-accent/10 transition-colors">
-                        {u.username[0].toUpperCase()}
+              {activeTab === 'users' ? (
+                filteredUsers.map(u => (
+                  <tr key={u.id} className="group hover:bg-accent/[0.02] transition-colors">
+                    <td className="p-8 font-mono text-xs text-accent font-black tracking-tighter opacity-40">#00{u.id}</td>
+                    <td className="p-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-base premium-border flex items-center justify-center font-black text-main shadow-inner group-hover:bg-accent/10 transition-colors">
+                          {u.username[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-main uppercase italic tracking-tight">{u.username}</p>
+                          <p className="text-[10px] text-sec font-medium mt-1">Person ID: {u.personId || 'No vinculado'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-black text-main uppercase italic tracking-tight">{u.username}</p>
-                        <p className="text-[10px] text-sec font-medium mt-1">Person ID: {u.personId || 'No vinculado'}</p>
+                    </td>
+                    <td className="p-8">
+                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                        u.role === 'ADMIN' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                        u.role === 'TEACHER' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        'bg-accent/10 text-accent border-accent/20'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="p-8">
+                      <div className="flex items-center gap-2">
+                         <div className={`w-2 h-2 rounded-full ${u.status ? 'bg-success shadow-[0_0_10px_#10B981]' : 'bg-sec'}`} />
+                         <span className="text-[10px] font-bold text-sec uppercase tracking-widest">{u.status ? 'Activo' : 'Revocado'}</span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="p-8">
-                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                      u.role === 'ADMIN' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
-                      u.role === 'TEACHER' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                      'bg-accent/10 text-accent border-accent/20'
-                    }`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="p-8">
-                    <div className="flex items-center gap-2">
-                       <div className={`w-2 h-2 rounded-full ${u.status ? 'bg-success shadow-[0_0_10px_#10B981]' : 'bg-sec'}`} />
-                       <span className="text-[10px] font-bold text-sec uppercase tracking-widest">{u.status ? 'Activo' : 'Revocado'}</span>
-                    </div>
-                  </td>
-                  <td className="p-8 text-right">
-                    <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                      <button 
-                        onClick={() => handleOpenModal(u)}
-                        className="p-3 rounded-xl bg-card border border-border/60 text-sec hover:text-accent hover:border-accent/40 transition-all"
-                      >
-                        <Edit3 size={16} />
-                      </button>
-                      <button className="p-3 rounded-xl bg-card border border-border/60 text-sec hover:text-warning hover:border-warning/40 transition-all">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
-                // Lógica de Personas (Students, Teachers)
+                    </td>
+                    <td className="p-8 text-right">
+                      <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <button 
+                          onClick={() => handleOpenModal(u)}
+                          className="p-3 rounded-xl bg-card border border-border/60 text-sec hover:text-accent hover:border-accent/40 transition-all"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button className="p-3 rounded-xl bg-card border border-border/60 text-sec hover:text-warning hover:border-warning/40 transition-all">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 Object.keys(people).flatMap(type => people[type].map(p => (
                   <tr key={`${type}-${p.id}`} className="group hover:bg-accent/[0.02] transition-colors">
                     <td className="p-8 font-mono text-xs text-success font-black tracking-tighter opacity-40 italic">{type.slice(0,2).toUpperCase()}-{p.id}</td>
@@ -181,11 +182,13 @@ export function AdminUserManagement() {
                     </td>
                     <td className="p-8"><CheckCircle2 size={18} className="text-success opacity-40" /></td>
                     <td className="p-8 text-right">
-                      <button className="p-3 rounded-xl bg-card border border-border/60 text-sec hover:text-accent transition-all opacity-0 group-hover:opacity-100"><Edit3 size={16}/></button>
+                      <button className="p-3 rounded-xl bg-card border border-border/60 text-sec hover:text-accent transition-all opacity-0 group-hover:opacity-100">
+                        <Edit3 size={16}/>
+                      </button>
                     </td>
                   </tr>
                 )))
-              }
+              )}
             </tbody>
           </table>
         </div>
