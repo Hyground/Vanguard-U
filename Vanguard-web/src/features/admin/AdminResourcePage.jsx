@@ -268,8 +268,6 @@ export function AdminResourcePage({ group }) {
     </section>
   );
 }
-  );
-}
 
 function getReferenceLabel(item) {
   if (item.firstName || item.lastName) return [item.firstName, item.lastName].filter(Boolean).join(' ');
