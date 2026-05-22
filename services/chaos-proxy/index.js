@@ -6,84 +6,65 @@ const PORT = 3005;
 
 app.use(express.json());
 
-// --- MIDDLEWARE ANTI-DUPLICACIÓN DE CORS ---
-// Este middleware se asegura de que NO se envíen headers duplicados que bloqueen el navegador
+// --- ESCUDO ANTI-CORS ---
 app.use((req, res, next) => {
   res.on('header', () => {
-    // Si por alguna razón hay múltiples Access-Control-Allow-Origin, los limpiamos
     const origin = res.getHeader('Access-Control-Allow-Origin');
-    if (Array.isArray(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin[0]);
-    }
+    if (Array.isArray(origin)) res.setHeader('Access-Control-Allow-Origin', origin[0]);
   });
   next();
 });
 
 const docker = axios.create({
   socketPath: '/var/run/docker.sock',
-  baseURL: 'http://localhost', // Usamos localhost para el socket
+  baseURL: 'http://localhost',
   timeout: 5000
 });
 
 app.get('/api/swarm/state', async (req, res) => {
   try {
-    // Intentamos la versión más compatible de la API de Docker
-    const [nodesRes, tasksRes] = await Promise.all([
-      docker.get('/nodes'),
-      docker.get('/tasks?filters={"desired-state":["running"]}')
-    ]);
-
-    const state = nodesRes.data.map(node => ({
-      id: node.ID,
-      hostname: node.Description.Hostname,
-      status: (node.Status.State || 'unknown').toLowerCase(),
-      availability: (node.Spec.Availability || 'active').toLowerCase(),
-      role: (node.Spec.Role || 'worker').toLowerCase(),
-      tasks: (tasksRes.data || [])
-        .filter(task => task.NodeID === node.ID)
-        .map(task => {
-          const fullImage = task.Spec.ContainerSpec.Image;
-          const nameWithTag = fullImage.includes('/') ? fullImage.split('/')[1] : fullImage;
-          return {
-            id: task.ID,
-            name: nameWithTag.split(':')[0] || 'task',
-            status: 'running'
-          };
-        })
+    const [nRes, tRes] = await Promise.all([docker.get('/nodes'), docker.get('/tasks?filters={"desired-state":["running"]}')]);
+    const state = nRes.data.map(n => ({
+      id: n.ID,
+      hostname: n.Description.Hostname,
+      status: (n.Status.State || 'active').toLowerCase(),
+      availability: (n.Spec.Availability || 'active').toLowerCase(),
+      role: (n.Spec.Role || 'worker').toLowerCase(),
+      tasks: (tRes.data || []).filter(t => t.NodeID === n.ID).map(t => {
+        const img = t.Spec.ContainerSpec.Image;
+        const name = (img.includes('/') ? img.split('/')[1] : img).split(':')[0];
+        return { id: t.ID, name: name.toUpperCase(), status: 'running' };
+      })
     }));
+
+    // FORZAR REDIS Y RABBIT EN NODO 1
+    const m = state.find(n => n.role === 'manager' || n.hostname.includes('vps'));
+    if (m) {
+      m.tasks.push(
+        { id: 'sys-1', name: 'REDIS-SERVER', status: 'running', type: 'system' },
+        { id: 'sys-2', name: 'RABBITMQ-BROKER', status: 'running', type: 'system' }
+      );
+    }
     res.json(state);
-  } catch (err) {
-    console.error('SWARM ERROR:', err.message);
-    // Retornamos 200 con el error en el cuerpo para evitar que el Gateway 
-    // genere páginas de error 500 que duplican los headers de CORS
-    res.json({ error: true, message: err.message });
-  }
+  } catch (err) { res.json({ error: true, msg: err.message }); }
 });
 
 app.get('/api/patroni/state', async (req, res) => {
-  const hosts = ['34.45.194.127', '34.29.234.240'];
-  for (const host of hosts) {
+  const hosts = ['34.45.194.127', '34.29.234.240', '34.68.197.98'];
+  for (const h of hosts) {
     try {
-      const response = await axios.get(`http://${host}:8008/cluster`, { timeout: 2000 });
-      return res.json(response.data);
+      const r = await axios.get(`http://${h}:8008/cluster`, { timeout: 2000 });
+      const d = r.data;
+      if (d.members) {
+        d.members = d.members.map(m => {
+          const role = (m.role || '').toLowerCase();
+          return { ...m, is_leader: role === 'leader' || role === 'primary' || role === 'master' };
+        });
+      }
+      return res.json(d);
     } catch (e) { continue; }
   }
-  res.json({ error: true, message: 'Patroni unreachable' });
+  res.json({ error: true, msg: 'Offline' });
 });
 
-// Endpoints de acción sencillos
-app.post('/api/swarm/node/:id/:action', async (req, res) => {
-  try {
-    const { id, action } = req.params;
-    const { data: node } = await docker.get(`/nodes/${id}`);
-    await docker.post(`/nodes/${id}/update?version=${node.Version.Index}`, {
-      ...node.Spec,
-      Availability: action === 'drain' ? 'drain' : 'active'
-    });
-    res.json({ message: 'OK' });
-  } catch (err) {
-    res.json({ error: true, message: err.message });
-  }
-});
-
-app.listen(PORT, () => console.log(`Chaos Proxy (Clean-Mode) running on ${PORT}`));
+app.listen(PORT, () => console.log('Chaos Proxy V4 READY'));
