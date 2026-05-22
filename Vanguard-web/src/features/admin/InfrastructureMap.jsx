@@ -258,9 +258,14 @@ function NodeCard({ node, onAction, onRebalance, isLoading, isMaster }) {
           </button>
         )}
         {isMaster && (
-          <button onClick={onRebalance} disabled={isLoading} className="absolute top-8 right-8 flex items-center gap-3 px-4 py-3 rounded-2xl border-4 border-accent/50 bg-accent/10 text-accent font-black uppercase tracking-widest text-[10px] shadow-2xl hover:bg-accent/20 transition-all disabled:opacity-30">
-            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
-            Rebalancear
+          <button
+            onClick={onRebalance}
+            disabled={isLoading}
+            title="Rebalancear servicios"
+            aria-label="Rebalancear servicios"
+            className="absolute top-8 right-8 p-3 rounded-2xl border-4 border-accent/50 bg-accent/10 text-accent shadow-2xl hover:bg-accent/20 transition-all disabled:opacity-10"
+          >
+            <RefreshCw size={28} className={isLoading ? 'animate-spin' : ''} />
           </button>
         )}
         <div className="flex items-center gap-3 mt-6 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-border/20">
