@@ -226,8 +226,8 @@ export function registerUser(data, token) {
   });
 }
 
-export function getSecurityIdentityPage(token, { userPage = 0, peoplePage = 0, size = DEFAULT_PAGE_SIZE } = {}) {
-  return apiRequest(`/admin/security/identity?userPage=${userPage}&peoplePage=${peoplePage}&size=${size}`, { token });
+export function getSecurityIdentityPage(token, { userPage = 0, peoplePage = 0, size = DEFAULT_PAGE_SIZE, section = 'all' } = {}) {
+  return apiRequest(`/admin/security/identity?userPage=${userPage}&peoplePage=${peoplePage}&size=${size}&section=${section}`, { token });
 }
 
 export function createResource(resourceId, data, token) {

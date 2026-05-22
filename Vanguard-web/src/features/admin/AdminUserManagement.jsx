@@ -17,12 +17,13 @@ export function AdminUserManagement() {
     securityPagination,
     refreshSecurityData,
   } = useData();
-  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'people'
+  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'students' | 'teachers' | 'tutors'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const activePagination = securityPagination[activeTab] || { page: 0, totalPages: 1, totalElements: 0 };
   const userPage = securityPagination.users.page;
-  const peoplePage = securityPagination.people.page;
+  const peoplePage = activeTab === 'users' ? 0 : activePagination.page;
 
   // Form State
   const [formData, setFormData] = useState({
@@ -32,24 +33,25 @@ export function AdminUserManagement() {
   });
 
   useEffect(() => {
-    refreshSecurityData({ userPage: 0, peoplePage: 0 });
-  }, [refreshSecurityData]);
+    refreshSecurityData({ userPage: 0, peoplePage: 0, section: activeTab });
+  }, [refreshSecurityData, activeTab]);
 
   const reloadCurrentPage = () => {
-    refreshSecurityData({ userPage, peoplePage });
+    refreshSecurityData({ userPage, peoplePage, section: activeTab });
   };
 
   const goUserPage = (nextPage) => {
-    refreshSecurityData({ userPage: nextPage, peoplePage });
+    refreshSecurityData({ userPage: nextPage, peoplePage: 0, section: 'users' });
   };
 
   const goPeoplePage = (nextPage) => {
-    refreshSecurityData({ userPage, peoplePage: nextPage });
+    refreshSecurityData({ userPage: 0, peoplePage: nextPage, section: activeTab });
   };
 
-  const peopleRows = useMemo(() => Object.keys(people).flatMap((cat) =>
-    people[cat].map((person) => ({ ...person, _category: cat }))
-  ), [people]);
+  const peopleRows = useMemo(() => activeTab === 'users'
+    ? []
+    : (people[activeTab] || []).map((person) => ({ ...person, _category: activeTab }))
+  , [people, activeTab]);
 
   const peopleByUserId = useMemo(() => {
     const index = new Map();
@@ -84,7 +86,20 @@ export function AdminUserManagement() {
       });
     } else {
       setEditingItem(null);
-      setFormData({ username: '', role: 'STUDENT', password: '', firstName: '', lastName: '', email: '', personType: 'students', status: true, personId: '', cui: '', personalCode: '', userId: '' });
+      setFormData({
+        username: '',
+        role: activeTab === 'teachers' ? 'TEACHER' : 'STUDENT',
+        password: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        personType: activeTab === 'users' ? 'students' : activeTab,
+        status: true,
+        personId: '',
+        cui: '',
+        personalCode: '',
+        userId: ''
+      });
     }
     setIsModalOpen(true);
   };
@@ -114,7 +129,7 @@ export function AdminUserManagement() {
 
   const getUserRelationLabel = (userId) => {
     const relation = peopleByUserId.get(Number(userId));
-    if (!relation) return 'Sin persona vinculada';
+    if (!relation) return 'Persona no cargada en esta vista';
     return `${relation._category} #${relation.id} - ${relation.firstName} ${relation.lastName}`;
   };
 
@@ -171,7 +186,7 @@ export function AdminUserManagement() {
               <Info size={24} className={isLoading ? 'animate-spin' : ''} />
            </button>
            <button 
-             onClick={() => handleOpenModal()}
+             onClick={() => handleOpenModal(null, activeTab === 'users' ? 'user' : 'people')}
              className="bg-accent hover:bg-accent/90 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-accent/20 transition-all active:scale-95 flex items-center gap-4 group"
            >
              <UserPlus size={20} className="group-hover:scale-110 transition-transform" />
@@ -181,16 +196,16 @@ export function AdminUserManagement() {
       </header>
 
       {/* Tabs Premium */}
-      <div className="flex p-2 bg-card/40 backdrop-blur-xl premium-border rounded-[2.5rem] w-fit shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+      <div className="flex flex-wrap p-2 bg-card/40 backdrop-blur-xl premium-border rounded-[2.5rem] w-fit shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
         <button onClick={() => setActiveTab('users')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'users' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Capa de Usuarios</button>
-        <button onClick={() => setActiveTab('people')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'people' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Capa de Personas</button>
+        <button onClick={() => setActiveTab('students')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'students' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Estudiantes</button>
+        <button onClick={() => setActiveTab('teachers')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'teachers' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Docentes</button>
+        <button onClick={() => setActiveTab('tutors')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'tutors' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Tutores</button>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
         <div className="text-[10px] font-black text-sec uppercase tracking-[0.25em]">
-          {activeTab === 'users'
-            ? `${securityPagination.users.totalElements} usuarios - pagina ${securityPagination.users.page + 1} de ${securityPagination.users.totalPages}`
-            : `${securityPagination.people.totalElements} personas - pagina ${securityPagination.people.page + 1} de ${securityPagination.people.totalPages}`}
+          {`${activePagination.totalElements} ${activeTab} - pagina ${activePagination.page + 1} de ${activePagination.totalPages}`}
         </div>
         <div className="flex items-center gap-3">
           {activeTab === 'users' ? (
@@ -201,7 +216,7 @@ export function AdminUserManagement() {
           ) : (
             <>
               <button disabled={peoplePage === 0 || isLoading} onClick={() => goPeoplePage(peoplePage - 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Anterior</button>
-              <button disabled={peoplePage >= securityPagination.people.totalPages - 1 || isLoading} onClick={() => goPeoplePage(peoplePage + 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Siguiente</button>
+              <button disabled={peoplePage >= activePagination.totalPages - 1 || isLoading} onClick={() => goPeoplePage(peoplePage + 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Siguiente</button>
             </>
           )}
         </div>
@@ -294,7 +309,7 @@ export function AdminUserManagement() {
               )}
             </tbody>
           </table>
-          {users.length === 0 && !isLoading && (
+          {((activeTab === 'users' && users.length === 0) || (activeTab !== 'users' && peopleRows.length === 0)) && !isLoading && (
             <div className="p-40 text-center space-y-6 opacity-20">
                <ShieldCheck size={100} className="mx-auto" />
                <p className="text-2xl font-black uppercase tracking-[1em] italic">Database Empty</p>

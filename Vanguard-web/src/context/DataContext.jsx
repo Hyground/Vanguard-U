@@ -29,18 +29,20 @@ export function DataProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [securityPagination, setSecurityPagination] = useState({
     users: { page: 0, totalPages: 1, totalElements: 0 },
-    people: { page: 0, totalPages: 1, totalElements: 0 },
+    students: { page: 0, totalPages: 1, totalElements: 0 },
+    teachers: { page: 0, totalPages: 1, totalElements: 0 },
+    tutors: { page: 0, totalPages: 1, totalElements: 0 },
   });
 
   const addLog = useCallback((user, action, type = 'info') => {
     setLogs(prev => [{ id: Date.now(), timestamp: new Date().toISOString(), userId: user, action, type }, ...prev.slice(0, 99)]);
   }, []);
 
-  const refreshSecurityData = useCallback(async ({ userPage = 0, peoplePage = 0, size = SECURITY_PAGE_SIZE } = {}) => {
+  const refreshSecurityData = useCallback(async ({ userPage = 0, peoplePage = 0, size = SECURITY_PAGE_SIZE, section = 'users' } = {}) => {
     if (!token || !isAuthenticated) return;
     setIsLoading(true);
     try {
-      const identity = await getSecurityIdentityPage(token, { userPage, peoplePage, size });
+      const identity = await getSecurityIdentityPage(token, { userPage, peoplePage, size, section });
       const uRes = identity.users;
       const rRes = identity.roles;
       const sRes = identity.students;
@@ -52,20 +54,27 @@ export function DataProvider({ children }) {
       const nextTeachers = asList(tRes);
       const nextTutors = asList(tutRes);
 
-      setUsers(nextUsers);
-      setRoles(asList(rRes));
-      setPeople({ students: nextStudents, teachers: nextTeachers, tutors: nextTutors });
+      if (section === 'users' || section === 'all') {
+        setUsers(nextUsers);
+        setRoles(asList(rRes));
+      }
+      if (section === 'students' || section === 'all') {
+        setPeople(prev => ({ ...prev, students: nextStudents }));
+      }
+      if (section === 'teachers' || section === 'all') {
+        setPeople(prev => ({ ...prev, teachers: nextTeachers }));
+      }
+      if (section === 'tutors' || section === 'all') {
+        setPeople(prev => ({ ...prev, tutors: nextTutors }));
+      }
 
-      setSecurityPagination({
-        users: pageMeta(uRes, nextUsers.length),
-        people: {
-          page: peoplePage,
-          totalPages: Math.max(sRes?.totalPages ?? 1, tRes?.totalPages ?? 1, tutRes?.totalPages ?? 1),
-          totalElements: (sRes?.totalElements ?? nextStudents.length)
-            + (tRes?.totalElements ?? nextTeachers.length)
-            + (tutRes?.totalElements ?? nextTutors.length),
-        },
-      });
+      setSecurityPagination(prev => ({
+        ...prev,
+        ...(section === 'users' || section === 'all' ? { users: pageMeta(uRes, nextUsers.length) } : {}),
+        ...(section === 'students' || section === 'all' ? { students: pageMeta(sRes, nextStudents.length) } : {}),
+        ...(section === 'teachers' || section === 'all' ? { teachers: pageMeta(tRes, nextTeachers.length) } : {}),
+        ...(section === 'tutors' || section === 'all' ? { tutors: pageMeta(tutRes, nextTutors.length) } : {}),
+      }));
 
       addLog('SYSTEM', 'Sincronizacion de seguridad completada', 'info');
     } catch (err) {
@@ -136,7 +145,7 @@ export function DataProvider({ children }) {
       password: userData.password,
       roleId,
     }, token);
-    await refreshSecurityData();
+    await refreshSecurityData({ section: 'users' });
     return response;
   };
 
@@ -149,18 +158,18 @@ export function DataProvider({ children }) {
     if (typeof data.status === 'boolean') {
       await updateUserStatus(id, data.status, token);
     }
-    await refreshSecurityData();
+    await refreshSecurityData({ section: 'users' });
   };
 
   const addPersonReal = async (type, data) => {
     const response = await createResource(type, data, token);
-    await refreshSecurityData();
+    await refreshSecurityData({ section: type });
     return response;
   };
 
   const updatePersonReal = async (type, id, data) => {
     await updateResource(type, id, data, token);
-    await refreshSecurityData();
+    await refreshSecurityData({ section: type });
   };
 
   const setStudentGrade = async (studentId, activityId, score, teacherName) => {

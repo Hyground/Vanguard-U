@@ -1,8 +1,11 @@
 package com.vanguard.gateway.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.http.HttpStatus;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -10,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -17,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 public class SecurityIdentityService {
 
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
 
     @Value("${USERS_MS_URL:http://localhost:8081}")
     private String usersMsUrl;
@@ -30,16 +35,28 @@ public class SecurityIdentityService {
     @Value("${SECURITY_IDENTITY_TIMEOUT_MS:3000}")
     private long timeoutMs;
 
-    public SecurityIdentityService(WebClient.Builder webClientBuilder) {
+    public SecurityIdentityService(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.build();
+        this.objectMapper = objectMapper;
     }
 
-    public Mono<Map<String, JsonNode>> getIdentityPage(String token, int userPage, int peoplePage, int size) {
-        Mono<JsonNode> users = fetch(usersMsUrl + pagePath("/api/v1/users", userPage, size), token);
-        Mono<JsonNode> roles = fetch(usersMsUrl + pagePath("/api/v1/roles", 0, 100), token);
-        Mono<JsonNode> students = fetch(studentMsUrl + pagePath("/api/v1/students", peoplePage, size), token);
-        Mono<JsonNode> teachers = fetch(academicMsUrl + pagePath("/api/v1/teachers", peoplePage, size), token);
-        Mono<JsonNode> tutors = fetch(studentMsUrl + pagePath("/api/v1/tutors", peoplePage, size), token);
+    public Mono<Map<String, JsonNode>> getIdentityPage(String token, int userPage, int peoplePage, int size, String section) {
+        String normalizedSection = String.valueOf(section).toLowerCase(Locale.ROOT);
+        Mono<JsonNode> users = shouldFetch(normalizedSection, "users")
+                ? fetch(usersMsUrl + pagePath("/api/v1/users", userPage, size), token)
+                : Mono.just(emptyPage(userPage));
+        Mono<JsonNode> roles = shouldFetch(normalizedSection, "users")
+                ? fetch(usersMsUrl + pagePath("/api/v1/roles", 0, 100), token)
+                : Mono.just(objectMapper.createArrayNode());
+        Mono<JsonNode> students = shouldFetch(normalizedSection, "students")
+                ? fetch(studentMsUrl + pagePath("/api/v1/students", peoplePage, size), token)
+                : Mono.just(emptyPage(peoplePage));
+        Mono<JsonNode> teachers = shouldFetch(normalizedSection, "teachers")
+                ? fetch(academicMsUrl + pagePath("/api/v1/teachers", peoplePage, size), token)
+                : Mono.just(emptyPage(peoplePage));
+        Mono<JsonNode> tutors = shouldFetch(normalizedSection, "tutors")
+                ? fetch(studentMsUrl + pagePath("/api/v1/tutors", peoplePage, size), token)
+                : Mono.just(emptyPage(peoplePage));
 
         return Mono.zip(users, roles, students, teachers, tutors)
                 .map(tuple -> Map.of(
@@ -49,6 +66,20 @@ public class SecurityIdentityService {
                         "teachers", tuple.getT4(),
                         "tutors", tuple.getT5()
                 ));
+    }
+
+    private boolean shouldFetch(String section, String candidate) {
+        return "all".equals(section) || candidate.equals(section);
+    }
+
+    private JsonNode emptyPage(int page) {
+        ObjectNode payload = objectMapper.createObjectNode();
+        ArrayNode content = objectMapper.createArrayNode();
+        payload.set("content", content);
+        payload.put("number", Math.max(page, 0));
+        payload.put("totalPages", 1);
+        payload.put("totalElements", 0);
+        return payload;
     }
 
     private Mono<JsonNode> fetch(String url, String token) {

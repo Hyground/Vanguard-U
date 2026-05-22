@@ -26,8 +26,9 @@ public class AdminSecurityController {
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "0") int userPage,
             @RequestParam(defaultValue = "0") int peoplePage,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "all") String section
     ) {
-        return securityIdentityService.getIdentityPage(token, userPage, peoplePage, size);
+        return securityIdentityService.getIdentityPage(token, userPage, peoplePage, size, section);
     }
 }
