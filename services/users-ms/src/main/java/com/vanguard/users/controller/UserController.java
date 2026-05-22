@@ -26,6 +26,12 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers(pageable));
     }
 
+    @GetMapping("/count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Long> countUsers() {
+        return ResponseEntity.ok(userService.countUsers());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Integer id) {
         return ResponseEntity.ok(userService.getUserById(id));
@@ -55,4 +61,5 @@ public class UserController {
     ) {
         return ResponseEntity.ok(userService.updateUserStatus(id, statusUpdate.get("status")));
     }
+
 }

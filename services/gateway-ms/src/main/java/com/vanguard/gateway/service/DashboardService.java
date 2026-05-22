@@ -6,13 +6,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class DashboardService {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClient;
 
     @Value("${USERS_MS_URL:http://localhost:8081}")
     private String usersMsUrl;
@@ -23,51 +24,73 @@ public class DashboardService {
     @Value("${STUDENT_MS_URL:http://localhost:8083}")
     private String studentMsUrl;
 
+    @Value("${DASHBOARD_TIMEOUT_MS:3000}")
+    private long dashboardTimeoutMs;
+
     public DashboardService(WebClient.Builder webClientBuilder) {
-        this.webClientBuilder = webClientBuilder;
+        this.webClient = webClientBuilder.build();
     }
 
     public Mono<DashboardSummaryDTO> getSummary(String token) {
-        Mono<Long> usersCount = fetchCount(usersMsUrl + "/api/v1/users", token);
-        Mono<Long> studentsCount = fetchCount(studentMsUrl + "/api/v1/students", token);
-        Mono<Long> teachersCount = fetchCount(academicMsUrl + "/api/v1/teachers", token);
-        Mono<Long> enrollmentsCount = fetchCount(studentMsUrl + "/api/v1/enrollments", token);
-        Mono<Long> coursesCount = fetchCount(academicMsUrl + "/api/v1/courses", token);
-        Mono<Long> activeCyclesCount = fetchCount(academicMsUrl + "/api/v1/school-cycles", token);
+        Mono<UserSummary> usersSummary = fetchSummary(usersMsUrl + "/api/v1/admin/summary", token, UserSummary.class)
+                .onErrorResume(error -> fetchCount(usersMsUrl + "/api/v1/users/count", token)
+                        .map(UserSummary::new));
 
-        return Mono.zip(usersCount, studentsCount, teachersCount, enrollmentsCount, coursesCount, activeCyclesCount)
+        Mono<StudentEnrollmentSummary> studentSummary = fetchSummary(studentMsUrl + "/api/v1/admin/summary", token, StudentEnrollmentSummary.class)
+                .onErrorResume(error -> Mono.zip(
+                                fetchCount(studentMsUrl + "/api/v1/students/count", token),
+                                fetchCount(studentMsUrl + "/api/v1/enrollments/count", token)
+                        )
+                        .map(tuple -> new StudentEnrollmentSummary(tuple.getT1(), tuple.getT2())));
+
+        Mono<AcademicSummary> academicSummary = fetchSummary(academicMsUrl + "/api/v1/admin/summary", token, AcademicSummary.class)
+                .onErrorResume(error -> Mono.zip(
+                                fetchCount(academicMsUrl + "/api/v1/teachers/count", token),
+                                fetchCount(academicMsUrl + "/api/v1/courses/count", token),
+                                fetchCount(academicMsUrl + "/api/v1/school-cycles/count/active", token)
+                        )
+                        .map(tuple -> new AcademicSummary(tuple.getT1(), tuple.getT2(), tuple.getT3())));
+
+        return Mono.zip(usersSummary, studentSummary, academicSummary)
                 .map(tuple -> new DashboardSummaryDTO(
-                        tuple.getT2(), // students
-                        tuple.getT3(), // teachers
-                        tuple.getT1(), // users
-                        tuple.getT4(), // enrollments
-                        tuple.getT5(), // courses
-                        tuple.getT6(), // cycles
-                        List.of(),     // logs (placeholder)
+                        tuple.getT2().totalStudents(),
+                        tuple.getT3().totalTeachers(),
+                        tuple.getT1().totalUsers(),
+                        tuple.getT2().totalEnrollments(),
+                        tuple.getT3().totalCourses(),
+                        tuple.getT3().activeCycles(),
+                        List.of(),
                         Map.of("status", "healthy", "gateway", "online")
                 ));
     }
 
-    private Mono<Long> fetchCount(String url, String token) {
-        return webClientBuilder.build()
+    private <T> Mono<T> fetchSummary(String url, String token, Class<T> responseType) {
+        return webClient
                 .get()
                 .uri(url)
                 .header("Authorization", token)
                 .retrieve()
-                .bodyToMono(Map.class)
-                .map(response -> {
-                    // Adaptar según la estructura de respuesta de tus MS (Spring Data REST o Custom)
-                    if (response.containsKey("totalElements")) {
-                        return ((Number) response.get("totalElements")).longValue();
-                    }
-                    if (response.containsKey("total")) {
-                        return ((Number) response.get("total")).longValue();
-                    }
-                    if (response.get("data") instanceof Map data && data.containsKey("totalElements")) {
-                        return ((Number) data.get("totalElements")).longValue();
-                    }
-                    return 0L;
-                })
-                .onErrorReturn(0L); // Resiliencia básica: si falla un MS, devolvemos 0 en ese contador
+                .bodyToMono(responseType)
+                .timeout(Duration.ofMillis(dashboardTimeoutMs));
+    }
+
+    private Mono<Long> fetchCount(String url, String token) {
+        return webClient
+                .get()
+                .uri(url)
+                .header("Authorization", token)
+                .retrieve()
+                .bodyToMono(Long.class)
+                .timeout(Duration.ofMillis(dashboardTimeoutMs))
+                .onErrorReturn(0L);
+    }
+
+    private record UserSummary(long totalUsers) {
+    }
+
+    private record StudentEnrollmentSummary(long totalStudents, long totalEnrollments) {
+    }
+
+    private record AcademicSummary(long totalTeachers, long totalCourses, long activeCycles) {
     }
 }

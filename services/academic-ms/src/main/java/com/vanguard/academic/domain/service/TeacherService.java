@@ -29,6 +29,11 @@ public class TeacherService {
     }
 
     @Transactional(readOnly = true)
+    public long countTeachers() {
+        return teacherRepository.count();
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Teacher> findById(Long id) {
         return teacherRepository.findById(id);
     }

@@ -27,6 +27,11 @@ public class TeacherController {
         return ResponseEntity.ok(teacherService.findAll(pageable).map(this::toDTO));
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> countTeachers() {
+        return ResponseEntity.ok(teacherService.countTeachers());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TeacherDTO> getTeacherById(@PathVariable Long id) {
         return teacherService.findById(id)

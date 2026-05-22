@@ -34,6 +34,11 @@ public class StudentController {
         return ResponseEntity.ok(studentService.findAll(pageable));
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> countStudents() {
+        return ResponseEntity.ok(studentService.countStudents());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<StudentResponse> findById(@PathVariable Integer id) {
         return ResponseEntity.ok(studentService.findById(id));

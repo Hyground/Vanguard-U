@@ -1,6 +1,7 @@
 package com.vanguard.users.service;
 
 import com.vanguard.users.dto.request.UpdateUserRequest;
+import com.vanguard.users.dto.response.UserSummaryResponse;
 import com.vanguard.users.dto.response.UserResponse;
 import com.vanguard.users.repository.RoleRepository;
 import com.vanguard.users.repository.UserRepository;
@@ -26,6 +27,14 @@ public class UserService {
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
                 .map(this::toResponse);
+    }
+
+    public long countUsers() {
+        return userRepository.count();
+    }
+
+    public UserSummaryResponse getSummary() {
+        return new UserSummaryResponse(userRepository.count());
     }
 
     public UserResponse getUserById(Integer id) {

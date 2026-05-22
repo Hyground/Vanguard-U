@@ -273,7 +273,7 @@ export async function getAdminOverview(token) {
   } catch (err) {
     console.error('Error al cargar el agregador del dashboard:', err);
     // Fallback a peticiones individuales si el agregador falla (opcional, pero mejor manejar el error)
-    const keys = ['students', 'teachers', 'enrollments', 'courses', 'school-cycles'];
+    const keys = ['users', 'students', 'teachers', 'enrollments', 'courses', 'school-cycles'];
     const selected = adminResources.filter((resource) => keys.includes(resource.id));
     const results = await Promise.allSettled(selected.map((resource) => listResource(resource, token)));
 
@@ -283,6 +283,9 @@ export async function getAdminOverview(token) {
       if (res.status === 'fulfilled') {
         const payload = res.value;
         value = payload?.totalElements ?? payload?.total ?? payload?.data?.totalElements ?? asList(payload).length;
+        if (resource.id === 'school-cycles') {
+          value = asList(payload).filter((cycle) => cycle.active === true || cycle.status === true).length;
+        }
       }
       return {
         id: resource.id,

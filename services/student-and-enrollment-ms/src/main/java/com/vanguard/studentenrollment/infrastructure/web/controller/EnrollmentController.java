@@ -34,6 +34,11 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollmentService.findAll(pageable));
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> countEnrollments() {
+        return ResponseEntity.ok(enrollmentService.countEnrollments());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<EnrollmentResponse> findById(@PathVariable Integer id) {
         return ResponseEntity.ok(enrollmentService.findById(id));

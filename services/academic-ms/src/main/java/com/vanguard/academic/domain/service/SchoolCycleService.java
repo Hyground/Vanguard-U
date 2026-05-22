@@ -22,6 +22,16 @@ public class SchoolCycleService {
     public List<SchoolCycle> findAll() {
         return schoolCycleRepository.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public long countSchoolCycles() {
+        return schoolCycleRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long countActiveSchoolCycles() {
+        return schoolCycleRepository.countByActiveTrue();
+    }
     
     @Transactional(readOnly = true)
     public Optional<SchoolCycle> findById(Long id) {

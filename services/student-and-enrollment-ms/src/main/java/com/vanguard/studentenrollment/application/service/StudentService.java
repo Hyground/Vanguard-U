@@ -53,6 +53,11 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
+    public long countStudents() {
+        return studentRepository.count();
+    }
+
+    @Transactional(readOnly = true)
     public StudentResponse findById(Integer id) {
         return StudentEnrollmentMapper.toResponse(getStudent(id));
     }

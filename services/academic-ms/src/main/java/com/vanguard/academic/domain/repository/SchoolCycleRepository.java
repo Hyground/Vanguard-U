@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface SchoolCycleRepository extends JpaRepository<SchoolCycle, Long> {
     Optional<SchoolCycle> findByYear(Integer year);
     Optional<SchoolCycle> findByActiveTrue();
+    long countByActiveTrue();
     boolean existsByYear(Integer year);
 }

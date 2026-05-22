@@ -22,6 +22,11 @@ public class CourseService {
     public List<Course> findAll() {
         return courseRepository.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public long countCourses() {
+        return courseRepository.count();
+    }
     
     @Transactional(readOnly = true)
     public Optional<Course> findById(Long id) {

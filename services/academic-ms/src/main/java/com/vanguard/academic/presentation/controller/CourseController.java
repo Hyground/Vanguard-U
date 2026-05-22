@@ -30,7 +30,12 @@ public class CourseController {
             .map(this::toDTO)
             .toList();
     }
-    
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> countCourses() {
+        return ResponseEntity.ok(courseService.countCourses());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CourseDTO> getCourseById(@PathVariable Long id) {
         return courseService.findById(id)

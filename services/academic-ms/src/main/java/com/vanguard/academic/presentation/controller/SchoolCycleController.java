@@ -30,7 +30,17 @@ public class SchoolCycleController {
             .map(this::toDTO)
             .toList();
     }
-    
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> countSchoolCycles() {
+        return ResponseEntity.ok(schoolCycleService.countSchoolCycles());
+    }
+
+    @GetMapping("/count/active")
+    public ResponseEntity<Long> countActiveSchoolCycles() {
+        return ResponseEntity.ok(schoolCycleService.countActiveSchoolCycles());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<SchoolCycleDTO> getSchoolCycleById(@PathVariable Long id) {
         return schoolCycleService.findById(id)
