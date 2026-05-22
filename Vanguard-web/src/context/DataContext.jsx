@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import { listResource, createResource, updateResource, updateUserStatus, registerUser } from '../api/adminApi';
+import { listResource, createResource, updateResource, updateUserStatus, registerUser, getSecurityIdentityPage } from '../api/adminApi';
 import { useAuth } from '../auth/AuthContext';
 import { asList } from '../api/client';
 
@@ -40,13 +40,12 @@ export function DataProvider({ children }) {
     if (!token || !isAuthenticated) return;
     setIsLoading(true);
     try {
-      const [uRes, rRes, sRes, tRes, tutRes] = await Promise.all([
-        listResource({ endpoint: '/users' }, token, userPage, size),
-        listResource({ endpoint: '/roles' }, token, 0, 100),
-        listResource({ endpoint: '/students' }, token, peoplePage, size),
-        listResource({ endpoint: '/teachers' }, token, peoplePage, size),
-        listResource({ endpoint: '/tutors' }, token, peoplePage, size),
-      ]);
+      const identity = await getSecurityIdentityPage(token, { userPage, peoplePage, size });
+      const uRes = identity.users;
+      const rRes = identity.roles;
+      const sRes = identity.students;
+      const tRes = identity.teachers;
+      const tutRes = identity.tutors;
 
       const nextUsers = asList(uRes);
       const nextStudents = asList(sRes);
