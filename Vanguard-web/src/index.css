@@ -30,7 +30,12 @@
 
 @layer base {
   body {
-    @apply bg-base text-main font-sans overflow-hidden transition-colors duration-500 tracking-wide;
+    background-color: var(--color-base);
+    color: var(--color-main);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    overflow: hidden;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    letter-spacing: 0.025em;
   }
 }
 
@@ -39,7 +44,8 @@
     border: 1px solid var(--color-border);
   }
   .glass-panel {
-    @apply backdrop-blur-2xl;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
     background-color: var(--glass-bg);
     border: 1px solid var(--glass-border);
   }
@@ -55,16 +61,20 @@
   }
 }
 
-/* Refined Scrollbar */
+/* Refined Scrollbar - Pure CSS */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-sec/20 rounded-full hover:bg-sec/40 transition-colors;
+  background-color: var(--color-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-sec);
 }
 
 @media print {
@@ -74,8 +84,14 @@
 }
 .print-only { display: none; }
 
+/* Page Transition - Native CSS Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .page-transition {
-  @apply animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out;
+  animation: fadeIn 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 /* Custom selection logic */
