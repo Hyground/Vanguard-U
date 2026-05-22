@@ -3,6 +3,15 @@ import { Activity, Database, Server, Shield, Zap, Power, RefreshCw, AlertTriangl
 import { apiRequest } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 
+function formatNodeName(hostname) {
+  const name = hostname.toLowerCase();
+  if (name.includes('vps') && !name.includes('4') && !name.includes('5')) return 'NODO MANAGER (Cerebro)';
+  if (name.includes('node2')) return 'NODO TRABAJADOR 1';
+  if (name.includes('vps4')) return 'NODO TRABAJADOR 2';
+  if (name.includes('vps5')) return 'NODO TRABAJADOR 3';
+  return hostname.toUpperCase();
+}
+
 export function InfrastructureMap() {
   const { token } = useAuth();
   const [swarmNodes, setSwarmNodes] = useState([]);
@@ -23,10 +32,10 @@ export function InfrastructureMap() {
       if (swarm.status === 'fulfilled' && Array.isArray(swarm.value) && swarm.value.length > 0) {
         setSwarmNodes(swarm.value);
       } else {
-        // FALLBACK: Representación completa de tus 4 servidores y todos tus microservicios
+        // FALLBACK: Representación completa con nombres intuitivos
         setSwarmNodes([
           { 
-            id: '1', hostname: 'vps (Manager)', status: 'ready', availability: 'active', role: 'manager', 
+            id: '1', hostname: 'vps', status: 'ready', availability: 'active', role: 'manager', 
             tasks: [
               {id: 't1', name: 'gateway-ms'}, 
               {id: 't2', name: 'chaos-proxy'},
@@ -166,54 +175,58 @@ export function InfrastructureMap() {
       <section className="space-y-4">
         <div className="flex items-center gap-2 px-2">
           <Server size={18} className="text-accent" />
-          <h3 className="font-bold text-lg">Capa de Aplicación (Docker Swarm)</h3>
+          <h3 className="font-bold text-lg text-sec uppercase tracking-[0.2em]">Capa de Aplicación (Docker Swarm)</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {swarmNodes.map((node) => (
             <div 
               key={node.id} 
-              className={`cyber-panel border-2 transition-all duration-500 ${
+              className={`cyber-panel border-2 transition-all duration-500 shadow-xl ${
                 node.availability === 'drain' ? 'border-warning/40 bg-warning/5' : 'border-border/40'
               }`}
             >
-              <div className="p-4 border-b border-border/40 flex items-start justify-between">
+              <div className="p-5 border-b border-border/40 flex items-start justify-between bg-black/20">
                 <div>
-                  <p className="text-xs font-mono text-sec uppercase mb-1">{node.role}</p>
-                  <h4 className="font-bold text-main">{node.hostname}</h4>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span className={`w-2 h-2 rounded-full ${node.status === 'ready' || node.status === 'active' ? 'bg-success' : 'bg-warning'} shadow-[0_0_8px_currentColor]`} />
-                    <span className="text-[10px] font-bold uppercase text-sec">{node.status}</span>
+                  <p className={`text-[11px] font-bold uppercase mb-1 tracking-[0.2em] ${node.role === 'manager' ? 'text-accent' : 'text-sec'}`}>
+                    {node.role === 'manager' ? 'Cluster Master' : 'Compute Node'}
+                  </p>
+                  <h4 className="text-xl font-black text-main tracking-tight uppercase">
+                    {formatNodeName(node.hostname)}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className={`w-3 h-3 rounded-full ${node.status === 'ready' || node.status === 'active' ? 'bg-success' : 'bg-warning'} shadow-[0_0_12px_currentColor]`} />
+                    <span className="text-xs font-black uppercase tracking-widest text-main">{node.status}</span>
                   </div>
                 </div>
                 <button
                   onClick={() => handleNodeAction(node.id, node.availability === 'drain' ? 'active' : 'drain')}
                   disabled={isActionLoading || node.role === 'manager'}
-                  className={`p-2 rounded-lg border transition-all ${
+                  className={`p-2.5 rounded-lg border transition-all ${
                     node.availability === 'drain' 
-                      ? 'border-success/50 text-success hover:bg-success/10' 
-                      : 'border-warning/50 text-warning hover:bg-warning/10'
+                      ? 'border-success text-success bg-success/10 hover:bg-success/20' 
+                      : 'border-warning text-warning bg-warning/10 hover:bg-warning/20'
                   } disabled:opacity-20`}
                   title={node.availability === 'drain' ? 'Activar Nodo' : 'Simular Caída (Drain)'}
                 >
-                  <Power size={18} />
+                  <Power size={20} />
                 </button>
               </div>
 
-              <div className="p-4 space-y-3 min-h-[120px]">
-                <p className="text-[10px] font-bold text-sec uppercase tracking-widest">Microservicios Activos</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="p-5 space-y-4 min-h-[140px]">
+                <p className="text-[11px] font-bold text-sec uppercase tracking-[0.2em]">Servicios en Ejecución</p>
+                <div className="flex flex-wrap gap-2.5">
                   {node.tasks.map((task) => (
                     <div 
                       key={task.id}
-                      className="px-2 py-1 rounded bg-black/40 border border-border/50 text-[10px] font-mono text-accent flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded bg-accent/10 border border-accent/30 text-[11px] font-bold font-mono text-accent flex items-center gap-2 shadow-sm"
                     >
-                      <Zap size={10} />
-                      {task.name}
+                      <Zap size={12} fill="currentColor" />
+                      {task.name.toUpperCase()}
                     </div>
                   ))}
                   {node.tasks.length === 0 && (
-                    <p className="text-xs text-sec italic">Sin carga activa</p>
+                    <p className="text-xs text-sec/60 italic font-medium">Sin carga activa en este nodo</p>
                   )}
                 </div>
               </div>
@@ -227,76 +240,80 @@ export function InfrastructureMap() {
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <Database size={18} className="text-success" />
-            <h3 className="font-bold text-lg">Capa de Datos (PostgreSQL Patroni HA)</h3>
+            <h3 className="font-bold text-lg text-sec uppercase tracking-[0.2em]">Capa de Datos (PostgreSQL Patroni HA)</h3>
           </div>
           <button
             onClick={handleDbFailover}
             disabled={isActionLoading}
-            className="text-xs font-bold text-sec hover:text-warning border border-border/40 px-3 py-1.5 rounded-lg hover:border-warning/40 transition-all"
+            className="text-xs font-black text-warning hover:text-white border border-warning/40 px-4 py-2 rounded-lg hover:bg-warning/20 transition-all uppercase tracking-widest"
           >
             Forzar Failover DB
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* BD1: El Router */}
-          <div className="cyber-panel border-success/30 bg-success/5">
-            <div className="p-4 border-b border-border/40">
-              <p className="text-xs font-mono text-success uppercase mb-1">Router / LB</p>
-              <h4 className="font-bold text-main">bd1 (HAProxy)</h4>
-              <div className="flex items-center gap-1.5 mt-2">
-                <ShieldCheck size={14} className="text-success" />
-                <span className="text-[10px] font-bold uppercase text-success">Healthy</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* NODO BD 1: El Router */}
+          <div className="cyber-panel border-success/30 bg-success/5 transform hover:scale-[1.02] transition-transform shadow-xl">
+            <div className="p-5 border-b border-border/40 bg-black/20">
+              <p className="text-[11px] font-bold text-success uppercase mb-1 tracking-[0.2em]">Data Traffic Controller</p>
+              <h4 className="text-xl font-black text-main uppercase">NODO BD 1 (Router)</h4>
+              <div className="flex items-center gap-2 mt-3">
+                <ShieldCheck size={18} className="text-success shadow-[0_0_10px_currentColor]" />
+                <span className="text-xs font-black uppercase tracking-widest text-success">OPERACIONAL</span>
               </div>
             </div>
-            <div className="p-4 flex items-center justify-center py-10">
+            <div className="p-5 flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="flex justify-center gap-2 mb-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-ping" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-ping delay-75" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-ping delay-150" />
+                <div className="flex justify-center gap-2.5 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-success animate-ping" />
+                  <div className="w-2 h-2 rounded-full bg-success animate-ping delay-75" />
+                  <div className="w-2 h-2 rounded-full bg-success animate-ping delay-150" />
                 </div>
-                <p className="text-xs text-sec font-mono uppercase">Enrutando a líder</p>
+                <p className="text-[10px] text-sec font-black uppercase tracking-[0.2em]">Balanceando Tráfico</p>
               </div>
             </div>
           </div>
 
-          {/* BD2 & BD3 */}
-          {['bd2', 'bd3'].map((nodeName) => {
+          {/* NODO BD 2 & 3 */}
+          {['bd2', 'bd3'].map((nodeName, idx) => {
             const member = patroniState?.members?.find(m => m.name === nodeName);
             const isLeader = member?.role === 'leader' || member?.role === 'primary';
             return (
               <div 
                 key={nodeName} 
-                className={`cyber-panel border-2 transition-all duration-700 ${
+                className={`cyber-panel border-2 transition-all duration-700 transform hover:scale-[1.02] shadow-xl ${
                   isLeader ? 'border-accent bg-accent/5' : 'border-border/40'
                 }`}
               >
-                <div className="p-4 border-b border-border/40 flex items-start justify-between">
+                <div className="p-5 border-b border-border/40 flex items-start justify-between bg-black/20">
                   <div>
-                    <p className={`text-xs font-mono uppercase mb-1 ${isLeader ? 'text-accent' : 'text-sec'}`}>
-                      {member?.role || 'PostgreSQL'}
+                    <p className={`text-[11px] font-bold uppercase mb-1 tracking-[0.2em] ${isLeader ? 'text-accent' : 'text-sec'}`}>
+                      {isLeader ? 'Primary Database Master' : 'Hot Standby Replica'}
                     </p>
-                    <h4 className="font-bold text-main uppercase">{nodeName}</h4>
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <span className={`w-2 h-2 rounded-full ${member?.state === 'running' ? 'bg-success' : 'bg-warning'} shadow-[0_0_8px_currentColor]`} />
-                      <span className="text-[10px] font-bold uppercase text-sec">{member?.state || 'Unknown'}</span>
+                    <h4 className="text-xl font-black text-main uppercase tracking-tight">
+                      NODO BD {idx + 2}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className={`w-3 h-3 rounded-full ${member?.state === 'running' ? 'bg-success' : 'bg-warning'} shadow-[0_0_12px_currentColor]`} />
+                      <span className="text-xs font-black uppercase tracking-widest text-main">{member?.state || 'Unknown'}</span>
                     </div>
                   </div>
                   {isLeader && (
-                    <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent animate-bounce">
-                      <Zap size={20} fill="currentColor" />
+                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent animate-bounce border border-accent/40">
+                      <Zap size={24} fill="currentColor" />
                     </div>
                   )}
                 </div>
-                <div className="p-4 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-sec">Timeline:</span>
-                    <span className="font-mono text-main">{patroniState?.scheduled_switchover ? 'Switching...' : 'Stable'}</span>
+                <div className="p-5 space-y-3 bg-black/10">
+                  <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider">
+                    <span className="text-sec">Timeline Sync:</span>
+                    <span className="font-mono text-main bg-black/40 px-2 py-0.5 rounded border border-border/30">
+                      {patroniState?.scheduled_switchover ? 'EN CAMBIO...' : 'ESTABLE'}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-sec">Sync:</span>
-                    <span className="font-mono text-success">Synchronous</span>
+                  <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider">
+                    <span className="text-sec">Replication:</span>
+                    <span className="text-success font-black">ACTIVA</span>
                   </div>
                 </div>
               </div>
