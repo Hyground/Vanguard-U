@@ -19,7 +19,6 @@ export function InfrastructureMap() {
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showRaw, setShowRaw] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -32,12 +31,14 @@ export function InfrastructureMap() {
       if (swarm.status === 'fulfilled' && Array.isArray(swarm.value)) {
         setSwarmNodes(swarm.value);
         setError(null);
-      } else if (swarm.status === 'rejected') {
-        setError('Sin conexión con Swarm Proxy.');
+      } else {
+        setError('Error al conectar con la infraestructura.');
       }
 
-      if (patroni.status === 'fulfilled' && patroni.value) {
+      if (patroni.status === 'fulfilled' && patroni.value && !patroni.value.error) {
         setPatroniState(patroni.value);
+      } else {
+        setPatroniState(null);
       }
     } catch (err) {
       console.error('Fetch error', err);
@@ -58,78 +59,65 @@ export function InfrastructureMap() {
       const BASE = 'https://api.wissegt.com/api';
       await apiRequest(`${BASE}/swarm/node/${nodeId}/${action}`, { method: 'POST', token });
       await fetchData();
-    } catch (err) { alert('Comando enviado.'); }
+    } catch (err) { alert('Comando no disponible.'); }
     finally { setIsActionLoading(false); }
   };
 
   const handleDbFailover = async () => {
-    if (!window.confirm('¿Forzar failover de base de datos?')) return;
+    if (!window.confirm('¿Forzar failover?')) return;
     setIsActionLoading(true);
     try {
       const BASE = 'https://api.wissegt.com/api';
       await apiRequest(`${BASE}/patroni/failover`, { method: 'POST', token });
-      alert('Rotación iniciada.');
-    } catch (err) { alert('Comando enviado.'); }
+    } catch (err) { alert('Error en comando.'); }
     finally { setIsActionLoading(false); }
   };
 
-  const managerNode = swarmNodes.find(n => n.role === 'manager' || n.hostname.toLowerCase().includes('vps'));
+  const managerNode = swarmNodes.find(n => n.hostname.toLowerCase() === 'vps' || n.role === 'manager');
   const workerNodes = swarmNodes.filter(n => n.id !== managerNode?.id);
 
   if (isLoading && !swarmNodes.length) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-accent">
         <RefreshCw size={40} className="animate-spin mb-4" />
-        <p className="font-black uppercase tracking-[0.3em]">Mapping Full Infrastructure...</p>
+        <p className="font-black uppercase tracking-[0.3em]">Conectando al Motor Docker...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-16 pb-20 animate-in fade-in duration-1000">
-      {/* HEADER */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border/50 pb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Network className="text-accent" size={32} />
             <h2 className="text-4xl font-black tracking-tighter text-main italic uppercase">TOPOLOGÍA FULL-STACK</h2>
           </div>
-          <p className="text-sec text-[11px] font-black uppercase tracking-[0.3em]">Estado Real de Servidores • Capa de Cómputo • Capa de Datos</p>
+          <p className="text-sec text-[11px] font-black uppercase tracking-[0.3em]">Estado Real • Datos de Docker Socket y Patroni API</p>
         </div>
         <div className="flex items-center gap-4">
-           <button onClick={() => setShowRaw(!showRaw)} className="text-[10px] font-black uppercase tracking-widest text-sec hover:text-main">
-              {showRaw ? 'Cerrar Debug' : 'Debug Raw Data'}
-           </button>
-           <a href="https://grafana.wissegt.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-3 bg-accent/10 border-2 border-accent/40 text-accent font-black rounded-xl hover:bg-accent/20 transition-all uppercase tracking-widest text-xs">
+           <a href="https://grafana.wissegt.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-3 bg-accent/10 border-2 border-accent/40 text-accent font-black rounded-xl hover:bg-accent/20 transition-all uppercase tracking-widest text-xs shadow-xl">
               <BarChart3 size={18} /> Grafana <ExternalLink size={14} />
            </a>
         </div>
       </header>
 
-      {showRaw && (
-        <div className="cyber-panel p-6 bg-black font-mono text-[10px] text-success overflow-auto max-h-96">
-           <p className="mb-4 text-main font-bold">// DOCKER SWARM RAW DATA:</p>
-           <pre>{JSON.stringify(swarmNodes, null, 2)}</pre>
-           <p className="my-4 text-main font-bold">// PATRONI RAW DATA:</p>
-           <pre>{JSON.stringify(patroniState, null, 2)}</pre>
-        </div>
-      )}
-
-      {/* --- CAPA 1: SWARM Cluster (CÓMPUTO) --- */}
+      {/* CAPA CÓMPUTO */}
       <section className="relative">
-        <div className="flex items-center gap-3 mb-10 px-2 text-sec border-l-8 border-accent pl-6">
-          <Cpu size={32} className="text-accent" />
-          <h3 className="font-black text-3xl uppercase tracking-tighter text-main">CAPA DE APLICACIÓN</h3>
+        <div className="flex items-center gap-3 mb-10 px-2 text-sec border-l-8 border-accent pl-6 uppercase font-black text-2xl tracking-tighter">
+          Capa de Cómputo (Swarm Cluster)
         </div>
 
         <div className="flex flex-col items-center gap-16">
-          <div className="relative z-20 w-full max-w-lg">
+          <div className="relative z-20 w-full max-w-md">
              <NodeCard node={managerNode} onAction={handleNodeAction} isLoading={isActionLoading} isMaster />
+             <div className="absolute -top-12 left-1/2 -translate-x-1/2 h-12 w-1 bg-accent/30" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full relative z-20">
              {workerNodes.map(node => (
                <div key={node.id} className="relative">
+                  <div className="hidden md:block absolute -top-16 left-1/2 -translate-x-1/2 h-16 w-1 bg-accent/20" />
                   <NodeCard node={node} onAction={handleNodeAction} isLoading={isActionLoading} />
                </div>
              ))}
@@ -143,34 +131,32 @@ export function InfrastructureMap() {
         </div>
       </section>
 
-      {/* CANAL DE DATOS VISUAL */}
+      {/* FLUJO DE DATOS */}
       <div className="flex flex-col items-center gap-4 py-10 relative">
          <div className="bg-black/60 px-8 py-3 rounded-full border-2 border-border/40 text-[11px] font-black text-sec uppercase tracking-[0.4em] z-20">
-            --- ACCESO A PERSISTENCIA ---
+            --- CANAL DE PERSISTENCIA ---
          </div>
          <div className="h-20 w-1 bg-gradient-to-b from-accent to-success opacity-30" />
       </div>
 
-      {/* --- CAPA 2: DATABASE Cluster --- */}
+      {/* CAPA DATOS */}
       <section className="space-y-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2 border-l-8 border-success pl-6">
           <div className="flex items-center gap-3 text-success">
             <Database size={32} />
-            <h3 className="font-black text-3xl uppercase tracking-tighter text-main">CAPA DE DATOS (PATRONI)</h3>
+            <h3 className="font-black text-3xl uppercase tracking-tighter text-main">CAPA DE PERSISTENCIA (PATRONI)</h3>
           </div>
-          <button onClick={handleDbFailover} className="px-10 py-4 bg-warning/20 border-2 border-warning/50 text-warning font-black rounded-2xl hover:bg-warning/30 transition-all uppercase tracking-widest text-xs">
-             EJECUTAR FAILOVER DB
+          <button onClick={handleDbFailover} className="px-10 py-4 bg-warning/20 border-2 border-warning/50 text-warning font-black rounded-2xl hover:bg-warning/30 transition-all uppercase tracking-widest text-xs shadow-2xl">
+             FORZAR FAILOVER
           </button>
         </div>
 
         <div className="flex flex-col items-center gap-16 relative">
            <div className="cyber-panel border-success/60 bg-success/10 p-10 w-full max-w-xl relative z-20 shadow-2xl">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                   <p className="text-[10px] font-black text-success uppercase tracking-widest mb-1">HA TRAFFIC ROUTER</p>
-                   <h4 className="text-3xl font-black text-main uppercase italic">NODO BD 1 (ROUTER)</h4>
-                </div>
+              <p className="text-[10px] font-black text-success uppercase tracking-widest mb-1 text-center">NODO BD 1 (PROXY ROUTER)</p>
+              <div className="flex flex-col items-center gap-4 mt-2">
                 <ShieldCheck className="text-success shadow-[0_0_20px_currentColor] animate-pulse" size={56} />
+                <span className="text-[11px] font-black text-success uppercase tracking-widest bg-black/60 px-4 py-1.5 rounded-full border border-success/40 italic">Enrutando Tráfico a Maestro</span>
               </div>
            </div>
 
@@ -183,22 +169,31 @@ export function InfrastructureMap() {
                   <div key={nodeName} className={`cyber-panel border-4 p-10 transition-all duration-700 shadow-2xl ${isLeader ? 'border-accent bg-accent/5 ring-4 ring-accent/10' : 'border-border/40 bg-card/40'}`}>
                     <div className="flex justify-between items-start mb-8">
                        <div>
-                          <p className={`text-[13px] font-black uppercase mb-1 tracking-widest ${isLeader ? 'text-accent' : 'text-sec'}`}>
-                            {isLeader ? '>>> CLÚSTER MASTER <<<' : 'READ-ONLY REPLICA'}
+                          <p className={`text-[13px] font-black uppercase mb-1 tracking-widest ${isLeader ? 'text-accent animate-bounce' : 'text-sec'}`}>
+                            {isLeader ? '>>> CLÚSTER MASTER <<<' : 'REPLICA NODE'}
                           </p>
-                          <h4 className="text-4xl font-black text-main uppercase italic font-black tracking-tighter text-3xl">NODO BD {idx + 2}</h4>
+                          <h4 className="text-4xl font-black text-main uppercase italic font-black tracking-tighter">NODO BD {idx + 2}</h4>
                        </div>
-                       {isLeader && <Zap className="text-accent animate-bounce" size={40} fill="currentColor" />}
+                       {isLeader && <div className="w-16 h-16 rounded-3xl bg-accent/30 border-2 border-accent/50 flex items-center justify-center text-accent shadow-[0_0_30px_rgba(99,102,241,0.5)] animate-pulse">
+                          <Zap size={40} fill="currentColor" />
+                       </div>}
                     </div>
                     
-                    <div className="flex items-center gap-4 mb-8 bg-black/60 p-5 rounded-2xl border-2 border-border/20">
-                      <div className={`w-5 h-5 rounded-full ${member?.state === 'running' ? 'bg-success animate-pulse' : 'bg-warning'} shadow-[0_0_20px_currentColor]`} />
-                      <span className="text-lg font-black text-main uppercase tracking-[0.2em]">{member?.state || 'ONLINE'}</span>
-                    </div>
+                    {!member ? (
+                      <div className="flex items-center gap-4 mb-8 bg-black/60 p-5 rounded-2xl border-2 border-border/20 text-warning animate-pulse">
+                        <AlertTriangle />
+                        <span className="text-lg font-black uppercase tracking-widest italic">Node Unreachable (Firewall?)</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4 mb-8 bg-black/60 p-5 rounded-2xl border-2 border-border/20">
+                        <div className={`w-5 h-5 rounded-full ${member.state === 'running' ? 'bg-success animate-pulse' : 'bg-warning'} shadow-[0_0_20px_currentColor]`} />
+                        <span className="text-lg font-black text-main uppercase tracking-[0.2em]">{member.state.toUpperCase()}</span>
+                      </div>
+                    )}
 
-                    <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border/20">
-                       <span className="text-[11px] font-black text-sec uppercase tracking-widest">Patroni Role:</span>
-                       <span className="text-xs font-black text-main uppercase font-mono bg-black/40 px-3 py-1 rounded">{member?.role || 'Replica'}</span>
+                    <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-border/20 font-black">
+                       <span className="text-[11px] text-sec uppercase tracking-widest">Patroni State:</span>
+                       <span className="text-xs text-main uppercase font-mono bg-black/40 px-3 py-1 rounded border border-border/20">{member?.role || 'OFFLINE'}</span>
                     </div>
                   </div>
                 );
@@ -216,33 +211,33 @@ export function InfrastructureMap() {
 }
 
 function NodeCard({ node, onAction, isLoading, isMaster }) {
-  if (!node) return <div className="cyber-panel border-4 border-dashed border-border/20 p-16 text-center text-sec/20 italic font-black uppercase tracking-[0.4em] text-xl">Sincronizando Nodo...</div>;
+  if (!node) return <div className="cyber-panel border-4 border-dashed border-border/20 p-16 text-center text-sec/20 italic font-black uppercase tracking-[0.4em] text-xl animate-pulse">Syncing Cluster...</div>;
   const isDrained = node.availability === 'drain';
 
   return (
     <div className={`cyber-panel border-4 transition-all duration-500 shadow-2xl overflow-hidden ${isDrained ? 'border-warning/60 bg-warning/10 grayscale' : 'border-border/60 bg-card/40'} w-full`}>
       <div className="p-8 border-b border-border/40 bg-black/50 relative">
         <p className={`text-[11px] font-black uppercase mb-2 tracking-[0.3em] ${isMaster ? 'text-accent' : 'text-sec'}`}>
-          {isMaster ? 'HUB ORQUESTADOR CENTRAL' : 'NODO DE CÓMPUTO'}
+          {isMaster ? 'Cluster Orchestrator Master' : 'Compute Execution Node'}
         </p>
         <h4 className="text-3xl font-black text-main tracking-tighter uppercase italic">{formatNodeName(node.hostname)}</h4>
         {!isMaster && (
           <button onClick={() => onAction(node.id, isDrained ? 'active' : 'drain')} disabled={isLoading} className={`absolute top-8 right-8 p-3 rounded-2xl border-4 transition-all shadow-2xl ${isDrained ? 'border-success text-success bg-success/10 hover:bg-success/20' : 'border-warning text-warning bg-warning/10 hover:bg-warning/20'} disabled:opacity-10`}><Power size={28} /></button>
         )}
-        <div className="flex items-center gap-3 mt-6 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-border/20">
+        <div className="flex items-center gap-3 mt-6 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-border/20 shadow-inner">
           <div className={`w-3 h-3 rounded-full ${node.status === 'ready' || node.status === 'active' ? 'bg-success animate-pulse' : 'bg-warning'} shadow-[0_0_15px_currentColor]`} />
-          <span className="text-xs font-black uppercase tracking-widest text-main">{node.status}</span>
+          <span className="text-[11px] font-black uppercase tracking-widest text-main">{node.status}</span>
         </div>
       </div>
       <div className="p-8 space-y-5 bg-black/30 min-h-[180px]">
         <div className="flex flex-wrap gap-3">
           {node.tasks.map((task) => (
-            <div key={task.id} className={`px-4 py-2.5 rounded-xl border-2 flex items-center gap-3 transition-all ${task.type === 'system' ? 'bg-accent/20 border-accent text-white font-black ring-2 ring-accent/20 animate-in zoom-in duration-500' : 'bg-black/60 border-border/40 text-accent font-black'}`}>
+            <div key={task.id} className={`px-4 py-2.5 rounded-xl border-2 flex items-center gap-3 transition-all ${task.type === 'system' ? 'bg-accent/30 border-accent text-white font-black ring-4 ring-accent/10 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'bg-black/60 border-border/40 text-accent font-black'}`}>
               <Zap size={14} fill="currentColor" className={task.type === 'system' ? 'animate-bounce text-white' : ''} />
               <span className="text-[12px] font-mono tracking-tighter">{task.name.toUpperCase()}</span>
             </div>
           ))}
-          {node.tasks.length === 0 && <div className="w-full py-8 text-center border-4 border-dashed border-border/10 rounded-2xl"><p className="text-sm text-sec/20 font-black uppercase tracking-[0.3em] italic">Standby Mode</p></div>}
+          {node.tasks.length === 0 && <div className="w-full py-8 text-center border-4 border-dashed border-border/10 rounded-2xl animate-pulse"><p className="text-sm text-sec/20 font-black uppercase tracking-[0.3em] italic">Idle Node</p></div>}
         </div>
       </div>
     </div>
