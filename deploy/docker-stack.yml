@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   users-ms:
-    image: vanguard12s/users-ms:lab
+    image: vanguard12s/users-ms:stable
     ports:
       - "8081:8081"
     deploy:
@@ -20,7 +20,7 @@ services:
       - vanguard-net
 
   academic-ms:
-    image: vanguard12s/academic-ms:lab
+    image: vanguard12s/academic-ms:stable
     ports:
       - "8082:8082"
     deploy:
@@ -42,7 +42,7 @@ services:
       - vanguard-net
 
   student-and-enrollment-ms:
-    image: vanguard12s/student-and-enrollment-ms:lab
+    image: vanguard12s/student-and-enrollment-ms:stable
     ports:
       - "8083:8083"
     deploy:
@@ -60,7 +60,7 @@ services:
       - vanguard-net
 
   billing-ms:
-    image: vanguard12s/billing-ms:lab
+    image: vanguard12s/billing-ms:stable
     ports:
       - "8084:8084"
     deploy:
@@ -78,7 +78,7 @@ services:
       - vanguard-net
 
   gateway-ms:
-    image: vanguard12s/gateway-ms:lab
+    image: vanguard12s/gateway-ms:stable
     deploy:
       replicas: 2
       restart_policy:
@@ -97,7 +97,7 @@ services:
       - vanguard-net
 
   chaos-proxy:
-    image: vanguard12s/chaos-proxy:vfinal
+    image: vanguard12s/chaos-proxy:stable
     deploy:
       replicas: 1
       placement:

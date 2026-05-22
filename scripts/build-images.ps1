@@ -1,6 +1,6 @@
 param(
     [string]$Registry = "vanguard12s",
-    [string]$Tag = "lab",
+    [string]$Tag = "stable",
     [string[]]$Only,
     [switch]$Push
 )

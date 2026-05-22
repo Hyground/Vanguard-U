@@ -6,13 +6,11 @@ const PORT = 3005;
 
 app.use(express.json());
 
-// --- ESCUDO ANTI-CORS DUPLICADO ---
+// --- CORS SHIELD ---
 app.use((req, res, next) => {
   res.on('header', () => {
     const origin = res.getHeader('Access-Control-Allow-Origin');
-    if (Array.isArray(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin[0]);
-    }
+    if (Array.isArray(origin)) res.setHeader('Access-Control-Allow-Origin', origin[0]);
   });
   next();
 });
@@ -39,68 +37,43 @@ app.get('/api/swarm/state', async (req, res) => {
       tasks: (tRes.data || [])
         .filter(task => task.NodeID === n.ID)
         .map(task => {
-          const fullImage = task.Spec.ContainerSpec.Image;
-          const nameWithTag = fullImage.includes('/') ? fullImage.split('/')[1] : fullImage;
-          // FORZAMOS MAYÚSCULAS PARA IDENTIFICACIÓN CLARA
-          return {
-            id: task.ID,
-            name: nameWithTag.split(':')[0].toUpperCase() || 'TASK',
-            status: 'running'
-          };
+          const img = task.Spec.ContainerSpec.Image;
+          const name = (img.includes('/') ? img.split('/')[1] : img).split(':')[0];
+          return { id: task.ID, name: name.toUpperCase(), status: 'running' };
         })
     }));
 
-    // INYECTAR SERVICIOS CENTRALES (Redis/Rabbit viven en el Nodo 1)
-    // Usamos el hostname 'vps' o el rol 'manager'
-    const manager = state.find(n => n.role === 'manager' || n.hostname.toLowerCase() === 'vps');
+    // FORZAR REDIS Y RABBIT EN EL MANAGER (vps)
+    const manager = state.find(n => n.hostname.toLowerCase() === 'vps' || n.role === 'manager');
     if (manager) {
-      // Evitar duplicados si el proxy se reinicia
-      if (!manager.tasks.some(t => t.id === 'sys-redis')) {
-        manager.tasks.push(
-          { id: 'sys-redis', name: 'REDIS-SERVER', status: 'running', type: 'system' },
-          { id: 'sys-rabbit', name: 'RABBITMQ-BROKER', status: 'running', type: 'system' }
-        );
-      }
+      manager.tasks.push(
+        { id: 'redis-force', name: 'REDIS-SERVER', status: 'running', type: 'system' },
+        { id: 'rabbit-force', name: 'RABBITMQ-BROKER', status: 'running', type: 'system' }
+      );
     }
-
     res.json(state);
   } catch (err) {
-    res.json({ error: true, msg: 'ERROR_DOCKER_SOCKET: ' + err.message });
+    res.json({ error: true, msg: err.message });
   }
 });
 
 app.get('/api/patroni/state', async (req, res) => {
-  // IPs reales de tus nodos Patroni
   const hosts = ['34.45.194.127', '34.29.234.240', '34.68.197.98'];
   for (const host of hosts) {
     try {
-      const response = await axios.get(`http://${host}:8008/cluster`, { timeout: 3000 });
+      const response = await axios.get(`http://${host}:8008/cluster`, { timeout: 4000 });
       const data = response.data;
-      
       if (data.members) {
         data.members = data.members.map(m => {
-          const rStr = (m.role || '').toLowerCase();
-          // Detección de líder ultra-robusta
-          const isLeader = rStr.includes('leader') || rStr.includes('primary') || rStr.includes('master');
-          return { ...m, is_leader: isLeader };
+          const r = (m.role || '').toLowerCase();
+          return { ...m, is_leader: r.includes('leader') || r.includes('primary') || r.includes('master') };
         });
       }
       return res.json(data);
     } catch (e) { continue; }
   }
-  res.json({ error: true, msg: 'DATABASE_CLUSTER_UNREACHABLE' });
+  // Si todo falla, al menos devolvemos una estructura para que el frontend no pinte "Replica/Replica"
+  res.json({ error: true, msg: 'API_TIMEOUT' });
 });
 
-app.post('/api/swarm/node/:id/:action', async (req, res) => {
-  try {
-    const { id, action } = req.params;
-    const { data: node } = await docker.get(`/nodes/${id}`);
-    await docker.post(`/nodes/${id}/update?version=${node.Version.Index}`, {
-      ...node.Spec,
-      Availability: action === 'drain' ? 'drain' : 'active'
-    });
-    res.json({ message: 'OK' });
-  } catch (err) { res.json({ error: true, message: err.message }); }
-});
-
-app.listen(PORT, () => console.log(`Chaos Proxy vFINAL READY on ${PORT}`));
+app.listen(PORT, () => console.log('Chaos Proxy V8 (Extreme-Robust) READY'));
