@@ -12,7 +12,7 @@
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(226, 232, 240, 0.5);
+  --glass-border: rgba(226, 232, 240, 0.6);
 }
 
 .dark {
@@ -24,8 +24,8 @@
   --color-accent: #818cf8;
   --color-success: #34d399;
   --color-warning: #fbbf24;
-  --glass-bg: rgba(17, 24, 39, 0.7);
-  --glass-border: rgba(30, 41, 59, 0.5);
+  --glass-bg: rgba(17, 24, 39, 0.8);
+  --glass-border: rgba(30, 41, 59, 0.7);
 }
 
 @layer base {
@@ -39,16 +39,23 @@
     border: 1px solid var(--color-border);
   }
   .glass-panel {
-    @apply backdrop-blur-md;
+    @apply backdrop-blur-2xl;
     background-color: var(--glass-bg);
     border: 1px solid var(--glass-border);
   }
   .cyber-glow {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.12);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
-/* Custom Scrollbar Premium */
+/* Refined Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -68,5 +75,11 @@
 .print-only { display: none; }
 
 .page-transition {
-  @apply animate-in fade-in duration-500 ease-out;
+  @apply animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out;
+}
+
+/* Custom selection logic */
+::selection {
+  background: var(--color-accent);
+  color: white;
 }

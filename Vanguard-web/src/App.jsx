@@ -7,6 +7,7 @@ import { AppShell } from './layout/AppShell';
 
 // Features
 import { AdminDashboard } from './features/admin/AdminDashboard';
+import { AdminUserManagement } from './features/admin/AdminUserManagement';
 import { AdminResourcePage } from './features/admin/AdminResourcePage';
 import { InfrastructureMap } from './features/admin/InfrastructureMap';
 import { AuditPanel } from './features/admin/AuditPanel';
@@ -49,9 +50,9 @@ function AppContent() {
     if (role === 'ADMIN') {
       switch (currentView) {
         case 'infra': return <InfrastructureMap />;
-        case 'users': return <AdminResourcePage group="Seguridad" />;
+        case 'users': return <AdminUserManagement />;
         case 'academic': return <AdminResourcePage group="Academico" />;
-        case 'people': return <AdminResourcePage group="Personas" />;
+        case 'people': return <AdminUserManagement />;
         case 'operations': return <AdminResourcePage group="Operaciones" />;
         case 'finance': return <AdminResourcePage group="Finanzas" />;
         case 'audit': return <AuditPanel />;

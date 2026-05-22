@@ -1,139 +1,180 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, GraduationCap, UserCog, Users, Activity, ShieldCheck, Database, Server } from 'lucide-react';
+import { 
+  BookOpen, GraduationCap, UserCog, Users, Activity, ShieldCheck, Database, Server, Cpu, Globe, Zap, ArrowUpRight, TrendingUp, AlertTriangle
+} from 'lucide-react';
 import { getAdminOverview } from '../../api/adminApi';
 import { getErrorMessage } from '../../api/client';
 import { StatCard } from '../../components/StatCard';
 import { useAuth } from '../../auth/AuthContext';
 
-const icons = {
-  users: UserCog,
-  students: GraduationCap,
-  teachers: Users,
-  enrollments: BookOpen,
-  courses: BookOpen,
-  'school-cycles': Activity,
-};
-
-const colors = {
-  users: 'accent',
-  students: 'success',
-  teachers: 'accent',
-  enrollments: 'warning',
-  courses: 'success',
-  'school-cycles': 'accent',
-};
-
 export function AdminDashboard() {
   const { token } = useAuth();
   const [stats, setStats] = useState([]);
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  // Mapeo premium de iconos y colores
+  const config = {
+    users: { icon: UserCog, color: 'accent' },
+    students: { icon: GraduationCap, color: 'success' },
+    teachers: { icon: Users, color: 'accent' },
+    enrollments: { icon: BookOpen, color: 'warning' },
+    courses: { icon: BookOpen, color: 'success' },
+    'school-cycles': { icon: Activity, color: 'accent' },
+  };
+
   useEffect(() => {
-    let active = true;
     setIsLoading(true);
     getAdminOverview(token)
-      .then((data) => {
-        if (active) setStats(data);
-      })
-      .catch((err) => {
-        if (active) setError(getErrorMessage(err));
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
-
-    return () => { active = false; };
+      .then(setStats)
+      .finally(() => setIsLoading(false));
   }, [token]);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border pb-8">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-bold tracking-widest uppercase border border-accent/20">
-              System Core
-            </span>
-            <span className="h-px w-8 bg-border/50" />
-            <span className="text-sec text-[10px] font-mono tracking-tighter uppercase">Administrator Panel</span>
+    <div className="space-y-12 page-transition">
+      
+      {/* Header Central de Inteligencia */}
+      <header className="flex flex-col xl:flex-row xl:items-center justify-between gap-10 border-b border-border/50 pb-12">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+             <div className="w-14 h-14 rounded-[1.5rem] bg-accent/10 text-accent flex items-center justify-center border border-accent/20 shadow-2xl shadow-accent/5">
+                <Cpu size={32} strokeWidth={2.5} />
+             </div>
+             <div>
+                <h2 className="text-6xl font-black tracking-tighter text-main uppercase italic leading-none">
+                  Vanguard <span className="text-accent">Central</span>
+                </h2>
+                <p className="text-sec text-sm font-bold uppercase tracking-[0.4em] mt-2 opacity-60 italic">Core Network Supervisor v4.5</p>
+             </div>
           </div>
-          <h2 className="text-4xl font-black tracking-tight text-main uppercase italic">Vanguard Central</h2>
-          <p className="text-sm text-sec mt-2 max-w-lg">
-            Monitoreo en tiempo real de registros institucionales y estado de la red de microservicios.
-          </p>
         </div>
 
-        <div className="flex gap-4">
-          <div className="cyber-panel px-4 py-2 flex items-center gap-3 border-success/30 bg-success/5">
-            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span className="text-[10px] font-bold text-success uppercase tracking-widest">Backend Online</span>
-          </div>
-          <div className="cyber-panel px-4 py-2 flex items-center gap-3 border-accent/30 bg-accent/5">
-            <Activity size={14} className="text-accent" />
-            <span className="text-[10px] font-bold text-accent uppercase tracking-widest">API v1.0.4</span>
-          </div>
+        <div className="flex items-center gap-6">
+           <div className="glass-panel px-8 py-4 rounded-[2rem] premium-border flex items-center gap-5 bg-emerald-500/[0.02]">
+              <div className="relative">
+                 <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping absolute inset-0" />
+                 <div className="w-3 h-3 rounded-full bg-emerald-500 relative shadow-[0_0_15px_#10B981]" />
+              </div>
+              <div>
+                 <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">Nodes Online</p>
+                 <p className="text-xl font-black text-main uppercase italic italic tracking-tighter mt-1">Sincronizado</p>
+              </div>
+           </div>
+           <div className="glass-panel p-4 rounded-[1.5rem] premium-border text-accent bg-accent/[0.02]">
+              <Globe size={24} className="animate-spin-slow" />
+           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid de Métricas de Alto Impacto */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {isLoading 
-          ? [1, 2, 3, 4, 5, 6].map(i => <StatCard key={i} label="Cargando..." value={null} />)
-          : stats.map((stat) => (
-            <StatCard 
-              key={stat.id ?? stat.label} 
-              label={stat.label} 
-              value={stat.value} 
-              icon={icons[stat.id]} 
-              color={colors[stat.id]}
-              error={stat.error} 
-            />
-          ))
+          ? [1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="glass-panel h-48 rounded-[3rem] premium-border animate-pulse bg-card/20" />
+            ))
+          : stats.map((stat) => {
+              const item = config[stat.id] || { icon: Activity, color: 'accent' };
+              return (
+                <div key={stat.id} className="glass-panel p-10 rounded-[3rem] premium-border group hover:border-accent/40 transition-all duration-500 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-8 text-accent/5 -rotate-12 group-hover:scale-110 transition-transform duration-700">
+                      <item.icon size={120} strokeWidth={3} />
+                   </div>
+                   <div className="relative z-10 space-y-6">
+                      <div className="flex justify-between items-start">
+                         <div className="space-y-1">
+                            <p className="text-[10px] font-black text-sec uppercase tracking-[0.3em]">{stat.label}</p>
+                            <p className="text-5xl font-black text-main tracking-tighter italic">{stat.value}</p>
+                         </div>
+                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-lg ${
+                           item.color === 'accent' ? 'bg-accent/10 text-accent border-accent/20' : 
+                           item.color === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                           'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                         }`}>
+                            <item.icon size={28} />
+                         </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-[9px] font-black text-sec uppercase tracking-widest bg-base/60 px-3 py-2 rounded-xl w-fit border border-border/40">
+                         <TrendingUp size={12} className="text-emerald-400" /> +2.1% Global Traffic
+                      </div>
+                   </div>
+                </div>
+              );
+            })
         }
       </div>
 
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div className="cyber-panel p-8 space-y-6">
-          <h3 className="text-xl font-bold text-main flex items-center gap-3 uppercase tracking-tighter">
-            <ShieldCheck size={20} className="text-accent" />
-            Estado de Seguridad
+      {/* Secciones de Infraestructura y Alertas */}
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+        
+        {/* Layer de Seguridad */}
+        <div className="glass-panel p-10 rounded-[3.5rem] premium-border space-y-8 bg-card/30 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-transparent to-transparent opacity-30" />
+          <h3 className="text-2xl font-black text-main flex items-center gap-4 uppercase italic tracking-tighter">
+            <ShieldCheck size={28} className="text-accent" />
+            Estatus de Red Cifrada
           </h3>
+          
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-base border border-border group hover:border-accent/40 transition-all">
-              <div className="flex items-center gap-4">
-                <Database size={18} className="text-sec" />
+            <div className="flex items-center justify-between p-6 rounded-3xl bg-base/40 border border-border/40 group/item hover:border-accent/40 transition-all duration-300">
+              <div className="flex items-center gap-6">
+                <div className="w-12 h-12 rounded-2xl bg-card premium-border flex items-center justify-center text-sec group-hover/item:text-accent transition-colors shadow-inner">
+                   <Database size={20} />
+                </div>
                 <div>
-                  <p className="text-sm font-bold text-main">Base de Datos HA</p>
-                  <p className="text-[10px] text-sec uppercase font-medium">Patroni Master - Sincronizado</p>
+                  <p className="text-sm font-black text-main uppercase tracking-widest leading-none italic">Database Cluster</p>
+                  <p className="text-[10px] text-sec uppercase font-bold mt-2 opacity-60">Patroni Master @ node-core-01</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-success uppercase tracking-widest bg-success/10 px-2 py-1 rounded">OK</span>
+              <div className="flex items-center gap-3">
+                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20">Synced</span>
+                 <ArrowUpRight size={14} className="text-sec opacity-20" />
+              </div>
             </div>
-            <div className="flex items-center justify-between p-4 rounded-xl bg-base border border-border group hover:border-accent/40 transition-all">
-              <div className="flex items-center gap-4">
-                <Server size={18} className="text-sec" />
+
+            <div className="flex items-center justify-between p-6 rounded-3xl bg-base/40 border border-border/40 group/item hover:border-accent/40 transition-all duration-300">
+              <div className="flex items-center gap-6">
+                <div className="w-12 h-12 rounded-2xl bg-card premium-border flex items-center justify-center text-sec group-hover/item:text-accent transition-colors shadow-inner">
+                   <Server size={20} />
+                </div>
                 <div>
-                  <p className="text-sm font-bold text-main">Balanceador HAProxy</p>
-                  <p className="text-[10px] text-sec uppercase font-medium">Gateway Cluster - Activo</p>
+                  <p className="text-sm font-black text-main uppercase tracking-widest leading-none italic">Gateway Balance</p>
+                  <p className="text-[10px] text-sec uppercase font-bold mt-2 opacity-60">HAProxy Layer-7 • 12ms Latency</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-success uppercase tracking-widest bg-success/10 px-2 py-1 rounded">Activo</span>
+              <div className="flex items-center gap-3">
+                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20">Balanced</span>
+                 <ArrowUpRight size={14} className="text-sec opacity-20" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="cyber-panel p-8 border-warning/20 bg-warning/5 space-y-6">
-          <h3 className="text-xl font-bold text-warning flex items-center gap-3 uppercase tracking-tighter">
-            <Activity size={20} />
-            Alertas del Sistema
+        {/* Notificaciones de Sistema */}
+        <div className="glass-panel p-10 rounded-[3.5rem] premium-border space-y-8 bg-amber-500/[0.01] border-amber-500/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-5 -rotate-12">
+             <AlertTriangle size={150} />
+          </div>
+          <h3 className="text-2xl font-black text-amber-500 flex items-center gap-4 uppercase italic tracking-tighter">
+            <Zap size={28} className="animate-pulse" />
+            Alertas de Transmisión
           </h3>
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-base border border-warning/30">
-              <p className="text-sm font-bold text-main">Sincronización de Inscripciones</p>
-              <p className="text-xs text-sec mt-1 leading-relaxed">Se detectaron 5 registros con inconsistencia en el microservicio Billing. La resolución automática se ejecutará a las 00:00.</p>
+          
+          <div className="space-y-6">
+            <div className="p-8 rounded-[2.5rem] bg-base/50 border border-amber-500/20 relative">
+              <div className="flex items-center gap-3 mb-3">
+                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                 <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest italic">Anomalía Detectada en Billing-MS</p>
+              </div>
+              <p className="text-sm text-sec leading-relaxed font-medium">
+                Se ha detectado una discrepancia en el protocolo de inscripción para el usuario #5591. El sistema de resolución automática de conflictos ha sido activado. Estimación de corrección: <span className="text-main font-bold">140ms</span>.
+              </p>
             </div>
+            <button className="w-full py-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] hover:bg-amber-500/20 transition-all">
+               Ejecutar Protocolo de Reparación
+            </button>
           </div>
         </div>
       </section>
+
     </div>
   );
 }
