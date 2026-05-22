@@ -259,7 +259,7 @@ export function deleteResource(resourceId, id, token) {
 
 export async function getAdminOverview(token) {
   try {
-    const summary = await apiRequest('/dashboard/summary', { token });
+    const summary = await apiRequest('/admin/summary', { token });
     
     // Mapear el DTO del agregador al formato que espera el componente Dashboard
     return [

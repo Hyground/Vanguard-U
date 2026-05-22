@@ -9,22 +9,17 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1/dashboard")
-public class DashboardController {
+@RequestMapping("/api/v1/admin")
+public class AdminSummaryController {
 
     private final DashboardService dashboardService;
 
-    public DashboardController(DashboardService dashboardService) {
+    public AdminSummaryController(DashboardService dashboardService) {
         this.dashboardService = dashboardService;
     }
 
     @GetMapping("/summary")
     public Mono<DashboardSummaryDTO> getSummary(@RequestHeader("Authorization") String token) {
-        return dashboardService.getSummary(token);
-    }
-
-    @GetMapping("/admin/summary")
-    public Mono<DashboardSummaryDTO> getAdminSummary(@RequestHeader("Authorization") String token) {
         return dashboardService.getSummary(token);
     }
 }
