@@ -38,11 +38,17 @@ app.get('/api/swarm/state', async (req, res) => {
       role: node.Spec.Role.toLowerCase(),
       tasks: (tasks || [])
         .filter(task => task.NodeID === node.ID)
-        .map(task => ({
-          id: task.ID,
-          name: task.Spec.ContainerSpec.Image.split('/')[1]?.split(':')[0] || 'task',
-          status: 'running'
-        }))
+        .map(task => {
+          const fullImage = task.Spec.ContainerSpec.Image;
+          // Extraer nombre: "vanguard12s/users-ms:lab" -> "users-ms", "caddy:2" -> "caddy"
+          const nameWithTag = fullImage.includes('/') ? fullImage.split('/')[1] : fullImage;
+          const name = nameWithTag.split(':')[0] || 'task';
+          return {
+            id: task.ID,
+            name: name,
+            status: 'running'
+          };
+        })
     }));
     res.json(state);
   } catch (err) {
