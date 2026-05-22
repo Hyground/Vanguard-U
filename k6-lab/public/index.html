@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vanguard K6 Lab</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Vanguard-U external load runner</p>
+          <h1>K6 Lab</h1>
+        </div>
+        <a class="grafana" href="https://grafana.wissegt.com/" target="_blank" rel="noreferrer">Grafana</a>
+      </header>
+
+      <section class="panel control-panel">
+        <div class="field">
+          <label>Endpoint</label>
+          <div id="targets" class="target-grid"></div>
+        </div>
+
+        <div class="control-grid">
+          <div class="field">
+            <label>Peticiones</label>
+            <div id="presets" class="preset-row"></div>
+            <input id="requests" type="number" min="1" max="100000" value="10" />
+          </div>
+          <div class="field">
+            <label>Usuarios virtuales</label>
+            <input id="vus" type="number" min="1" max="2000" value="1" />
+          </div>
+          <div class="field">
+            <label>Tiempo maximo</label>
+            <input id="duration" value="2m" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="start" class="primary">Atacar</button>
+          <button id="attack-all" class="danger">Atacar todo</button>
+          <button id="stop" class="secondary" disabled>Detener</button>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel metrics">
+          <h2>Resultado</h2>
+          <div class="metric-grid">
+            <div><span>Estado</span><strong id="status">idle</strong></div>
+            <div><span>Requests</span><strong id="metric-requests">-</strong></div>
+            <div><span>Error rate</span><strong id="metric-fail">-</strong></div>
+            <div><span>P95</span><strong id="metric-p95">-</strong></div>
+            <div><span>Promedio</span><strong id="metric-avg">-</strong></div>
+            <div><span>2xx / 4xx / 5xx</span><strong id="metric-statuses">-</strong></div>
+            <div><span>Run</span><strong id="run-id">-</strong></div>
+          </div>
+        </article>
+
+        <article class="panel log-panel">
+          <div class="panel-title">
+            <h2>Log</h2>
+            <div class="log-actions">
+              <button id="clear-log" class="ghost">Limpiar</button>
+              <button id="copy-log" class="ghost">Copiar log</button>
+              <button id="refresh" class="ghost">Actualizar</button>
+            </div>
+          </div>
+          <pre id="logs">Sin prueba activa.</pre>
+        </article>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

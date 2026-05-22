@@ -22,6 +22,7 @@ pnpm-debug.log*
 # Docker/Infrastructure Data
 infrastructure/**/data/
 infrastructure/redis_data/
+k6-lab/runs/*.json
 
 # Maven local config
 **/maven.config

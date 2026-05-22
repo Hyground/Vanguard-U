@@ -1,0 +1,14 @@
+{
+  "name": "vanguard-k6-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Panel separado para ejecutar pruebas k6 contra Vanguard-U",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3"
+  }
+}

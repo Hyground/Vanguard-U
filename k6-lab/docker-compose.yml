@@ -1,0 +1,13 @@
+services:
+  k6-lab:
+    build: .
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - BASE_URL=https://api.wissegt.com
+      - LOAD_USERNAME=load_admin
+      - LOAD_PASSWORD=Demo123!
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./runs:/app/runs
