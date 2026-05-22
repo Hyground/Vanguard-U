@@ -25,14 +25,14 @@ export function PreEnrollmentPage() {
   const simulateIA = async () => {
     setIsValidating(true);
     setError('');
-    setValidationLog(['[CORE] Iniciando protocolo de validación IA...', '[NETWORK] Conectando con base de datos central de pagos...', '[AUTH] Verificando firma digital de boleta...']);
+    setValidationLog(['Iniciando protocolo de validación...', 'Conectando con base de datos de pagos...', 'Verificando firma digital de boleta...']);
 
     const steps = [
-      '[IA] Analizando metadatos de transacción...',
-      '[IA] Correlación de CUI detectada: 100% match.',
-      '[CORE] Pago confirmado en BANCO-VANGUARD.',
-      '[SYSTEM] Generando código personal de estudiante...',
-      '[SUCCESS] Validación completada con éxito.'
+      'Analizando metadatos de transacción...',
+      'Correlación de CUI detectada: 100% match.',
+      'Pago confirmado.',
+      'Generando código personal de estudiante...',
+      'Validación completada con éxito.'
     ];
 
     for (let i = 0; i < steps.length; i++) {

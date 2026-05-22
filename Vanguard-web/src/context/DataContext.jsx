@@ -13,6 +13,7 @@ export function DataProvider({ children }) {
   const [people, setPeople] = useState({ students: [], teachers: [], tutors: [] });
   const [courses, setCourses] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [grades, setGrades] = useState({});
   const [attendance, setAttendance] = useState({});
   const [logs, setLogs] = useState([]);
@@ -23,15 +24,16 @@ export function DataProvider({ children }) {
     if (!token || !isAuthenticated) return;
     setIsLoading(true);
     try {
-      const [uRes, sRes, tRes, tutRes, cRes, aRes, gRes, schRes] = await Promise.all([
+      const [uRes, sRes, tRes, tutRes, cRes, aRes, gRes, actRes, attRes] = await Promise.all([
         listResource({ endpoint: '/users' }, token),
         listResource({ endpoint: '/students' }, token),
         listResource({ endpoint: '/teachers' }, token),
         listResource({ endpoint: '/tutors' }, token),
         listResource({ endpoint: '/courses' }, token),
         listResource({ endpoint: '/teacher-assignments' }, token),
-        listResource({ endpoint: '/grades' }, token),
-        listResource({ endpoint: '/schedules' }, token),
+        listResource({ endpoint: '/grades-records' }, token),
+        listResource({ endpoint: '/activities' }, token),
+        listResource({ endpoint: '/attendance' }, token),
       ]);
 
       setUsers(asList(uRes));
@@ -42,20 +44,29 @@ export function DataProvider({ children }) {
       });
       setCourses(asList(cRes));
       setAssignments(asList(aRes));
+      setActivities(asList(actRes));
       
       // Normalizar notas (grades_records)
       const rawGrades = asList(gRes);
       const normalizedGrades = {};
       rawGrades.forEach(g => {
-        // Asumiendo que la API devuelve studentId y teacherAssignmentId
-        // Para el mock, mapeamos a nuestra estructura interna: studentId_assignmentId_activityId
-        // Como no tenemos activityId real en el recurso genérico, usamos 'final' por defecto
-        const key = `${g.studentId}_${g.teacherAssignmentId}_final`;
+        // La clave ahora es studentId_activityId para mayor precisión
+        const key = `${g.studentId}_${g.activityId}`;
         normalizedGrades[key] = g.scoreObtained;
       });
       setGrades(normalizedGrades);
 
-      addLog('SYSTEM', 'Sincronización con el Núcleo completada', 'info');
+      // Normalizar asistencia
+      const rawAttendance = asList(attRes);
+      const normalizedAtt = {};
+      rawAttendance.forEach(a => {
+        const dateKey = new Date(a.attendanceDate).toDateString();
+        const key = `${a.studentId}_${a.teacherAssignmentId}_${dateKey}`;
+        normalizedAtt[key] = a.status.toLowerCase();
+      });
+      setAttendance(normalizedAtt);
+
+      addLog('SYSTEM', 'Sincronización de datos completada', 'info');
     } catch (err) {
       addLog('SYSTEM', `Error de sincronización: ${err.message}`, 'warning');
     } finally {
@@ -95,16 +106,33 @@ export function DataProvider({ children }) {
     await refreshData();
   };
 
-  const setStudentGrade = (studentId, assignmentId, activityId, score, teacherName) => {
-    const key = `${studentId}_${assignmentId}_${activityId}`;
-    setGrades(prev => ({ ...prev, [key]: parseFloat(score) || 0 }));
-    addLog(teacherName, `Nota Registrada (Simulación): ${score}`, 'update');
-    // En producción: await apiRequest('/grades', { method: 'POST', body: ... })
+  const setStudentGrade = async (studentId, activityId, score, teacherName) => {
+    try {
+      await createResource('grades_records', { studentId, activityId, scoreObtained: score }, token);
+      const key = `${studentId}_${activityId}`;
+      setGrades(prev => ({ ...prev, [key]: parseFloat(score) || 0 }));
+      addLog(teacherName, `Nota Registrada: ${score}`, 'update');
+    } catch (err) {
+      alert('Error al registrar nota: ' + err.message);
+    }
   };
 
-  const recordAttendance = (studentId, assignmentId, date, status, teacherName) => {
-    const key = `${studentId}_${assignmentId}_${date}`;
-    setAttendance(prev => ({ ...prev, [key]: status }));
+  const recordAttendance = async (studentId, assignmentId, date, status, teacherName) => {
+    try {
+      // Convertir date string a ISO para el backend
+      const isoDate = new Date(date).toISOString().split('T')[0];
+      await createResource({ id: 'attendance', endpoint: '/attendance' }, { 
+        studentId, 
+        teacherAssignmentId: assignmentId, 
+        attendanceDate: isoDate, 
+        status: status.toUpperCase() 
+      }, token);
+      
+      const key = `${studentId}_${assignmentId}_${date}`;
+      setAttendance(prev => ({ ...prev, [key]: status }));
+    } catch (err) {
+      console.error('Error al registrar asistencia:', err);
+    }
   };
 
   // --- GETTERS RELACIONALES (Sincronizados) ---
@@ -113,33 +141,41 @@ export function DataProvider({ children }) {
       .filter(a => a.teacherId === teacherId)
       .map(a => ({
         ...a,
-        course: courses.find(c => c.id === a.courseId)
+        course: courses.find(c => c.id === a.courseId),
+        activities: activities.filter(act => act.teacherAssignmentId === a.id)
       }));
-  }, [assignments, courses]);
+  }, [assignments, courses, activities]);
 
   const getStudentCourses = useCallback((studentId) => {
+    // Aquí filtramos las asignaciones donde el estudiante está inscrito
+    // En un sistema real, esto vendría de /enrollments
     return assignments.map(a => ({
       ...a,
       course: courses.find(c => c.id === a.courseId),
-      grades: Object.keys(grades)
-        .filter(key => key.startsWith(`${studentId}_${a.id}_`))
-        .reduce((acc, key) => ({ ...acc, [key.split('_')[2]]: grades[key] }), {})
+      activities: activities.filter(act => act.teacherAssignmentId === a.id),
+      grades: activities
+        .filter(act => act.teacherAssignmentId === a.id)
+        .reduce((acc, act) => {
+          const score = grades[`${studentId}_${act.id}`];
+          if (score !== undefined) acc[act.id] = score;
+          return acc;
+        }, {})
     }));
-  }, [assignments, courses, grades]);
+  }, [assignments, courses, activities, grades]);
 
-  const getStudentGradesForCourse = useCallback((studentId, courseId) => {
+  const getStudentGradesForCourse = useCallback((studentId, assignmentId) => {
     const result = {};
-    Object.keys(grades).forEach(key => {
-      if (key.startsWith(`${studentId}_${courseId}_`)) {
-        const activityId = key.split('_')[2];
-        result[activityId] = grades[key];
-      }
-    });
+    activities
+      .filter(act => act.teacherAssignmentId === assignmentId)
+      .forEach(act => {
+        const score = grades[`${studentId}_${act.id}`];
+        if (score !== undefined) result[act.id] = score;
+      });
     return result;
-  }, [grades]);
+  }, [activities, grades]);
 
   const value = {
-    users, people, courses, assignments, grades, attendance, logs, isLoading,
+    users, people, courses, assignments, activities, grades, attendance, logs, isLoading,
     createUser: createUserReal, 
     updateUser: updateUserReal, 
     addPerson: addPersonReal, 

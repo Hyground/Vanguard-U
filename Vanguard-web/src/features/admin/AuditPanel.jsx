@@ -122,7 +122,7 @@ export function AuditPanel() {
            {/* Active Cursor */}
            <div className="flex gap-4 items-center pt-4 animate-pulse">
               <span className="text-rose-500 font-black tracking-widest text-[10px]">>>></span>
-              <span className="text-sec font-black tracking-[0.4em] uppercase text-[10px]">Listening for Core events...</span>
+              <span className="text-sec font-black tracking-[0.4em] uppercase text-[10px]">Esperando eventos del sistema...</span>
               <div className="w-2.5 h-5 bg-accent shadow-[0_0_10px_#6366F1]" />
            </div>
         </div>

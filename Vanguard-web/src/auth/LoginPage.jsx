@@ -60,7 +60,7 @@ export function LoginPage() {
               <h1 className="text-4xl font-black tracking-tighter uppercase italic leading-none">
                 VANGUARD<span className="text-accent">-U</span>
               </h1>
-              <p className="text-[10px] font-black text-sec uppercase tracking-[0.4em] mt-2 opacity-60">System v1.5 Premium</p>
+              <p className="text-[10px] font-black text-sec uppercase tracking-[0.4em] mt-2 opacity-60">Plataforma Académica</p>
             </div>
           </div>
 

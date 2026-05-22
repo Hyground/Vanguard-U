@@ -10,50 +10,35 @@ export function CourseHubView({ course, onBack }) {
   const { grades } = useData();
   const [activeUnit, setActiveUnit] = useState(1);
 
-  // Definición de estructura académica formal
-  const units = [
-    {
-      id: 1,
-      title: 'Unidad I: Fundamentos y Metodologías',
-      progress: 100,
-      activities: [
-        { id: 'act1', name: 'Ensayo sobre Metodologías Ágiles', weight: '10 pts', date: '10 Mayo' },
-        { id: 'act2', name: 'Mapa Mental: Ciclo de Vida del Software', weight: '15 pts', date: '15 Mayo' },
-      ]
-    },
-    {
-      id: 2,
-      title: 'Unidad II: Análisis de Requerimientos',
-      progress: 45,
-      activities: [
-        { id: 'exam', name: 'Examen Parcial I: Casos de Uso', weight: '25 pts', date: '20 Mayo' },
-        { id: 'act3', name: 'Documentación IEEE 830', weight: '15 pts', date: '30 Mayo' },
-      ]
-    },
-    {
-      id: 3,
-      title: 'Unidad III: Diseño y Arquitectura',
-      progress: 0,
-      locked: true,
-      activities: [
-        { id: 'act4', name: 'Diagrama de Clases y Objetos', weight: '20 pts', date: '15 Junio' },
-      ]
-    }
-  ];
+  // Usar actividades reales de la asignación (course)
+  const activities = useMemo(() => course.activities || [], [course.activities]);
 
-  // Cálculo de nota acumulada real (Vinculada al motor de datos)
+  // Agrupar actividades por "unidad" o similar si existe, 
+  // sino creamos una unidad virtual para la demo
+  const units = useMemo(() => {
+    if (activities.length === 0) return [];
+    return [
+      {
+        id: 1,
+        title: 'Ciclo Evaluativo Vigente',
+        progress: Math.min(100, (Object.keys(course.grades).length / activities.length) * 100),
+        activities: activities.map(act => ({
+          ...act,
+          score: grades[`${user?.personId}_${act.id}`]
+        }))
+      }
+    ];
+  }, [activities, course.grades, grades, user?.personId]);
+
+  // Cálculo de nota acumulada real
   const totalScore = useMemo(() => {
     let sum = 0;
-    units.forEach(unit => {
-      unit.activities.forEach(act => {
-        // Obtenemos la nota del profesor desde el contexto global
-        // Nota: En este mock, el studentId es 101 y el assignmentId es 1 (Análisis I)
-        const score = grades[`101_1_${act.id}`] || 0;
-        sum += score;
-      });
+    activities.forEach(act => {
+      const score = grades[`${user?.personId}_${act.id}`] || 0;
+      sum += score;
     });
     return sum;
-  }, [grades]);
+  }, [activities, grades, user?.personId]);
 
   return (
     <div className="space-y-12 page-transition">
@@ -103,7 +88,7 @@ export function CourseHubView({ course, onBack }) {
                  <div className="h-2 w-full bg-base rounded-full overflow-hidden shadow-inner premium-border">
                     <div className="h-full bg-gradient-to-r from-accent to-indigo-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(99,102,241,0.5)]" style={{ width: `${totalScore}%` }} />
                  </div>
-                 <p className="text-[9px] font-black text-sec uppercase tracking-widest text-right italic">Sincronizado con el Core Docente</p>
+                 <p className="text-[9px] font-black text-sec uppercase tracking-widest text-right italic">Sincronizado con el sistema docente</p>
               </div>
            </div>
         </div>
@@ -148,7 +133,7 @@ export function CourseHubView({ course, onBack }) {
                   {activeUnit === unit.id && !unit.locked && (
                     <div className="p-8 bg-black/20 space-y-4 animate-in slide-in-from-top-6 duration-500 border-t border-border/20">
                        {unit.activities.map((act) => {
-                         const score = grades[`101_1_${act.id}`];
+                         const score = grades[`${user?.personId}_${act.id}`];
                          return (
                            <div key={act.id} className="flex items-center justify-between p-6 rounded-[2rem] bg-base/40 premium-border group hover:border-accent/40 transition-all duration-300">
                               <div className="flex items-center gap-6">

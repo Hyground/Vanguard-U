@@ -188,11 +188,11 @@ export const adminResources = [
     id: 'grades_records',
     group: 'Operaciones',
     title: 'Registro de Notas',
-    endpoint: '/grades',
+    endpoint: '/grades-records',
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'studentId', label: 'Estudiante', type: 'ref', ref: 'students' },
-      { key: 'teacherAssignmentId', label: 'Asignación', type: 'ref', ref: 'teacher-assignments' },
+      { key: 'activityId', label: 'Actividad', type: 'ref', ref: 'activities' },
       { key: 'scoreObtained', label: 'Nota' },
     ],
   },
@@ -244,6 +244,16 @@ export function patchResource(resourceId, id, data, token) {
     token,
     method: 'PATCH',
     body: JSON.stringify(data),
+  });
+}
+
+export function deleteResource(resourceId, id, token) {
+  const resource = adminResources.find(r => r.id === resourceId);
+  if (!resource) return Promise.reject(new Error('Recurso no encontrado'));
+  const baseEndpoint = resource.endpoint.split('?')[0];
+  return apiRequest(`${baseEndpoint}/${id}`, {
+    token,
+    method: 'DELETE',
   });
 }
 

@@ -7,57 +7,63 @@ import { useData } from '../../context/DataContext';
 
 export function ClassManagementView({ assignment, onBack }) {
   const { user } = useAuth();
-  const { students, grades, setStudentGrade, attendance, recordAttendance, addLog } = useData();
+  const { people, grades, setStudentGrade, attendance, recordAttendance, addLog, refreshData } = useData();
   const [activeTab, setActiveTab] = useState('evaluations'); // 'evaluations' | 'attendance'
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Definición formal de actividades académicas
-  const activities = [
-    { id: 'act1', name: 'Ensayo Metodologías Ágiles', max: 10, weight: '10%' },
-    { id: 'act2', name: 'Mapa Mental: Ciclo de Vida', max: 15, weight: '15%' },
-    { id: 'exam', name: 'Examen Parcial I', max: 25, weight: '25%' },
-  ];
+  // Usar actividades reales de la asignación
+  const activities = useMemo(() => assignment.activities || [], [assignment.activities]);
+  
+  // Estudiantes reales (para propósitos de demostración, filtramos de people.students)
+  // En producción se usaría /enrollments para filtrar por sección
+  const students = people.students;
 
   // Cálculo de promedio acumulado de la sección en tiempo real
   const sectionAverage = useMemo(() => {
-    const totalMax = activities.reduce((acc, a) => acc + a.max, 0);
+    if (activities.length === 0 || students.length === 0) return 0;
+    
+    const totalMax = activities.reduce((acc, a) => acc + (a.weight || 10), 0);
     let totalScore = 0;
     let count = 0;
 
     students.forEach(s => {
       activities.forEach(a => {
-        const val = grades[`${s.id}_${assignment.id}_${a.id}`] || 0;
+        const val = grades[`${s.id}_${a.id}`] || 0;
         totalScore += val;
         count++;
       });
     });
 
-    if (count === 0) return 0;
     return (totalScore / (students.length * totalMax)) * 100;
-  }, [students, grades, assignment.id]);
+  }, [students, grades, activities]);
 
-  const handleGradeChange = (studentId, activityId, value) => {
+  const handleGradeChange = async (studentId, activityId, value) => {
     const activity = activities.find(a => a.id === activityId);
     let num = parseFloat(value) || 0;
-    if (num > activity.max) num = activity.max;
+    const max = activity.weight || 100;
+    if (num > max) num = max;
     if (num < 0) num = 0;
-    setStudentGrade(studentId, assignment.id, activityId, num, user.username);
+    await setStudentGrade(studentId, activityId, num, user.username);
   };
 
-  const handleAttendanceChange = (studentId, status) => {
+  const handleAttendanceChange = async (studentId, status) => {
     const today = new Date().toDateString();
-    recordAttendance(studentId, assignment.id, today, status, user.username);
+    await recordAttendance(studentId, assignment.id, today, status, user.username);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      addLog(user.username, `PUBLICÓ ACTA DE CALIFICACIONES: ${assignment.course.name} - SECCIÓN ${assignment.section}`, 'update');
-      setIsSaving(false);
+    try {
+      await refreshData();
+      addLog(user.username, `PUBLICÓ ACTA DE CALIFICACIONES: ${assignment.course?.name} - SECCIÓN ${assignment.sectionId}`, 'success');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);
-    }, 2000);
+    } catch (err) {
+      alert('Error en publicación: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const todayStr = new Date().toLocaleDateString('es-GT', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -146,7 +152,7 @@ export function ClassManagementView({ assignment, onBack }) {
                 className="bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4 group"
               >
                 {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} className="group-hover:scale-110 transition-transform" />}
-                {isSaving ? 'Actualizando Core...' : 'Publicar Acta'}
+                {isSaving ? 'Actualizando datos...' : 'Publicar Acta'}
               </button>
            </div>
 

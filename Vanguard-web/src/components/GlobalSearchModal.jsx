@@ -91,7 +91,7 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }) {
                   </button>
                 )) : (
                   <div className="py-20 text-center space-y-4 opacity-20 italic">
-                     <p className="text-sm font-bold uppercase tracking-[0.4em]">Sin coincidencias en el Core</p>
+                     <p className="text-sm font-bold uppercase tracking-[0.4em]">Sin coincidencias encontradas</p>
                   </div>
                 )}
              </div>

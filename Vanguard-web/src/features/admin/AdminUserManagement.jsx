@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  UserCog, Users, Plus, Edit3, Trash2, ShieldCheck, Mail, KeyRound, Contact2, Search, Filter, ChevronRight, X, CheckCircle2, UserPlus, Info, Loader2, Link as LinkIcon
+  UserCog, Users, Plus, Edit3, Trash2, ShieldCheck, Mail, KeyRound, Contact2, Search, Filter, ChevronRight, X, CheckCircle2, UserPlus, Info, Loader2, Link as LinkIcon, Zap
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
