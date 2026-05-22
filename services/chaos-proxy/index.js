@@ -175,7 +175,9 @@ app.post('/api/patroni/failover', async (req, res) => {
     return res.status(409).json({ error: true, msg: 'No hay lider y replica saludable para failover', members: data.members });
   }
 
-  const leaderApi = leader.api_url || `http://${data.source}:8008`;
+  const leaderApi = leader.api_url
+    ? leader.api_url.replace(/\/patroni\/?$/, '')
+    : `http://${leader.host || data.source}:8008`;
 
   try {
     const response = await axios.post(`${leaderApi}/switchover`, {

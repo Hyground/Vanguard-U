@@ -28,6 +28,7 @@ bootstrap:
       pg_hba:
         - host all all 0.0.0.0/0 md5
         - host replication repl_user_svc 0.0.0.0/0 md5
+        - host all postgres 34.29.234.240/32 md5
 
   initdb:
   - encoding: UTF8
@@ -57,5 +58,10 @@ postgresql:
     superuser:
       username: postgres
       password: Kj82_mP91_Xz77_Rt
+  pg_hba:
+    - host all postgres 34.29.234.240/32 md5
+    - host all all 0.0.0.0/0 md5
+    - host replication repl_user_svc 34.29.234.240/32 md5
+    - host replication repl_user_svc 0.0.0.0/0 md5
   parameters:
     unix_socket_directories: '/var/run/postgresql'
