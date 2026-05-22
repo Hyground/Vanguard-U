@@ -91,14 +91,6 @@ app.get('/api/swarm/state', async (req, res) => {
         })
     }));
 
-    // FORZAR REDIS Y RABBIT (NODO 1)
-    const manager = state.find(n => n.role === 'manager' || n.hostname.toLowerCase() === 'vps');
-    if (manager) {
-      manager.tasks.push(
-        { id: 'sys-redis', name: 'REDIS-SERVER', status: 'running', type: 'system' },
-        { id: 'sys-rabbit', name: 'RABBITMQ-BROKER', status: 'running', type: 'system' }
-      );
-    }
     res.json(state);
   } catch (err) {
     res.status(503).json({ error: true, msg: 'DOCKER_FAIL: ' + err.message });
