@@ -1,15 +1,28 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   UserCog, Users, Plus, Edit3, Trash2, ShieldCheck, Mail, KeyRound, Contact2, Search, Filter, ChevronRight, X, CheckCircle2, UserPlus, Info, Loader2, Link as LinkIcon, Zap
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
 export function AdminUserManagement() {
-  const { users, people, createUser, updateUser, addPerson, updatePerson, addLog, isLoading, refreshData } = useData();
+  const {
+    users,
+    people,
+    createUser,
+    updateUser,
+    addPerson,
+    updatePerson,
+    addLog,
+    isLoading,
+    securityPagination,
+    refreshSecurityData,
+  } = useData();
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'people'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const userPage = securityPagination.users.page;
+  const peoplePage = securityPagination.people.page;
 
   // Form State
   const [formData, setFormData] = useState({
@@ -17,6 +30,22 @@ export function AdminUserManagement() {
     firstName: '', lastName: '', email: '', personType: 'students',
     cui: '', personalCode: '', status: true, personId: '', userId: ''
   });
+
+  useEffect(() => {
+    refreshSecurityData({ userPage: 0, peoplePage: 0 });
+  }, [refreshSecurityData]);
+
+  const reloadCurrentPage = () => {
+    refreshSecurityData({ userPage, peoplePage });
+  };
+
+  const goUserPage = (nextPage) => {
+    refreshSecurityData({ userPage: nextPage, peoplePage });
+  };
+
+  const goPeoplePage = (nextPage) => {
+    refreshSecurityData({ userPage, peoplePage: nextPage });
+  };
 
   const peopleRows = useMemo(() => Object.keys(people).flatMap((cat) =>
     people[cat].map((person) => ({ ...person, _category: cat }))
@@ -138,7 +167,7 @@ export function AdminUserManagement() {
         </div>
 
         <div className="flex items-center gap-6">
-           <button onClick={refreshData} className="p-5 rounded-2xl bg-card border border-border/60 text-sec hover:text-accent transition-all active:scale-95 shadow-xl">
+           <button onClick={reloadCurrentPage} className="p-5 rounded-2xl bg-card border border-border/60 text-sec hover:text-accent transition-all active:scale-95 shadow-xl">
               <Info size={24} className={isLoading ? 'animate-spin' : ''} />
            </button>
            <button 
@@ -155,6 +184,27 @@ export function AdminUserManagement() {
       <div className="flex p-2 bg-card/40 backdrop-blur-xl premium-border rounded-[2.5rem] w-fit shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
         <button onClick={() => setActiveTab('users')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'users' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Capa de Usuarios</button>
         <button onClick={() => setActiveTab('people')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'people' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Capa de Personas</button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+        <div className="text-[10px] font-black text-sec uppercase tracking-[0.25em]">
+          {activeTab === 'users'
+            ? `${securityPagination.users.totalElements} usuarios - pagina ${securityPagination.users.page + 1} de ${securityPagination.users.totalPages}`
+            : `${securityPagination.people.totalElements} personas - pagina ${securityPagination.people.page + 1} de ${securityPagination.people.totalPages}`}
+        </div>
+        <div className="flex items-center gap-3">
+          {activeTab === 'users' ? (
+            <>
+              <button disabled={userPage === 0 || isLoading} onClick={() => goUserPage(userPage - 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Anterior</button>
+              <button disabled={userPage >= securityPagination.users.totalPages - 1 || isLoading} onClick={() => goUserPage(userPage + 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Siguiente</button>
+            </>
+          ) : (
+            <>
+              <button disabled={peoplePage === 0 || isLoading} onClick={() => goPeoplePage(peoplePage - 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Anterior</button>
+              <button disabled={peoplePage >= securityPagination.people.totalPages - 1 || isLoading} onClick={() => goPeoplePage(peoplePage + 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Siguiente</button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Main Table HD */}

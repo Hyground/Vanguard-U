@@ -7,7 +7,7 @@ import { useData } from '../../context/DataContext';
 
 export function ClassManagementView({ assignment, onBack }) {
   const { user } = useAuth();
-  const { people, grades, setStudentGrade, attendance, recordAttendance, addLog, refreshData } = useData();
+  const { people, grades, setStudentGrade, attendance, recordAttendance, addLog, refreshAcademicData } = useData();
   const [activeTab, setActiveTab] = useState('evaluations'); // 'evaluations' | 'attendance'
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -55,7 +55,7 @@ export function ClassManagementView({ assignment, onBack }) {
   const handlePublish = async () => {
     setIsSaving(true);
     try {
-      await refreshData();
+      await refreshAcademicData();
       addLog(user.username, `PUBLICÓ ACTA DE CALIFICACIONES: ${assignment.course?.name} - SECCIÓN ${assignment.sectionId}`, 'success');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);

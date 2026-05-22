@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { 
   Users, ClipboardCheck, GraduationCap, Plus, Activity, TrendingUp, Calendar, ArrowRight, UserCheck
 } from 'lucide-react';
@@ -7,7 +7,11 @@ import { useData } from '../../context/DataContext';
 
 export function TeacherDashboard({ onSelectAssignment }) {
   const { user } = useAuth();
-  const { students, attendance, grades, getTeacherAssignments } = useData();
+  const { students, attendance, grades, refreshAcademicData, getTeacherAssignments } = useData();
+
+  useEffect(() => {
+    refreshAcademicData();
+  }, [refreshAcademicData]);
 
   // Obtener asignaciones reales vinculadas al ID de Persona del docente
   const myAssignments = useMemo(() => getTeacherAssignments(user?.personId || user?.idUser), [getTeacherAssignments, user]);

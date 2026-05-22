@@ -198,8 +198,8 @@ export const adminResources = [
   },
 ];
 
-export function listResource(resource, token, page = 0) {
-  const url = buildPagedEndpoint(resource.endpoint, page);
+export function listResource(resource, token, page = 0, size = DEFAULT_PAGE_SIZE) {
+  const url = buildPagedEndpoint(resource.endpoint, page, size);
   return apiRequest(url, { token });
 }
 

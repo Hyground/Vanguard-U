@@ -1,14 +1,22 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { listResource, createResource, updateResource, patchResource, updateUserStatus, registerUser, adminResources } from '../api/adminApi';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import { listResource, createResource, updateResource, updateUserStatus, registerUser } from '../api/adminApi';
 import { useAuth } from '../auth/AuthContext';
 import { asList } from '../api/client';
 
 const DataContext = createContext(null);
+const SECURITY_PAGE_SIZE = 20;
+
+function pageMeta(payload, fallbackLength = 0) {
+  return {
+    page: payload?.number ?? payload?.data?.number ?? 0,
+    totalPages: payload?.totalPages ?? payload?.data?.totalPages ?? 1,
+    totalElements: payload?.totalElements ?? payload?.data?.totalElements ?? fallbackLength,
+  };
+}
 
 export function DataProvider({ children }) {
-  const { token, isAuthenticated, role } = useAuth();
-  
-  // --- ESTADO SINCRONIZADO CON LA API ---
+  const { token, isAuthenticated } = useAuth();
+
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [people, setPeople] = useState({ students: [], teachers: [], tutors: [] });
@@ -19,18 +27,61 @@ export function DataProvider({ children }) {
   const [attendance, setAttendance] = useState({});
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [securityPagination, setSecurityPagination] = useState({
+    users: { page: 0, totalPages: 1, totalElements: 0 },
+    people: { page: 0, totalPages: 1, totalElements: 0 },
+  });
 
-  // --- CARGA INICIAL DESDE LA API ---
-  const refreshData = useCallback(async () => {
+  const addLog = useCallback((user, action, type = 'info') => {
+    setLogs(prev => [{ id: Date.now(), timestamp: new Date().toISOString(), userId: user, action, type }, ...prev.slice(0, 99)]);
+  }, []);
+
+  const refreshSecurityData = useCallback(async ({ userPage = 0, peoplePage = 0, size = SECURITY_PAGE_SIZE } = {}) => {
     if (!token || !isAuthenticated) return;
     setIsLoading(true);
     try {
-      const [uRes, rRes, sRes, tRes, tutRes, cRes, aRes, gRes, actRes, attRes] = await Promise.all([
-        listResource({ endpoint: '/users' }, token),
-        listResource({ endpoint: '/roles' }, token),
+      const [uRes, rRes, sRes, tRes, tutRes] = await Promise.all([
+        listResource({ endpoint: '/users' }, token, userPage, size),
+        listResource({ endpoint: '/roles' }, token, 0, 100),
+        listResource({ endpoint: '/students' }, token, peoplePage, size),
+        listResource({ endpoint: '/teachers' }, token, peoplePage, size),
+        listResource({ endpoint: '/tutors' }, token, peoplePage, size),
+      ]);
+
+      const nextUsers = asList(uRes);
+      const nextStudents = asList(sRes);
+      const nextTeachers = asList(tRes);
+      const nextTutors = asList(tutRes);
+
+      setUsers(nextUsers);
+      setRoles(asList(rRes));
+      setPeople({ students: nextStudents, teachers: nextTeachers, tutors: nextTutors });
+
+      setSecurityPagination({
+        users: pageMeta(uRes, nextUsers.length),
+        people: {
+          page: peoplePage,
+          totalPages: Math.max(sRes?.totalPages ?? 1, tRes?.totalPages ?? 1, tutRes?.totalPages ?? 1),
+          totalElements: (sRes?.totalElements ?? nextStudents.length)
+            + (tRes?.totalElements ?? nextTeachers.length)
+            + (tutRes?.totalElements ?? nextTutors.length),
+        },
+      });
+
+      addLog('SYSTEM', 'Sincronizacion de seguridad completada', 'info');
+    } catch (err) {
+      addLog('SYSTEM', `Error de seguridad: ${err.message}`, 'warning');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, isAuthenticated, addLog]);
+
+  const refreshAcademicData = useCallback(async () => {
+    if (!token || !isAuthenticated) return;
+    setIsLoading(true);
+    try {
+      const [sRes, cRes, aRes, gRes, actRes, attRes] = await Promise.all([
         listResource({ endpoint: '/students' }, token),
-        listResource({ endpoint: '/teachers' }, token),
-        listResource({ endpoint: '/tutors' }, token),
         listResource({ endpoint: '/courses' }, token),
         listResource({ endpoint: '/teacher-assignments' }, token),
         listResource({ endpoint: '/grades-records' }, token),
@@ -38,53 +89,45 @@ export function DataProvider({ children }) {
         listResource({ endpoint: '/attendance' }, token),
       ]);
 
-      setUsers(asList(uRes));
-      setRoles(asList(rRes));
-      setPeople({
-        students: asList(sRes),
-        teachers: asList(tRes),
-        tutors: asList(tutRes)
-      });
+      setPeople(prev => ({ ...prev, students: asList(sRes) }));
       setCourses(asList(cRes));
       setAssignments(asList(aRes));
       setActivities(asList(actRes));
-      
-      // Normalizar notas (grades_records)
-      const rawGrades = asList(gRes);
+
       const normalizedGrades = {};
-      rawGrades.forEach(g => {
-        // La clave ahora es studentId_activityId para mayor precisión
-        const key = `${g.studentId}_${g.activityId}`;
-        normalizedGrades[key] = g.scoreObtained;
+      asList(gRes).forEach((g) => {
+        normalizedGrades[`${g.studentId}_${g.activityId}`] = g.scoreObtained;
       });
       setGrades(normalizedGrades);
 
-      // Normalizar asistencia
-      const rawAttendance = asList(attRes);
-      const normalizedAtt = {};
-      rawAttendance.forEach(a => {
+      const normalizedAttendance = {};
+      asList(attRes).forEach((a) => {
         const dateKey = new Date(a.attendanceDate).toDateString();
-        const key = `${a.studentId}_${a.teacherAssignmentId}_${dateKey}`;
-        normalizedAtt[key] = a.status.toLowerCase();
+        normalizedAttendance[`${a.studentId}_${a.teacherAssignmentId}_${dateKey}`] = a.status.toLowerCase();
       });
-      setAttendance(normalizedAtt);
+      setAttendance(normalizedAttendance);
 
-      addLog('SYSTEM', 'Sincronización de datos completada', 'info');
+      addLog('SYSTEM', 'Sincronizacion academica completada', 'info');
     } catch (err) {
-      addLog('SYSTEM', `Error de sincronización: ${err.message}`, 'warning');
+      addLog('SYSTEM', `Error academico: ${err.message}`, 'warning');
     } finally {
       setIsLoading(false);
     }
-  }, [token, isAuthenticated]);
+  }, [token, isAuthenticated, addLog]);
 
-  useEffect(() => {
-    if (isAuthenticated) refreshData();
-  }, [isAuthenticated, role, refreshData]);
+  const refreshData = refreshSecurityData;
 
-  // --- ACCIONES CON PERSISTENCIA REAL ---
-  
-  const addLog = (user, action, type = 'info') => {
-    setLogs(prev => [{ id: Date.now(), timestamp: new Date().toISOString(), userId: user, action, type }, ...prev.slice(0, 99)]);
+  const resolveRoleId = async (roleName) => {
+    const normalizedRole = String(roleName || '').trim().toUpperCase();
+    let availableRoles = roles;
+    if (availableRoles.length === 0) {
+      availableRoles = asList(await listResource({ endpoint: '/roles' }, token, 0, 100));
+      setRoles(availableRoles);
+    }
+
+    const roleRecord = availableRoles.find((item) => String(item.name || '').trim().toUpperCase() === normalizedRole);
+    if (!roleRecord) throw new Error(`Rol no encontrado: ${roleName}`);
+    return roleRecord.id;
   };
 
   const createUserReal = async (userData) => {
@@ -94,14 +137,12 @@ export function DataProvider({ children }) {
       password: userData.password,
       roleId,
     }, token);
-    await refreshData();
+    await refreshSecurityData();
     return response;
   };
 
   const updateUserReal = async (id, data) => {
-    const payload = {
-      username: data.username,
-    };
+    const payload = { username: data.username };
     if (data.password) payload.password = data.password;
     if (data.role) payload.roleId = await resolveRoleId(data.role);
 
@@ -109,33 +150,18 @@ export function DataProvider({ children }) {
     if (typeof data.status === 'boolean') {
       await updateUserStatus(id, data.status, token);
     }
-    await refreshData();
+    await refreshSecurityData();
   };
 
   const addPersonReal = async (type, data) => {
     const response = await createResource(type, data, token);
-    await refreshData();
+    await refreshSecurityData();
     return response;
   };
 
   const updatePersonReal = async (type, id, data) => {
     await updateResource(type, id, data, token);
-    await refreshData();
-  };
-
-  const resolveRoleId = async (roleName) => {
-    const normalizedRole = String(roleName || '').trim().toUpperCase();
-    let availableRoles = roles;
-    if (availableRoles.length === 0) {
-      availableRoles = asList(await listResource({ endpoint: '/roles' }, token));
-      setRoles(availableRoles);
-    }
-
-    const roleRecord = availableRoles.find((item) => String(item.name || '').trim().toUpperCase() === normalizedRole);
-    if (!roleRecord) {
-      throw new Error(`Rol no encontrado: ${roleName}`);
-    }
-    return roleRecord.id;
+    await refreshSecurityData();
   };
 
   const setStudentGrade = async (studentId, activityId, score, teacherName) => {
@@ -149,17 +175,16 @@ export function DataProvider({ children }) {
     }
   };
 
-  const recordAttendance = async (studentId, assignmentId, date, status, teacherName) => {
+  const recordAttendance = async (studentId, assignmentId, date, status) => {
     try {
-      // Convertir date string a ISO para el backend
       const isoDate = new Date(date).toISOString().split('T')[0];
-      await createResource({ id: 'attendance', endpoint: '/attendance' }, { 
-        studentId, 
-        teacherAssignmentId: assignmentId, 
-        attendanceDate: isoDate, 
-        status: status.toUpperCase() 
+      await createResource({ id: 'attendance', endpoint: '/attendance' }, {
+        studentId,
+        teacherAssignmentId: assignmentId,
+        attendanceDate: isoDate,
+        status: status.toUpperCase(),
       }, token);
-      
+
       const key = `${studentId}_${assignmentId}_${date}`;
       setAttendance(prev => ({ ...prev, [key]: status }));
     } catch (err) {
@@ -167,54 +192,69 @@ export function DataProvider({ children }) {
     }
   };
 
-  // --- GETTERS RELACIONALES (Sincronizados) ---
-  const getTeacherAssignments = useCallback((teacherId) => {
-    return assignments
-      .filter(a => a.teacherId === teacherId)
-      .map(a => ({
-        ...a,
-        course: courses.find(c => c.id === a.courseId),
-        activities: activities.filter(act => act.teacherAssignmentId === a.id)
-      }));
-  }, [assignments, courses, activities]);
-
-  const getStudentCourses = useCallback((studentId) => {
-    // Aquí filtramos las asignaciones donde el estudiante está inscrito
-    // En un sistema real, esto vendría de /enrollments
-    return assignments.map(a => ({
+  const getTeacherAssignments = useCallback((teacherId) => assignments
+    .filter(a => a.teacherId === teacherId)
+    .map(a => ({
       ...a,
       course: courses.find(c => c.id === a.courseId),
       activities: activities.filter(act => act.teacherAssignmentId === a.id),
-      grades: activities
-        .filter(act => act.teacherAssignmentId === a.id)
-        .reduce((acc, act) => {
-          const score = grades[`${studentId}_${act.id}`];
-          if (score !== undefined) acc[act.id] = score;
-          return acc;
-        }, {})
-    }));
-  }, [assignments, courses, activities, grades]);
+    })), [assignments, courses, activities]);
+
+  const getStudentCourses = useCallback((studentId) => assignments.map(a => ({
+    ...a,
+    course: courses.find(c => c.id === a.courseId),
+    activities: activities.filter(act => act.teacherAssignmentId === a.id),
+    grades: activities
+      .filter(act => act.teacherAssignmentId === a.id)
+      .reduce((acc, act) => {
+        const score = grades[`${studentId}_${act.id}`];
+        if (score !== undefined) acc[act.id] = score;
+        return acc;
+      }, {}),
+  })), [assignments, courses, activities, grades]);
 
   const getStudentGradesForCourse = useCallback((studentId, assignmentId) => {
     const result = {};
     activities
       .filter(act => act.teacherAssignmentId === assignmentId)
-      .forEach(act => {
+      .forEach((act) => {
         const score = grades[`${studentId}_${act.id}`];
         if (score !== undefined) result[act.id] = score;
       });
     return result;
   }, [activities, grades]);
 
-  const value = {
-    users, roles, people, courses, assignments, activities, grades, attendance, logs, isLoading,
-    createUser: createUserReal, 
-    updateUser: updateUserReal, 
-    addPerson: addPersonReal, 
+  const value = useMemo(() => ({
+    users,
+    roles,
+    people,
+    students: people.students,
+    courses,
+    assignments,
+    activities,
+    grades,
+    attendance,
+    logs,
+    isLoading,
+    securityPagination,
+    createUser: createUserReal,
+    updateUser: updateUserReal,
+    addPerson: addPersonReal,
     updatePerson: updatePersonReal,
-    setStudentGrade, recordAttendance, addLog, refreshData,
-    getTeacherAssignments, getStudentCourses, getStudentGradesForCourse
-  };
+    setStudentGrade,
+    recordAttendance,
+    addLog,
+    refreshData,
+    refreshSecurityData,
+    refreshAcademicData,
+    getTeacherAssignments,
+    getStudentCourses,
+    getStudentGradesForCourse,
+  }), [
+    users, roles, people, courses, assignments, activities, grades, attendance, logs, isLoading, securityPagination,
+    addLog, refreshData, refreshSecurityData, refreshAcademicData, getTeacherAssignments, getStudentCourses,
+    getStudentGradesForCourse,
+  ]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

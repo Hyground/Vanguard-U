@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { 
   BookMarked, Calendar, GraduationCap, LayoutDashboard, TrendingUp, Clock3, ChevronRight, CheckCircle2, AlertCircle, ArrowRight, MessageSquare, Star, Zap
 } from 'lucide-react';
@@ -7,7 +7,11 @@ import { useData } from '../../context/DataContext';
 
 export function StudentDashboard({ onSelectCourse }) {
   const { user } = useAuth();
-  const { people, assignments, grades, addLog, getStudentCourses } = useData();
+  const { grades, refreshAcademicData, getStudentCourses } = useData();
+
+  useEffect(() => {
+    refreshAcademicData();
+  }, [refreshAcademicData]);
 
   // Obtener cursos reales del estudiante
   const studentCourses = useMemo(() => getStudentCourses(user?.personId), [getStudentCourses, user?.personId]);
