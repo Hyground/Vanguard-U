@@ -19,7 +19,7 @@ export async function apiRequest(endpoint, { token, headers, ...options } = {}) 
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(payload?.message || `Error ${response.status}`);
+    throw new Error(payload?.message || payload?.msg || `Error ${response.status}`);
   }
 
   return payload;
