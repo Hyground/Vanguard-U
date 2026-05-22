@@ -43,4 +43,9 @@ public class GatewayConfig {
             return Mono.just(remoteAddress);
         };
     }
+
+    @Bean
+    public org.springframework.web.reactive.function.client.WebClient.Builder webClientBuilder() {
+        return org.springframework.web.reactive.function.client.WebClient.builder();
+    }
 }

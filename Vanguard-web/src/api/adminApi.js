@@ -258,25 +258,38 @@ export function deleteResource(resourceId, id, token) {
 }
 
 export async function getAdminOverview(token) {
-  const keys = ['students', 'teachers', 'enrollments', 'courses', 'school-cycles'];
-  const selected = adminResources.filter((resource) => keys.includes(resource.id));
-  const results = await Promise.allSettled(selected.map((resource) => listResource(resource, token)));
+  try {
+    const summary = await apiRequest('/dashboard/summary', { token });
+    
+    // Mapear el DTO del agregador al formato que espera el componente Dashboard
+    return [
+      { id: 'users', label: 'Usuarios', value: summary.totalUsers },
+      { id: 'students', label: 'Estudiantes', value: summary.totalStudents },
+      { id: 'teachers', label: 'Docentes', value: summary.totalTeachers },
+      { id: 'enrollments', label: 'Inscripciones', value: summary.totalEnrollments },
+      { id: 'courses', label: 'Cursos', value: summary.totalCourses },
+      { id: 'school-cycles', label: 'Ciclos escolares', value: summary.activeCycles },
+    ];
+  } catch (err) {
+    console.error('Error al cargar el agregador del dashboard:', err);
+    // Fallback a peticiones individuales si el agregador falla (opcional, pero mejor manejar el error)
+    const keys = ['students', 'teachers', 'enrollments', 'courses', 'school-cycles'];
+    const selected = adminResources.filter((resource) => keys.includes(resource.id));
+    const results = await Promise.allSettled(selected.map((resource) => listResource(resource, token)));
 
-  return selected.map((resource, index) => {
-    const res = results[index];
-    let value = null;
-
-    if (res.status === 'fulfilled') {
-      const payload = res.value;
-      // Intentar extraer el total de elementos de metadatos comunes (Spring Data, etc.)
-      value = payload?.totalElements ?? payload?.total ?? payload?.data?.totalElements ?? asList(payload).length;
-    }
-
-    return {
-      id: resource.id,
-      label: resource.title,
-      value,
-      error: res.status === 'rejected' ? res.reason.message : null,
-    };
-  });
+    return selected.map((resource, index) => {
+      const res = results[index];
+      let value = null;
+      if (res.status === 'fulfilled') {
+        const payload = res.value;
+        value = payload?.totalElements ?? payload?.total ?? payload?.data?.totalElements ?? asList(payload).length;
+      }
+      return {
+        id: resource.id,
+        label: resource.title,
+        value,
+        error: res.status === 'rejected' ? res.reason.message : null,
+      };
+    });
+  }
 }
