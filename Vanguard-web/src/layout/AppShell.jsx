@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, CreditCard, GraduationCap, LayoutDashboard, LogOut, Users, UserCog, Sun, Moon, Calendar, ClipboardCheck, BookMarked, Search, Menu, X, Command, Network, Bell, ChevronDown, RefreshCcw
 } from 'lucide-react';

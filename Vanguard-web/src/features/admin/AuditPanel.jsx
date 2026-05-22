@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Terminal, Shield, AlertTriangle, Info, CheckCircle2, Search, Trash2, Cpu, Zap, Activity } from 'lucide-react';
+import { Terminal, Shield, AlertTriangle, Info, CheckCircle2, Search, Trash2, Cpu, Zap, Activity, Clock } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 
 export function AuditPanel() {
