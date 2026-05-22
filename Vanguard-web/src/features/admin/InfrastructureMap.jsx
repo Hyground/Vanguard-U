@@ -76,6 +76,19 @@ export function InfrastructureMap() {
     }
   };
 
+  const handleRebalance = async () => {
+    if (!window.confirm('Recrear tareas y rebalancear servicios del Swarm?')) return;
+    setIsActionLoading(true);
+    try {
+      await apiRequest(`${BASE}/swarm/rebalance`, { method: 'POST', token });
+      await fetchData();
+    } catch (err) {
+      alert(`No se pudo rebalancear: ${err.message}`);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
   const handleDbFailover = async () => {
     if (!window.confirm('Forzar failover de base de datos?')) return;
     setIsActionLoading(true);
@@ -125,7 +138,13 @@ export function InfrastructureMap() {
 
         <div className="flex flex-col items-center gap-16">
           <div className="relative z-20 w-full max-w-md">
-            <NodeCard node={managerNode} onAction={handleNodeAction} isLoading={isActionLoading} isMaster />
+            <NodeCard
+              node={managerNode}
+              onAction={handleNodeAction}
+              onRebalance={handleRebalance}
+              isLoading={isActionLoading}
+              isMaster
+            />
             <div className="absolute -top-12 left-1/2 -translate-x-1/2 h-12 w-1 bg-accent/30" />
           </div>
 
@@ -217,7 +236,7 @@ export function InfrastructureMap() {
   );
 }
 
-function NodeCard({ node, onAction, isLoading, isMaster }) {
+function NodeCard({ node, onAction, onRebalance, isLoading, isMaster }) {
   if (!node) {
     return <div className="cyber-panel border-4 border-dashed border-border/20 p-16 text-center text-sec/20 italic font-black uppercase tracking-[0.4em] text-xl animate-pulse">Sin datos</div>;
   }
@@ -236,6 +255,12 @@ function NodeCard({ node, onAction, isLoading, isMaster }) {
         {!isMaster && (
           <button onClick={() => onAction(node.id, isDrained ? 'active' : 'drain')} disabled={isLoading} className={`absolute top-8 right-8 p-3 rounded-2xl border-4 transition-all shadow-2xl ${isDrained ? 'border-success text-success bg-success/10 hover:bg-success/20' : 'border-warning text-warning bg-warning/10 hover:bg-warning/20'} disabled:opacity-10`}>
             <Power size={28} />
+          </button>
+        )}
+        {isMaster && (
+          <button onClick={onRebalance} disabled={isLoading} className="absolute top-8 right-8 flex items-center gap-3 px-4 py-3 rounded-2xl border-4 border-accent/50 bg-accent/10 text-accent font-black uppercase tracking-widest text-[10px] shadow-2xl hover:bg-accent/20 transition-all disabled:opacity-30">
+            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+            Rebalancear
           </button>
         )}
         <div className="flex items-center gap-3 mt-6 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-border/20">

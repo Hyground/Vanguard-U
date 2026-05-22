@@ -123,6 +123,37 @@ app.post('/api/swarm/node/:id/:action', async (req, res) => {
   }
 });
 
+app.post('/api/swarm/rebalance', async (req, res) => {
+  try {
+    const services = await docker.get('/services');
+    const results = [];
+
+    for (const service of services.data || []) {
+      const name = service.Spec?.Name || '';
+      const mode = service.Spec?.Mode || {};
+
+      if (!name.startsWith('vanguard_') || !mode.Replicated) {
+        continue;
+      }
+
+      const spec = {
+        ...service.Spec,
+        TaskTemplate: {
+          ...service.Spec.TaskTemplate,
+          ForceUpdate: (service.Spec.TaskTemplate?.ForceUpdate || 0) + 1
+        }
+      };
+
+      await docker.post(`/services/${service.ID}/update?version=${service.Version.Index}`, spec);
+      results.push({ id: service.ID, name });
+    }
+
+    res.json({ ok: true, updated: results });
+  } catch (err) {
+    res.status(503).json({ error: true, msg: 'REBALANCE_FAIL: ' + err.message });
+  }
+});
+
 app.get('/api/patroni/state', async (req, res) => {
   const { data, errors } = await fetchPatroniCluster();
   if (data) {
