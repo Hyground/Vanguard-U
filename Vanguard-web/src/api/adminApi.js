@@ -218,6 +218,14 @@ export function updateUserStatus(userId, status, token) {
   });
 }
 
+export function registerUser(data, token) {
+  return apiRequest('/auth/register', {
+    token,
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export function createResource(resourceId, data, token) {
   const resource = adminResources.find(r => r.id === resourceId);
   return apiRequest(resource.endpoint, {

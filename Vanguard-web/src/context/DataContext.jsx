@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { listResource, createResource, updateResource, patchResource, adminResources } from '../api/adminApi';
+import { listResource, createResource, updateResource, patchResource, updateUserStatus, registerUser, adminResources } from '../api/adminApi';
 import { useAuth } from '../auth/AuthContext';
 import { asList } from '../api/client';
 
@@ -10,6 +10,7 @@ export function DataProvider({ children }) {
   
   // --- ESTADO SINCRONIZADO CON LA API ---
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [people, setPeople] = useState({ students: [], teachers: [], tutors: [] });
   const [courses, setCourses] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -24,8 +25,9 @@ export function DataProvider({ children }) {
     if (!token || !isAuthenticated) return;
     setIsLoading(true);
     try {
-      const [uRes, sRes, tRes, tutRes, cRes, aRes, gRes, actRes, attRes] = await Promise.all([
+      const [uRes, rRes, sRes, tRes, tutRes, cRes, aRes, gRes, actRes, attRes] = await Promise.all([
         listResource({ endpoint: '/users' }, token),
+        listResource({ endpoint: '/roles' }, token),
         listResource({ endpoint: '/students' }, token),
         listResource({ endpoint: '/teachers' }, token),
         listResource({ endpoint: '/tutors' }, token),
@@ -37,6 +39,7 @@ export function DataProvider({ children }) {
       ]);
 
       setUsers(asList(uRes));
+      setRoles(asList(rRes));
       setPeople({
         students: asList(sRes),
         teachers: asList(tRes),
@@ -75,7 +78,7 @@ export function DataProvider({ children }) {
   }, [token, isAuthenticated]);
 
   useEffect(() => {
-    if (isAuthenticated && role !== 'ADMIN') refreshData();
+    if (isAuthenticated) refreshData();
   }, [isAuthenticated, role, refreshData]);
 
   // --- ACCIONES CON PERSISTENCIA REAL ---
@@ -85,13 +88,27 @@ export function DataProvider({ children }) {
   };
 
   const createUserReal = async (userData) => {
-    const response = await createResource('users', userData, token);
+    const roleId = await resolveRoleId(userData.role);
+    const response = await registerUser({
+      username: userData.username,
+      password: userData.password,
+      roleId,
+    }, token);
     await refreshData();
     return response;
   };
 
   const updateUserReal = async (id, data) => {
-    await patchResource('users', id, data, token);
+    const payload = {
+      username: data.username,
+    };
+    if (data.password) payload.password = data.password;
+    if (data.role) payload.roleId = await resolveRoleId(data.role);
+
+    await updateResource('users', id, payload, token);
+    if (typeof data.status === 'boolean') {
+      await updateUserStatus(id, data.status, token);
+    }
     await refreshData();
   };
 
@@ -102,8 +119,23 @@ export function DataProvider({ children }) {
   };
 
   const updatePersonReal = async (type, id, data) => {
-    await patchResource(type, id, data, token);
+    await updateResource(type, id, data, token);
     await refreshData();
+  };
+
+  const resolveRoleId = async (roleName) => {
+    const normalizedRole = String(roleName || '').trim().toUpperCase();
+    let availableRoles = roles;
+    if (availableRoles.length === 0) {
+      availableRoles = asList(await listResource({ endpoint: '/roles' }, token));
+      setRoles(availableRoles);
+    }
+
+    const roleRecord = availableRoles.find((item) => String(item.name || '').trim().toUpperCase() === normalizedRole);
+    if (!roleRecord) {
+      throw new Error(`Rol no encontrado: ${roleName}`);
+    }
+    return roleRecord.id;
   };
 
   const setStudentGrade = async (studentId, activityId, score, teacherName) => {
@@ -175,7 +207,7 @@ export function DataProvider({ children }) {
   }, [activities, grades]);
 
   const value = {
-    users, people, courses, assignments, activities, grades, attendance, logs, isLoading,
+    users, roles, people, courses, assignments, activities, grades, attendance, logs, isLoading,
     createUser: createUserReal, 
     updateUser: updateUserReal, 
     addPerson: addPersonReal, 

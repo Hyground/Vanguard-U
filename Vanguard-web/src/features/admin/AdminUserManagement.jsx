@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   UserCog, Users, Plus, Edit3, Trash2, ShieldCheck, Mail, KeyRound, Contact2, Search, Filter, ChevronRight, X, CheckCircle2, UserPlus, Info, Loader2, Link as LinkIcon, Zap
 } from 'lucide-react';
@@ -15,12 +15,30 @@ export function AdminUserManagement() {
   const [formData, setFormData] = useState({
     username: '', role: 'STUDENT', password: '', 
     firstName: '', lastName: '', email: '', personType: 'students',
-    cui: '', personalCode: '', status: true, personId: ''
+    cui: '', personalCode: '', status: true, personId: '', userId: ''
   });
 
+  const peopleRows = useMemo(() => Object.keys(people).flatMap((cat) =>
+    people[cat].map((person) => ({ ...person, _category: cat }))
+  ), [people]);
+
+  const peopleByUserId = useMemo(() => {
+    const index = new Map();
+    peopleRows.forEach((person) => {
+      if (person.userId !== null && person.userId !== undefined) {
+        index.set(Number(person.userId), person);
+      }
+    });
+    return index;
+  }, [peopleRows]);
+
   const filteredUsers = useMemo(() => 
-    users.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase())), 
-    [users, searchQuery]
+    users.filter(u => {
+      const relation = peopleByUserId.get(Number(u.id));
+      const text = `${u.username} ${u.role} ${relation?.firstName || ''} ${relation?.lastName || ''}`.toLowerCase();
+      return text.includes(searchQuery.toLowerCase());
+    }), 
+    [users, peopleByUserId, searchQuery]
   );
 
   const handleOpenModal = (item = null, type = 'user') => {
@@ -30,13 +48,45 @@ export function AdminUserManagement() {
         ...formData,
         ...item,
         personType: type === 'people' ? item._category : formData.personType,
-        personId: item.personId || ''
+        personId: item.personId || '',
+        cui: item.cui || '',
+        personalCode: item.personalCode || '',
+        userId: item.userId || ''
       });
     } else {
       setEditingItem(null);
-      setFormData({ username: '', role: 'STUDENT', password: '', firstName: '', lastName: '', email: '', personType: 'students', status: true, personId: '' });
+      setFormData({ username: '', role: 'STUDENT', password: '', firstName: '', lastName: '', email: '', personType: 'students', status: true, personId: '', cui: '', personalCode: '', userId: '' });
     }
     setIsModalOpen(true);
+  };
+
+  const buildPersonPayload = (type, userId) => {
+    const base = {
+      cui: formData.cui,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      userId: Number(userId),
+    };
+
+    if (type === 'teachers') {
+      return { ...base, email: formData.email };
+    }
+
+    if (type === 'students') {
+      return {
+        ...base,
+        personalCode: formData.personalCode || `VNG-${Math.floor(1000 + Math.random() * 9000)}`,
+        tutorId: formData.tutorId || null,
+      };
+    }
+
+    return base;
+  };
+
+  const getUserRelationLabel = (userId) => {
+    const relation = peopleByUserId.get(Number(userId));
+    if (!relation) return 'Sin persona vinculada';
+    return `${relation._category} #${relation.id} - ${relation.firstName} ${relation.lastName}`;
   };
 
   const handleSave = async (e) => {
@@ -44,30 +94,23 @@ export function AdminUserManagement() {
     try {
       if (editingItem) {
         if (editingItem._type === 'user') {
-          await updateUser(editingItem.id, { username: formData.username, role: formData.role, status: formData.status, personId: formData.personId });
+          await updateUser(editingItem.id, { username: formData.username, role: formData.role, status: formData.status });
         } else {
-          await updatePerson(editingItem._category, editingItem.id, { firstName: formData.firstName, lastName: formData.lastName, email: formData.email });
+          await updatePerson(editingItem._category, editingItem.id, buildPersonPayload(editingItem._category, formData.userId));
         }
       } else {
-        let finalPersonId = formData.personId;
-        
-        // Si no hay personId, creamos una nueva persona
-        if (!finalPersonId) {
-          const personRes = await addPerson(formData.personType, {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            personalCode: formData.personType === 'students' ? `VNG-${Math.floor(1000 + Math.random() * 9000)}` : undefined
-          });
-          finalPersonId = personRes.id || personRes.data?.id;
-        }
-        
-        await createUser({
+        const userRes = await createUser({
           username: formData.username,
           role: formData.role,
-          password: formData.password,
-          personId: finalPersonId
+          password: formData.password
         });
+        const userId = userRes.idUser || userRes.id || userRes.data?.idUser;
+
+        if (!userId) {
+          throw new Error('Usuario creado sin idUser en la respuesta');
+        }
+
+        await addPerson(formData.personType, buildPersonPayload(formData.personType, userId));
       }
       setIsModalOpen(false);
       addLog('ADMIN', `OPERACIÓN DE IDENTIDAD EXITOSA`, 'success');
@@ -141,7 +184,7 @@ export function AdminUserManagement() {
                         <div className="space-y-1">
                           <p className="text-2xl font-black text-main uppercase italic tracking-tighter leading-none group-hover:text-accent transition-colors duration-500">{u.username}</p>
                           <p className="text-[10px] font-mono text-sec font-bold mt-2 opacity-50 uppercase tracking-widest flex items-center gap-2">
-                             <LinkIcon size={12} className="text-accent" /> Rel: {u.personId || 'No vinculado'}
+                             <LinkIcon size={12} className="text-accent" /> {getUserRelationLabel(u.id)}
                           </p>
                         </div>
                       </div>
@@ -170,19 +213,22 @@ export function AdminUserManagement() {
                   </tr>
                 ))
               ) : (
-                Object.keys(people).flatMap(cat => people[cat].map(p => (
-                  <tr key={`${cat}-${p.id}`} className="group hover:bg-emerald-500/[0.03] transition-all duration-500">
-                    <td className="p-12 font-mono text-xs text-emerald-500 font-black tracking-tighter italic opacity-40 uppercase">#{cat.slice(0,2)}-UUID-{p.id}</td>
+                peopleRows.map(p => (
+                  <tr key={`${p._category}-${p.id}`} className="group hover:bg-emerald-500/[0.03] transition-all duration-500">
+                    <td className="p-12 font-mono text-xs text-emerald-500 font-black tracking-tighter italic opacity-40 uppercase">#{p._category.slice(0,2)}-UUID-{p.id}</td>
                     <td className="p-12">
                        <div className="space-y-1">
                           <p className="text-2xl font-black text-main uppercase italic tracking-tighter leading-none group-hover:text-emerald-400 transition-colors duration-500">{p.firstName} {p.lastName}</p>
-                          <p className="text-sm font-bold text-sec uppercase tracking-widest opacity-60 mt-2">{p.email}</p>
+                          <p className="text-sm font-bold text-sec uppercase tracking-widest opacity-60 mt-2">{p.email || p.cui}</p>
+                          <p className="text-[10px] font-mono text-sec font-bold mt-2 opacity-50 uppercase tracking-widest flex items-center gap-2">
+                            <LinkIcon size={12} className="text-emerald-400" /> User: {p.userId}
+                          </p>
                        </div>
                     </td>
                     <td className="p-12">
                        <div className="flex items-center gap-4">
                           <div className="w-3 h-3 rounded-full bg-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
-                          <span className="text-xs font-black text-sec uppercase tracking-[0.3em] italic">{cat}</span>
+                          <span className="text-xs font-black text-sec uppercase tracking-[0.3em] italic">{p._category}</span>
                        </div>
                     </td>
                     <td className="p-12">
@@ -191,10 +237,10 @@ export function AdminUserManagement() {
                        </div>
                     </td>
                     <td className="p-12 text-right">
-                       <button onClick={() => handleOpenModal({ ...p, _category: cat }, 'people')} className="p-5 rounded-2xl bg-card border border-border/80 text-sec hover:text-emerald-400 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 shadow-2xl active:scale-90 translate-x-4 group-hover:translate-x-0 duration-500"><Edit3 size={20} strokeWidth={2.5}/></button>
+                       <button onClick={() => handleOpenModal(p, 'people')} className="p-5 rounded-2xl bg-card border border-border/80 text-sec hover:text-emerald-400 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 shadow-2xl active:scale-90 translate-x-4 group-hover:translate-x-0 duration-500"><Edit3 size={20} strokeWidth={2.5}/></button>
                     </td>
                   </tr>
-                )))
+                ))
               )}
             </tbody>
           </table>
@@ -244,13 +290,32 @@ export function AdminUserManagement() {
                        <label className="text-xs font-black text-sec uppercase tracking-[0.3em] ml-4">Capa de Autorización (Rol)</label>
                        <select 
                          className="w-full bg-base/50 border border-border/60 rounded-[2rem] py-6 px-10 text-xl font-black text-main outline-none focus:border-accent appearance-none cursor-pointer shadow-inner"
-                         value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
+                         value={formData.role} onChange={e => setFormData({...formData, role: e.target.value, personType: e.target.value === 'TEACHER' ? 'teachers' : e.target.value === 'STUDENT' ? 'students' : formData.personType})}
                        >
                           <option value="STUDENT">Estudiante Regular</option>
                           <option value="TEACHER">Personal Docente</option>
                           <option value="ADMIN">Administrador de Sistema</option>
                        </select>
                     </div>
+                    {!editingItem && (
+                      <div className="space-y-4">
+                         <label className="text-xs font-black text-sec uppercase tracking-[0.3em] ml-4">Clave Temporal</label>
+                         <div className="relative group">
+                            <KeyRound size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-sec group-focus-within:text-accent transition-colors" />
+                            <input 
+                              type="password" required
+                              className="w-full bg-base/50 border border-border/60 rounded-[2rem] py-6 pl-16 pr-8 text-xl font-black text-main outline-none focus:border-accent focus:ring-[12px] focus:ring-accent/5 transition-all shadow-inner"
+                              value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
+                            />
+                         </div>
+                      </div>
+                    )}
+                    {editingItem?._type === 'user' && (
+                      <label className="flex items-center gap-4 text-xs font-black text-sec uppercase tracking-[0.3em]">
+                        <input type="checkbox" checked={Boolean(formData.status)} onChange={e => setFormData({...formData, status: e.target.checked})} />
+                        Usuario autorizado
+                      </label>
+                    )}
                  </div>
                )}
 
@@ -261,7 +326,22 @@ export function AdminUserManagement() {
                        <Contact2 size={32} strokeWidth={2.5} />
                        <h5 className="text-xl font-black uppercase italic tracking-widest">Metadata de Persona Física</h5>
                     </div>
+                    {!editingItem && (
+                      <select
+                        className="relative z-10 w-full bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl"
+                        value={formData.personType}
+                        onChange={e => setFormData({...formData, personType: e.target.value})}
+                      >
+                        <option value="students">Estudiante</option>
+                        <option value="teachers">Docente</option>
+                        <option value="tutors">Tutor</option>
+                      </select>
+                    )}
                     <div className="grid grid-cols-2 gap-10 relative z-10">
+                       <input type="text" placeholder="CUI / DPI" required minLength={13} maxLength={13} className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.cui} onChange={e => setFormData({...formData, cui: e.target.value})}/>
+                       {formData.personType === 'students' && (
+                         <input type="text" placeholder="Codigo personal" className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.personalCode} onChange={e => setFormData({...formData, personalCode: e.target.value})}/>
+                       )}
                        <input type="text" placeholder="Nombres Civiles" required className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})}/>
                        <input type="text" placeholder="Apellidos Reales" required className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})}/>
                     </div>
