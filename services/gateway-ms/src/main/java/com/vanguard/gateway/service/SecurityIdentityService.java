@@ -1,13 +1,17 @@
 package com.vanguard.gateway.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class SecurityIdentityService {
@@ -53,7 +57,13 @@ public class SecurityIdentityService {
                 .header("Authorization", token)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .timeout(Duration.ofMillis(timeoutMs));
+                .timeout(Duration.ofMillis(timeoutMs))
+                .onErrorMap(WebClientResponseException.class, error ->
+                        new ResponseStatusException(error.getStatusCode(), "Security identity downstream error"))
+                .onErrorMap(TimeoutException.class, error ->
+                        new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT, "Security identity request timed out"))
+                .onErrorMap(error -> !(error instanceof ResponseStatusException), error ->
+                        new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Security identity downstream unavailable"));
     }
 
     private String pagePath(String endpoint, int page, int size) {
