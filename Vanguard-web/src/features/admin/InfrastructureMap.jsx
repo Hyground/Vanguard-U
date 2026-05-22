@@ -146,7 +146,7 @@ export function InfrastructureMap() {
       {/* CANAL DE DATOS VISUAL */}
       <div className="flex flex-col items-center gap-4 py-10 relative">
          <div className="bg-black/60 px-8 py-3 rounded-full border-2 border-border/40 text-[11px] font-black text-sec uppercase tracking-[0.4em] z-20">
-            >>> ACCESO A PERSISTENCIA >>>
+            --- ACCESO A PERSISTENCIA ---
          </div>
          <div className="h-20 w-1 bg-gradient-to-b from-accent to-success opacity-30" />
       </div>
