@@ -34,6 +34,33 @@ export function AuthProvider({ children }) {
     setSession(nextSession);
   };
 
+  const registerPreInscrito = async (userData) => {
+    // Simulacion de registro
+    const nextSession = {
+      token: 'mock-jwt-' + Math.random().toString(36).substr(2),
+      user: {
+        idUser: Date.now(),
+        username: userData.email.split('@')[0],
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: 'PRE_INSCRITO',
+      },
+    };
+    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
+    setSession(nextSession);
+  };
+
+  const upgradeToStudent = () => {
+    if (!session) return;
+    const personalCode = 'ST-' + Math.floor(100000 + Math.random() * 900000);
+    const nextSession = {
+      ...session,
+      user: { ...session.user, role: 'STUDENT', personalCode }
+    };
+    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
+    setSession(nextSession);
+  };
+
   const logout = () => {
     window.localStorage.removeItem(SESSION_STORAGE_KEY);
     setSession(null);
@@ -47,6 +74,8 @@ export function AuthProvider({ children }) {
       role: session?.user?.role,
       isAuthenticated: Boolean(session?.token),
       login,
+      registerPreInscrito,
+      upgradeToStudent,
       logout,
     }),
     [session],

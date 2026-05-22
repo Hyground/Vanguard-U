@@ -4,17 +4,18 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        base: '#0B0F19',
-        card: '#111827',
-        border: '#1F2937',
-        main: '#F9FAFB',
-        sec: '#9CA3AF',
-        accent: '#6366F1',
-        success: '#10B981',
-        warning: '#F59E0B'
+        base: 'var(--color-base)',
+        card: 'var(--color-card)',
+        border: 'var(--color-border)',
+        main: 'var(--color-main)',
+        sec: 'var(--color-sec)',
+        accent: 'var(--color-accent)',
+        success: 'var(--color-success)',
+        warning: 'var(--color-warning)',
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
