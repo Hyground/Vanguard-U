@@ -30,7 +30,7 @@
 
 @layer base {
   body {
-    @apply bg-base text-main font-sans overflow-hidden transition-colors duration-500 selection:bg-accent/30 tracking-wide;
+    @apply bg-base text-main font-sans overflow-hidden transition-colors duration-500 tracking-wide;
   }
 }
 
