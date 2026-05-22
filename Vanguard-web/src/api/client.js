@@ -6,7 +6,8 @@ export function getErrorMessage(error) {
 }
 
 export async function apiRequest(endpoint, { token, headers, ...options } = {}) {
-  const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const response = await fetchWithRetry(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
