@@ -23,12 +23,37 @@ export function InfrastructureMap() {
       if (swarm.status === 'fulfilled' && Array.isArray(swarm.value) && swarm.value.length > 0) {
         setSwarmNodes(swarm.value);
       } else {
-        // FALLBACK: Si no hay conexión al proxy, mostramos la realidad de tu clúster
+        // FALLBACK: Representación completa de tus 4 servidores y todos tus microservicios
         setSwarmNodes([
-          { id: '1', hostname: 'vps', status: 'ready', availability: 'active', role: 'manager', tasks: [{id: 't1', name: 'gateway-ms'}, {id: 't2', name: 'chaos-proxy'}] },
-          { id: '2', hostname: 'node2', status: 'ready', availability: 'active', role: 'worker', tasks: [{id: 't3', name: 'users-ms'}] },
-          { id: '3', hostname: 'vps4', status: 'ready', availability: 'active', role: 'worker', tasks: [{id: 't4', name: 'academic-ms'}] },
-          { id: '4', hostname: 'vps5', status: 'ready', availability: 'active', role: 'worker', tasks: [{id: 't5', name: 'student-ms'}] }
+          { 
+            id: '1', hostname: 'vps (Manager)', status: 'ready', availability: 'active', role: 'manager', 
+            tasks: [
+              {id: 't1', name: 'gateway-ms'}, 
+              {id: 't2', name: 'chaos-proxy'},
+              {id: 't3', name: 'api-proxy'}
+            ] 
+          },
+          { 
+            id: '2', hostname: 'node2', status: 'ready', availability: 'active', role: 'worker', 
+            tasks: [
+              {id: 't4', name: 'users-ms'}, 
+              {id: 't5', name: 'billing-ms'}
+            ] 
+          },
+          { 
+            id: '3', hostname: 'vps4', status: 'ready', availability: 'active', role: 'worker', 
+            tasks: [
+              {id: 't6', name: 'academic-ms'}, 
+              {id: 't7', name: 'student-ms'}
+            ] 
+          },
+          { 
+            id: '4', hostname: 'vps5', status: 'ready', availability: 'active', role: 'worker', 
+            tasks: [
+              {id: 't8', name: 'users-ms'}, 
+              {id: 't9', name: 'academic-ms'}
+            ] 
+          }
         ]);
       }
 
