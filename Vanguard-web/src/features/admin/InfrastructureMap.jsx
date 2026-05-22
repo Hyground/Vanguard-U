@@ -29,11 +29,15 @@ export function InfrastructureMap() {
       if (swarm.status === 'fulfilled' && Array.isArray(swarm.value) && swarm.value.length > 0) {
         setSwarmNodes(swarm.value);
       } else {
-        // FALLBACK CORREGIDO: Basado en tu distribución real
+        // FALLBACK MANUAL SOLICITADO: Organización lógica para la exposición
         setSwarmNodes([
           { 
             id: '1', hostname: 'vps', status: 'ready', availability: 'active', role: 'manager', 
-            tasks: [{id: 't1', name: 'gateway-ms'}, {id: 't2', name: 'chaos-proxy'}, {id: 't3', name: 'api-proxy'}] 
+            tasks: [
+              {id: 't1', name: 'gateway-ms'}, 
+              {id: 't2', name: 'chaos-proxy'},
+              {id: 't3', name: 'api-proxy'}
+            ] 
           },
           { 
             id: '2', hostname: 'node2', status: 'ready', availability: 'active', role: 'worker', 
@@ -41,11 +45,14 @@ export function InfrastructureMap() {
           },
           { 
             id: '3', hostname: 'vps4', status: 'ready', availability: 'active', role: 'worker', 
-            tasks: [{id: 't6', name: 'academic-ms'}] 
+            tasks: [{id: 't5', name: 'academic-ms'}] 
           },
           { 
             id: '4', hostname: 'vps5', status: 'ready', availability: 'active', role: 'worker', 
-            tasks: [{id: 't8', name: 'student-ms'}, {id: 't9', name: 'billing-ms'}] 
+            tasks: [
+              {id: 't6', name: 'student-ms'},
+              {id: 't7', name: 'billing-ms'}
+            ] 
           }
         ]);
       }
