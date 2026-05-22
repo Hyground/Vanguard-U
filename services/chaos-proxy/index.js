@@ -35,7 +35,7 @@ app.get('/api/swarm/state', async (req, res) => {
       availability: (n.Spec.Availability || 'active').toLowerCase(),
       role: (n.Spec.Role || 'worker').toLowerCase(),
       tasks: (tRes.data || [])
-        .filter(task => task.NodeID === node.ID)
+        .filter(task => task.NodeID === n.ID)
         .map(task => {
           const fullImage = task.Spec.ContainerSpec.Image;
           const nameWithTag = fullImage.includes('/') ? fullImage.split('/')[1] : fullImage;
@@ -47,29 +47,26 @@ app.get('/api/swarm/state', async (req, res) => {
         })
     }));
 
-    // IDENTIFICACIÓN DEL MANAGER PARA INYECCIÓN
-    const manager = state.find(n => n.role === 'manager' || n.hostname.toLowerCase().includes('vps'));
+    // FORZAR REDIS Y RABBIT (NODO 1)
+    const manager = state.find(n => n.role === 'manager' || n.hostname.toLowerCase() === 'vps');
     if (manager) {
       manager.tasks.push(
-        { id: 'system-redis', name: 'REDIS-SERVER', status: 'running', type: 'system' },
-        { id: 'system-rabbit', name: 'RABBITMQ-BROKER', status: 'running', type: 'system' }
+        { id: 'sys-redis', name: 'REDIS-SERVER', status: 'running', type: 'system' },
+        { id: 'sys-rabbit', name: 'RABBITMQ-BROKER', status: 'running', type: 'system' }
       );
     }
-
     res.json(state);
   } catch (err) {
-    // Si falla el socket, al menos devolvemos el error con 200 para que el mapa lo pinte
-    res.json({ error: true, msg: 'DOCKER_SOCKET_ERROR: ' + err.message });
+    res.json({ error: true, msg: 'DOCKER_FAIL: ' + err.message });
   }
 });
 
 app.get('/api/patroni/state', async (req, res) => {
-  // Intentamos todas las rutas posibles para saltar el firewall
   const hosts = ['34.45.194.127', '34.29.234.240', '34.68.197.98'];
   for (const host of hosts) {
     try {
-      const r = await axios.get(`http://${host}:8008/cluster`, { timeout: 4000 });
-      const data = r.data;
+      const response = await axios.get(`http://${host}:8008/cluster`, { timeout: 4000 });
+      const data = response.data;
       if (data.members) {
         data.members = data.members.map(m => {
           const rStr = (m.role || '').toLowerCase();
@@ -79,7 +76,7 @@ app.get('/api/patroni/state', async (req, res) => {
       return res.json(data);
     } catch (e) { continue; }
   }
-  res.json({ error: true, msg: 'DB_CLUSTER_UNREACHABLE' });
+  res.json({ error: true, msg: 'DATABASE_UNREACHABLE' });
 });
 
-app.listen(PORT, () => console.log('Chaos Proxy V10 Absolute Final READY'));
+app.listen(PORT, () => console.log('Chaos Proxy v10.1 READY'));
