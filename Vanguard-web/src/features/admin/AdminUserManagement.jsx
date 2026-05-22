@@ -170,7 +170,7 @@ export function AdminUserManagement() {
               )) : (
                 // Lógica de Personas (Students, Teachers)
                 Object.keys(people).flatMap(type => people[type].map(p => (
-                  <tr key={p.id} className="group hover:bg-accent/[0.02] transition-colors">
+                  <tr key={`${type}-${p.id}`} className="group hover:bg-accent/[0.02] transition-colors">
                     <td className="p-8 font-mono text-xs text-success font-black tracking-tighter opacity-40 italic">{type.slice(0,2).toUpperCase()}-{p.id}</td>
                     <td className="p-8">
                        <p className="text-sm font-black text-main uppercase italic">{p.firstName} {p.lastName}</p>
