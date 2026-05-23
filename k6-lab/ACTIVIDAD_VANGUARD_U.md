@@ -46,7 +46,7 @@ Para medir endpoints protegidos:
 1. Usar `Estudiantes`, `Inscripciones`, `Pagos` o `Todo`.
 2. El panel hace login una sola vez en `setup` y reutiliza el token.
 3. Si ya se tiene un token valido, pegarlo en `Token Bearer opcional` para saltar incluso ese login inicial.
-4. Si hay varios usuarios con la misma contrasena, pegarlos en `Usuarios de carga` y poner la contrasena compartida. El setup hace login una vez por usuario y reparte las peticiones entre esos tokens.
+4. Si hay varios usuarios reales con la misma contrasena, pegarlos en `Usuarios de carga` y poner la contrasena compartida. El setup hace login una vez por usuario y reparte las peticiones entre esos tokens.
 
 Para laboratorio se puede crear un usuario/token de carga con expiracion larga. No se recomienda un token que nunca expire en produccion. Si se usa, debe ser solo para pruebas, con permisos minimos y revocable.
 
@@ -57,15 +57,22 @@ Ejemplo practico:
 ```text
 Usuarios de carga:
 load_admin
-load_user_1
-load_user_2
-load_user_3
 
 Contrasena compartida:
 Demo123!
 ```
 
-Con eso, para una prueba de 50,000 contra `Estudiantes`, k6 no hace 50,000 logins. Hace 4 logins al inicio, obtiene 4 tokens y luego reparte las 50,000 iteraciones entre esos tokens.
+Cuenta alternativa real:
+
+```text
+Usuarios de carga:
+admin
+
+Contrasena compartida:
+admin
+```
+
+No mezclar `load_admin` y `admin` en la misma corrida porque no comparten contrasena. Con eso, para una prueba de 50,000 contra `Estudiantes`, k6 no hace 50,000 logins. Hace 1 login al inicio, obtiene 1 token y reutiliza ese token en las 50,000 iteraciones.
 
 ## Validacion antes de carga
 

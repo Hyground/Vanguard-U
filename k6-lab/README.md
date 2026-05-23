@@ -10,6 +10,59 @@ Para la actividad de observabilidad y estres, usar la guia especifica del proyec
 k6-lab/ACTIVIDAD_VANGUARD_U.md
 ```
 
+## Levantar rapido
+
+Requisitos:
+
+- Docker Desktop abierto y con el engine corriendo.
+- Puerto `3006` libre en la maquina local.
+- Acceso a internet hacia `https://api.wissegt.com`.
+
+Desde la raiz del proyecto:
+
+```powershell
+cd k6-lab
+docker compose up -d --build
+```
+
+Abrir el panel:
+
+```text
+http://localhost:3006
+```
+
+Verificar que quedo arriba:
+
+```powershell
+docker compose ps
+docker compose logs --tail=40
+```
+
+Si el puerto `3006` esta ocupado, primero revisar quien lo usa:
+
+```powershell
+netstat -ano | findstr :3006
+```
+
+Si no se puede liberar el puerto, cambiar el puerto externo en `k6-lab/docker-compose.yml`:
+
+```yaml
+ports:
+  - "3007:3006"
+```
+
+En ese caso abrir:
+
+```text
+http://localhost:3007
+```
+
+Para apagarlo:
+
+```powershell
+docker compose down
+```
+
 ## Local
 
 Requisitos:
@@ -20,9 +73,9 @@ Requisitos:
 
 Levantar:
 
-```bash
+```powershell
 cd k6-lab
-docker compose up --build
+docker compose up -d --build
 ```
 
 Abrir:
