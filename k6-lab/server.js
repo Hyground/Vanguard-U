@@ -37,17 +37,39 @@ function cleanDuration(value) {
   return /^[0-9]+(s|m|h)$/.test(text) ? text : '5m';
 }
 
+function durationToSeconds(value) {
+  const match = String(value || '5m').match(/^([0-9]+)(s|m|h)$/);
+  if (!match) return 300;
+  const amount = Number(match[1]);
+  if (match[2] === 's') return amount;
+  if (match[2] === 'm') return amount * 60;
+  return amount * 60 * 60;
+}
+
 function serializeRun(run) {
+  const end = run.finishedAt ? new Date(run.finishedAt).getTime() : Date.now();
+  const start = new Date(run.startedAt).getTime();
+  const completed = run.summary?.completedIterations ?? run.completedIterations ?? 0;
+  const completedPercent = run.requests > 0 ? (completed / run.requests) * 100 : 0;
+  const remaining = run.plannedRate > 0 ? Math.max(0, Math.ceil((run.requests - completed) / run.plannedRate)) : null;
   return {
     id: run.id,
     status: run.status,
     target: run.target,
     requests: run.requests,
     vus: run.vus,
+    maxVus: run.maxVus,
     duration: run.duration,
+    httpTimeout: run.httpTimeout,
+    plannedRate: run.plannedRate,
+    effectiveDuration: run.effectiveDuration,
+    completedIterations: completed,
+    completedPercent,
+    remainingSeconds: run.status === 'running' ? remaining : 0,
     baseUrl: run.baseUrl,
     startedAt: run.startedAt,
     finishedAt: run.finishedAt,
+    elapsedSeconds: Math.max(0, Math.round((end - start) / 1000)),
     exitCode: run.exitCode,
     summary: run.summary,
     logs: run.logs.slice(-120),
@@ -58,6 +80,8 @@ function appendLog(run, chunk) {
   const text = String(chunk || '').trim();
   if (!text) return;
   for (const line of text.split(/\r?\n/).filter(Boolean)) {
+    const progress = line.match(/,\s+([0-9]+)\s+complete\b/);
+    if (progress) run.completedIterations = Number(progress[1]);
     run.logs.push({ at: new Date().toISOString(), line });
   }
   if (run.logs.length > 600) run.logs.splice(0, run.logs.length - 600);
@@ -81,18 +105,30 @@ function k6Script() {
   return String.raw`
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
+import exec from 'k6/execution';
 import { Counter, Rate, Trend } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'https://api.wissegt.com';
 const USERNAME = __ENV.USERNAME || 'load_admin';
 const PASSWORD = __ENV.PASSWORD || 'Demo123!';
+const STATIC_TOKEN = __ENV.STATIC_TOKEN || '';
+const USERNAMES = (__ENV.USERNAMES || '')
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean);
 const TARGET = (__ENV.TARGET || 'login').toLowerCase();
 const REQUESTS = Number(__ENV.REQUESTS || 10);
 const VUS = Number(__ENV.VUS || 1);
+const MAX_VUS = Number(__ENV.MAX_VUS || Math.max(VUS * 4, VUS + 10));
 const DURATION = __ENV.DURATION || '5m';
+const HTTP_TIMEOUT = __ENV.HTTP_TIMEOUT || '30s';
 const PAGE_SIZE = Number(__ENV.PAGE_SIZE || 20);
+const RATE = Math.max(1, Math.ceil(REQUESTS / durationToSeconds(DURATION)));
+const EFFECTIVE_DURATION_SECONDS = Math.max(1, Math.ceil(REQUESTS / RATE));
+const EFFECTIVE_DURATION = EFFECTIVE_DURATION_SECONDS + 's';
 
 const endpointDuration = new Trend('vanguard_endpoint_duration');
+const workIterations = new Counter('vanguard_work_iterations');
 const authFailures = new Rate('vanguard_auth_failures');
 const status2xx = new Counter('vanguard_status_2xx');
 const status3xx = new Counter('vanguard_status_3xx');
@@ -102,10 +138,12 @@ const status5xx = new Counter('vanguard_status_5xx');
 export const options = {
   scenarios: {
     selected: {
-      executor: 'shared-iterations',
-      vus: VUS,
-      iterations: REQUESTS,
-      maxDuration: DURATION
+      executor: 'constant-arrival-rate',
+      rate: RATE,
+      timeUnit: '1s',
+      duration: EFFECTIVE_DURATION,
+      preAllocatedVUs: VUS,
+      maxVUs: MAX_VUS
     }
   },
   thresholds: {
@@ -117,6 +155,15 @@ export const options = {
     target: TARGET
   }
 };
+
+function durationToSeconds(value) {
+  const match = String(value || '5m').match(/^([0-9]+)(s|m|h)$/);
+  if (!match) return 300;
+  const amount = Number(match[1]);
+  if (match[2] === 's') return amount;
+  if (match[2] === 'm') return amount * 60;
+  return amount * 60 * 60;
+}
 
 function parseJson(res) {
   try {
@@ -146,39 +193,63 @@ function loginRequest() {
   const res = http.post(BASE_URL + '/api/v1/auth/login', JSON.stringify({ username: USERNAME, password: PASSWORD }), {
     headers: { 'Content-Type': 'application/json' },
     tags: { endpoint: 'login' },
-    timeout: '15s'
+    timeout: HTTP_TIMEOUT
   });
   recordStatus(res);
   return res;
 }
 
 export function setup() {
+  if (STATIC_TOKEN) {
+    console.log('setup using provided bearer token');
+    return { tokens: [STATIC_TOKEN] };
+  }
+
   if (TARGET === 'login') {
     console.log('setup skipped: login target does not need bearer token');
-    return { token: null };
+    return { tokens: [] };
   }
 
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    console.log('setup login attempt ' + attempt + '/3');
-    const res = loginRequest();
-    const body = parseJson(res);
-    const ok = check(res, {
-      'setup login 200': (r) => r.status === 200,
-      'setup token present': () => Boolean(body && body.token)
-    });
-    authFailures.add(!ok);
-    if (ok) return { token: body.token };
-    console.log('setup login failed status=' + res.status);
-    sleep(1);
+  const users = USERNAMES.length > 0 ? USERNAMES : [USERNAME];
+  const tokens = [];
+
+  for (const username of users) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      console.log('setup login user=' + username + ' attempt ' + attempt + '/3');
+      const res = http.post(BASE_URL + '/api/v1/auth/login', JSON.stringify({ username, password: PASSWORD }), {
+        headers: { 'Content-Type': 'application/json' },
+        tags: { endpoint: 'setup-login' },
+        timeout: HTTP_TIMEOUT
+      });
+      recordStatus(res);
+      const body = parseJson(res);
+      const ok = check(res, {
+        ['setup login 200 ' + username]: (r) => r.status === 200,
+        ['setup token present ' + username]: () => Boolean(body && body.token)
+      });
+      authFailures.add(!ok);
+      if (ok) {
+        tokens.push(body.token);
+        break;
+      }
+      console.log('setup login failed user=' + username + ' status=' + res.status);
+      sleep(1);
+    }
   }
 
-  throw new Error('Setup login failed after 3 attempts; target ' + TARGET + ' was not executed');
+  if (tokens.length > 0) {
+    console.log('setup tokens ready=' + tokens.length + '/' + users.length);
+    return { tokens };
+  }
+
+  throw new Error('Setup login failed; no bearer tokens were created for target ' + TARGET);
 }
 
 function get(path, token, endpoint) {
   const res = http.get(BASE_URL + path, {
     ...authHeaders(token),
-    tags: { endpoint }
+    tags: { endpoint },
+    timeout: HTTP_TIMEOUT
   });
   recordStatus(res);
   endpointDuration.add(res.timings.duration, { endpoint });
@@ -213,19 +284,23 @@ function attackPayments(token) {
 }
 
 export default function (data) {
+  if (exec.scenario.iterationInTest >= REQUESTS) return;
+  workIterations.add(1);
+  const tokens = data.tokens || [];
+  const token = tokens.length ? tokens[exec.scenario.iterationInTest % tokens.length] : null;
+
   group('attack-' + TARGET, () => {
     if (TARGET === 'login') attackLogin();
-    if (TARGET === 'users') attackUsers(data.token);
-    if (TARGET === 'students') attackStudents(data.token);
-    if (TARGET === 'enrollments') attackEnrollments(data.token);
-    if (TARGET === 'payments') attackPayments(data.token);
+    if (TARGET === 'users') attackUsers(token);
+    if (TARGET === 'students') attackStudents(token);
+    if (TARGET === 'enrollments') attackEnrollments(token);
+    if (TARGET === 'payments') attackPayments(token);
     if (TARGET === 'all') {
-      attackLogin();
-      attackUsers(data.token);
-      attackStudents(data.token);
-      attackEnrollments(data.token);
-      attackPayments(data.token);
-      get('/api/v1/admin/summary', data.token, 'admin-summary');
+      attackUsers(token);
+      attackStudents(token);
+      attackEnrollments(token);
+      attackPayments(token);
+      get('/api/v1/admin/summary', token, 'admin-summary');
     }
   });
   sleep(Number(__ENV.SLEEP_SECONDS || 0));
@@ -235,10 +310,19 @@ export function handleSummary(data) {
   const duration = data.metrics.http_req_duration?.values || {};
   const failed = data.metrics.http_req_failed?.values || {};
   const requests = data.metrics.http_reqs?.values || {};
+  const iterations = data.metrics.vanguard_work_iterations?.values || {};
+  const dropped = data.metrics.dropped_iterations?.values || {};
   return {
     stdout: JSON.stringify({
       type: 'k6-summary',
       target: TARGET,
+      requestedIterations: REQUESTS,
+      plannedRate: RATE,
+      plannedDuration: DURATION,
+      effectiveDuration: EFFECTIVE_DURATION,
+      completedIterations: iterations.count || 0,
+      completedPercent: REQUESTS > 0 ? ((iterations.count || 0) / REQUESTS) * 100 : 0,
+      droppedIterations: dropped.count || 0,
       requests: requests.count || 0,
       failRate: failed.rate || 0,
       p95: duration['p(95)'] || 0,
@@ -265,7 +349,11 @@ function startRun(input) {
   const target = targets[input.target] ? input.target : 'login';
   const requests = clampNumber(input.requests, 10, 1, 100000);
   const vus = clampNumber(input.vus, 1, 1, 2000);
+  const maxVus = clampNumber(input.maxVus, Math.max(vus * 4, vus + 10), vus, 5000);
   const duration = cleanDuration(input.duration);
+  const httpTimeout = cleanDuration(input.httpTimeout || '30s');
+  const plannedRate = Math.max(1, Math.ceil(requests / durationToSeconds(duration)));
+  const effectiveDuration = `${Math.max(1, Math.ceil(requests / plannedRate))}s`;
   const id = randomUUID();
 
   const run = {
@@ -274,7 +362,12 @@ function startRun(input) {
     target,
     requests,
     vus,
+    maxVus,
     duration,
+    httpTimeout,
+    plannedRate,
+    effectiveDuration,
+    completedIterations: 0,
     baseUrl: process.env.BASE_URL || input.baseUrl || 'https://api.wissegt.com',
     startedAt: new Date().toISOString(),
     finishedAt: null,
@@ -284,16 +377,22 @@ function startRun(input) {
     child: null,
   };
   runs.set(id, run);
-  appendLog(run, `start target=${target} requests=${requests} vus=${vus} duration=${duration}`);
+  appendLog(run, `start target=${target} requests=${requests} vus=${vus} maxVus=${maxVus} duration=${duration} timeout=${httpTimeout}`);
 
   const env = {
     BASE_URL: run.baseUrl,
     USERNAME: process.env.LOAD_USERNAME || input.username || 'load_admin',
     PASSWORD: process.env.LOAD_PASSWORD || input.password || 'Demo123!',
+    USERNAMES: Array.isArray(input.usernames)
+      ? input.usernames.join(',')
+      : String(input.usernames || process.env.LOAD_USERNAMES || ''),
     TARGET: target,
     REQUESTS: String(requests),
     VUS: String(vus),
+    MAX_VUS: String(maxVus),
     DURATION: duration,
+    HTTP_TIMEOUT: httpTimeout,
+    STATIC_TOKEN: String(input.token || process.env.LOAD_TOKEN || '').replace(/^Bearer\s+/i, '').trim(),
     PAGE_SIZE: String(clampNumber(input.pageSize, 20, 1, 100)),
   };
 
@@ -342,8 +441,10 @@ app.get('/api/config', (req, res) => {
     defaults: {
       target: 'login',
       requests: 10,
-      vus: 1,
-      duration: '2m',
+      vus: 10,
+      maxVus: 100,
+      duration: '15m',
+      httpTimeout: '30s',
       baseUrl: process.env.BASE_URL || 'https://api.wissegt.com',
     },
   });

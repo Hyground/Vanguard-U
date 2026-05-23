@@ -33,8 +33,32 @@
             <input id="vus" type="number" min="1" max="2000" value="1" />
           </div>
           <div class="field">
+            <label>VUs maximos</label>
+            <input id="max-vus" type="number" min="1" max="5000" value="100" />
+          </div>
+          <div class="field">
             <label>Tiempo maximo</label>
-            <input id="duration" value="2m" />
+            <input id="duration" value="15m" />
+          </div>
+          <div class="field">
+            <label>Timeout API</label>
+            <input id="http-timeout" value="30s" />
+          </div>
+        </div>
+
+        <div class="field token-field">
+          <label>Token Bearer opcional</label>
+          <input id="token" type="password" placeholder="Pegar token para saltar login de setup" autocomplete="off" />
+        </div>
+
+        <div class="auth-grid">
+          <div class="field">
+            <label>Usuarios de carga</label>
+            <textarea id="usernames" rows="3" placeholder="Uno por linea o separados por coma. Ej: load_admin, alumno_1, alumno_2"></textarea>
+          </div>
+          <div class="field">
+            <label>Contrasena compartida</label>
+            <input id="password" type="password" placeholder="Si todos usan la misma contrasena" autocomplete="off" />
           </div>
         </div>
 
@@ -50,13 +74,20 @@
           <h2>Resultado</h2>
           <div class="metric-grid">
             <div><span>Estado</span><strong id="status">idle</strong></div>
-            <div><span>Requests</span><strong id="metric-requests">-</strong></div>
-            <div><span>Error rate</span><strong id="metric-fail">-</strong></div>
-            <div><span>P95</span><strong id="metric-p95">-</strong></div>
-            <div><span>Promedio</span><strong id="metric-avg">-</strong></div>
-            <div><span>2xx / 4xx / 5xx</span><strong id="metric-statuses">-</strong></div>
+            <div><span>Transcurrido</span><strong id="metric-elapsed">-</strong></div>
+            <div><span>Peticiones reales</span><strong id="metric-requests">-</strong></div>
+            <div><span>Completadas</span><strong id="metric-progress">-</strong></div>
+            <div><span>Faltan aprox.</span><strong id="metric-remaining">-</strong></div>
+            <div><span>Peticiones por segundo</span><strong id="metric-rate">-</strong></div>
+            <div><span>Duracion real</span><strong id="metric-effective-duration">-</strong></div>
+            <div><span>No lanzadas</span><strong id="metric-dropped">-</strong></div>
+            <div><span>Porcentaje de error</span><strong id="metric-fail">-</strong></div>
+            <div><span>Tiempo respuesta p95</span><strong id="metric-p95">-</strong></div>
+            <div><span>Tiempo promedio</span><strong id="metric-avg">-</strong></div>
+            <div><span>Exitosas / cliente / servidor</span><strong id="metric-statuses">-</strong></div>
             <div><span>Run</span><strong id="run-id">-</strong></div>
           </div>
+          <p id="metric-reading" class="metric-reading">Sin prueba activa.</p>
         </article>
 
         <article class="panel log-panel">
