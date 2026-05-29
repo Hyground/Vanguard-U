@@ -10,7 +10,6 @@ import {
   KeyRound,
   LogIn,
   Mail,
-  ShieldAlert,
   User,
   UserPlus,
 } from 'lucide-react';
@@ -69,12 +68,12 @@ export function LoginPage() {
 
           <div className="space-y-7 relative z-10">
             <h2 className="text-5xl font-black tracking-tighter leading-none uppercase italic text-main">
-              {isRegister ? 'Inicia tu futuro academico' : 'Acceso institucional'}
+              {isRegister ? 'Registro de aspirante' : 'Inicio de sesion'}
             </h2>
             <p className="text-lg text-sec max-w-md leading-relaxed font-medium">
               {isRegister
                 ? 'Completa tu pre-inscripcion para iniciar el proceso academico en Vanguard-U.'
-                : 'Bienvenido al portal oficial. Autenticate para acceder a tus herramientas de gestion y monitoreo.'}
+                : 'Ingresa con tu usuario y contrasena para acceder al sistema.'}
             </p>
 
             <div className="flex flex-wrap gap-6 pt-4">
@@ -102,7 +101,7 @@ export function LoginPage() {
                 onClick={() => setIsRegister(false)}
                 className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all duration-200 ${!isRegister ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'text-sec hover:text-main'}`}
               >
-                Identificacion
+                Login
               </button>
               <button
                 type="button"
@@ -116,10 +115,10 @@ export function LoginPage() {
             <div className="space-y-6">
               <header>
                 <h3 className="text-2xl font-black text-main uppercase italic">
-                  {isRegister ? 'Crear perfil aspirante' : 'Verificacion de identidad'}
+                  {isRegister ? 'Crear perfil aspirante' : 'Iniciar sesion'}
                 </h3>
                 <p className="text-xs text-sec font-medium mt-1">
-                  {isRegister ? 'Completa tus datos para iniciar el proceso.' : 'Ingresa tus credenciales institucionales.'}
+                  {isRegister ? 'Completa tus datos para iniciar el proceso.' : 'Escribe tu usuario y contrasena.'}
                 </p>
               </header>
 
@@ -132,8 +131,9 @@ export function LoginPage() {
                         <input
                           type="text"
                           required
+                          autoComplete="given-name"
                           placeholder="Ej. Carlos"
-                          className="w-full bg-base/50 border border-border/50 rounded-lg py-3 px-4 text-sm font-medium outline-none focus:border-accent transition-all"
+                          className="login-input w-full bg-base/50 border border-border/50 rounded-lg py-3 px-4 text-sm font-medium outline-none focus:border-accent transition-all"
                           onChange={(event) => setRegData({ ...regData, firstName: event.target.value })}
                         />
                       </div>
@@ -142,8 +142,9 @@ export function LoginPage() {
                         <input
                           type="text"
                           required
+                          autoComplete="family-name"
                           placeholder="Ej. Mendez"
-                          className="w-full bg-base/50 border border-border/50 rounded-lg py-3 px-4 text-sm font-medium outline-none focus:border-accent transition-all"
+                          className="login-input w-full bg-base/50 border border-border/50 rounded-lg py-3 px-4 text-sm font-medium outline-none focus:border-accent transition-all"
                           onChange={(event) => setRegData({ ...regData, lastName: event.target.value })}
                         />
                       </div>
@@ -156,8 +157,9 @@ export function LoginPage() {
                         <input
                           type="text"
                           required
+                          autoComplete="off"
                           placeholder="2000000000101"
-                          className="w-full bg-base/50 border border-border/50 rounded-lg py-3 pl-12 pr-4 text-sm font-medium outline-none focus:border-accent transition-all"
+                          className="login-input w-full bg-base/50 border border-border/50 rounded-lg py-3 pl-12 pr-4 text-sm font-medium outline-none focus:border-accent transition-all"
                           onChange={(event) => setRegData({ ...regData, cui: event.target.value })}
                         />
                       </div>
@@ -170,8 +172,9 @@ export function LoginPage() {
                         <input
                           type="email"
                           required
+                          autoComplete="email"
                           placeholder="aspirante@vanguard.edu"
-                          className="w-full bg-base/50 border border-border/50 rounded-lg py-3 pl-12 pr-4 text-sm font-medium outline-none focus:border-accent transition-all"
+                          className="login-input w-full bg-base/50 border border-border/50 rounded-lg py-3 pl-12 pr-4 text-sm font-medium outline-none focus:border-accent transition-all"
                           onChange={(event) => setRegData({ ...regData, email: event.target.value })}
                         />
                       </div>
@@ -185,8 +188,9 @@ export function LoginPage() {
                       <input
                         type="text"
                         required
-                        placeholder="ID de usuario"
-                        className="w-full bg-base/50 border border-border/50 rounded-lg py-4 pl-12 pr-4 text-sm font-bold outline-none focus:border-accent transition-all"
+                        autoComplete="username"
+                        placeholder="Usuario"
+                        className="login-input w-full bg-base/50 border border-border/50 rounded-lg py-4 pl-12 pr-4 text-sm font-bold outline-none focus:border-accent transition-all"
                         value={username}
                         onChange={(event) => setUsername(event.target.value)}
                       />
@@ -201,8 +205,9 @@ export function LoginPage() {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete={isRegister ? 'new-password' : 'current-password'}
                       placeholder="********"
-                      className="w-full bg-base/50 border border-border/50 rounded-lg py-4 pl-12 pr-12 text-sm font-bold outline-none focus:border-accent transition-all"
+                      className="login-input w-full bg-base/50 border border-border/50 rounded-lg py-4 pl-12 pr-12 text-sm font-bold outline-none focus:border-accent transition-all"
                       value={isRegister ? regData.password : password}
                       onChange={(event) => (isRegister ? setRegData({ ...regData, password: event.target.value }) : setPassword(event.target.value))}
                     />
@@ -227,21 +232,12 @@ export function LoginPage() {
                   ) : (
                     <>
                       {isRegister ? <UserPlus size={18} /> : <LogIn size={18} />}
-                      {isRegister ? 'Iniciar pre-inscripcion' : 'Autorizar acceso'}
+                      {isRegister ? 'Crear registro' : 'Iniciar sesion'}
                       <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </button>
               </form>
-
-              {!isRegister && (
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-warning/5 border border-warning/20">
-                  <ShieldAlert size={18} className="text-warning shrink-0" />
-                  <p className="text-[10px] font-bold text-warning uppercase leading-tight tracking-wider">
-                    Solo personal registrado puede acceder al modulo administrativo.
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </section>
@@ -253,3 +249,4 @@ export function LoginPage() {
     </div>
   );
 }
+
