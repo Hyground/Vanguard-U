@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircle2,
   Contact2,
@@ -41,6 +41,8 @@ export function AdminUserManagement() {
   } = useData();
 
   const [activeTab, setActiveTab] = useState('users');
+  const [activeRequest, setActiveRequest] = useState(null);
+  const [showTableLoader, setShowTableLoader] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,21 +68,39 @@ export function AdminUserManagement() {
   const usersPagination = securityPagination.users || defaultPagination;
   const userPage = usersPagination.page;
   const peoplePage = activeTab === 'users' ? 0 : activePagination.page;
+  const lastRequestKey = useRef('');
+
+  const loadIdentitySection = async ({ userPage: nextUserPage = 0, peoplePage: nextPeoplePage = 0, section = activeTab, force = false } = {}) => {
+    const requestKey = `${section}:${nextUserPage}:${nextPeoplePage}`;
+    if (!force && lastRequestKey.current === requestKey) return;
+
+    lastRequestKey.current = requestKey;
+    setActiveRequest(section);
+    const loaderTimer = window.setTimeout(() => setShowTableLoader(true), 450);
+
+    try {
+      await refreshSecurityData({ userPage: nextUserPage, peoplePage: nextPeoplePage, section });
+    } finally {
+      window.clearTimeout(loaderTimer);
+      setShowTableLoader(false);
+      setActiveRequest(null);
+    }
+  };
 
   useEffect(() => {
-    refreshSecurityData({ userPage: 0, peoplePage: 0, section: activeTab });
-  }, [refreshSecurityData, activeTab]);
+    loadIdentitySection({ userPage: 0, peoplePage: 0, section: activeTab });
+  }, [activeTab]);
 
   const reloadCurrentPage = () => {
-    refreshSecurityData({ userPage, peoplePage, section: activeTab });
+    loadIdentitySection({ userPage, peoplePage, section: activeTab, force: true });
   };
 
   const goUserPage = (nextPage) => {
-    refreshSecurityData({ userPage: nextPage, peoplePage: 0, section: 'users' });
+    loadIdentitySection({ userPage: nextPage, peoplePage: 0, section: 'users', force: true });
   };
 
   const goPeoplePage = (nextPage) => {
-    refreshSecurityData({ userPage: 0, peoplePage: nextPage, section: activeTab });
+    loadIdentitySection({ userPage: 0, peoplePage: nextPage, section: activeTab, force: true });
   };
 
   const peopleRows = useMemo(() => (
@@ -99,8 +119,8 @@ export function AdminUserManagement() {
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const searchHint = activeTab === 'users'
-    ? 'Filtra por usuario, rol o estado'
-    : 'Filtra por nombre, correo, CUI o usuario vinculado';
+    ? 'Buscar en esta pagina por usuario, rol o estado'
+    : 'Buscar en esta pagina por nombre, correo, CUI o usuario';
 
   const filteredUsers = useMemo(() => (
     users.filter((user) => {
@@ -173,7 +193,7 @@ export function AdminUserManagement() {
 
   const getUserRelationLabel = (userId) => {
     const relation = peopleByUserId.get(Number(userId));
-    if (!relation) return 'Persona no cargada en esta vista';
+    if (!relation) return null;
     return `${relation._category} #${relation.id} - ${relation.firstName} ${relation.lastName}`;
   };
 
@@ -200,7 +220,7 @@ export function AdminUserManagement() {
 
       setIsModalOpen(false);
       addLog('ADMIN', 'Operacion de identidad exitosa', 'success');
-      reloadCurrentPage();
+      loadIdentitySection({ userPage, peoplePage, section: activeTab, force: true });
     } catch (err) {
       alert('No se pudo guardar: ' + err.message);
     }
@@ -247,14 +267,19 @@ export function AdminUserManagement() {
         <div className="flex flex-wrap gap-2 bg-card/60 premium-border rounded-xl p-1 w-fit">
           {tabs.map((tab) => (
             <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
+            key={tab.id}
+            type="button"
+              onClick={() => {
+                if (activeTab !== tab.id) setActiveTab(tab.id);
+              }}
               className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === tab.id ? 'bg-accent text-white shadow-md' : 'text-sec hover:text-main hover:bg-base/70'
               }`}
             >
-              {tab.label}
+              <span className="inline-flex items-center gap-2">
+                {tab.label}
+                {activeRequest === tab.id && !showTableLoader && <Loader2 size={12} className="animate-spin" />}
+              </span>
             </button>
           ))}
         </div>
@@ -285,7 +310,7 @@ export function AdminUserManagement() {
       </section>
 
       <section className="min-h-0 flex-1 glass-panel rounded-2xl overflow-hidden premium-border relative bg-card/60">
-        {isLoading && (
+        {showTableLoader && (
           <div className="absolute inset-0 z-30 bg-base/60 backdrop-blur-md flex items-center justify-center">
             <Loader2 size={42} className="text-accent animate-spin" />
           </div>
@@ -313,7 +338,7 @@ export function AdminUserManagement() {
             </tbody>
           </table>
 
-          {visibleRows.length === 0 && !isLoading && (
+          {visibleRows.length === 0 && !isLoading && !showTableLoader && (
             <div className="h-full min-h-[20rem] flex flex-col items-center justify-center text-center text-sec/50 gap-3">
               <ShieldCheck size={48} />
               <p className="text-sm font-black uppercase tracking-widest">Sin registros para mostrar</p>
@@ -325,7 +350,7 @@ export function AdminUserManagement() {
       <footer className="shrink-0 flex items-center justify-between gap-3">
         <button
           type="button"
-          disabled={(activeTab === 'users' ? userPage : peoplePage) === 0 || isLoading}
+          disabled={(activeTab === 'users' ? userPage : peoplePage) === 0 || Boolean(activeRequest)}
           onClick={() => (activeTab === 'users' ? goUserPage(userPage - 1) : goPeoplePage(peoplePage - 1))}
           className="px-4 py-2 rounded-lg bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent"
         >
@@ -333,7 +358,7 @@ export function AdminUserManagement() {
         </button>
         <button
           type="button"
-          disabled={(activeTab === 'users' ? userPage >= usersPagination.totalPages - 1 : peoplePage >= activePagination.totalPages - 1) || isLoading}
+          disabled={(activeTab === 'users' ? userPage >= usersPagination.totalPages - 1 : peoplePage >= activePagination.totalPages - 1) || Boolean(activeRequest)}
           onClick={() => (activeTab === 'users' ? goUserPage(userPage + 1) : goPeoplePage(peoplePage + 1))}
           className="px-4 py-2 rounded-lg bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent"
         >
