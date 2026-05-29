@@ -50,9 +50,8 @@ function AppContent() {
     if (role === 'ADMIN') {
       switch (currentView) {
         case 'infra': return <InfrastructureMap />;
-        case 'users': return <AdminUserManagement />;
+        case 'identity': return <AdminUserManagement />;
         case 'academic': return <AdminResourcePage group="Academico" />;
-        case 'people': return <AdminUserManagement />;
         case 'operations': return <AdminResourcePage group="Operaciones" />;
         case 'finance': return <AdminResourcePage group="Finanzas" />;
         case 'audit': return <AuditPanel />;

@@ -59,6 +59,9 @@ export function AdminUserManagement() {
     userId: '',
   });
 
+  const pageDescription = 'Cuentas de acceso y expedientes institucionales vinculados';
+  const newButtonLabel = activeTab === 'users' ? 'Nuevo usuario' : 'Nueva persona';
+
   const activePagination = securityPagination[activeTab] || defaultPagination;
   const usersPagination = securityPagination.users || defaultPagination;
   const userPage = usersPagination.page;
@@ -212,10 +215,10 @@ export function AdminUserManagement() {
           </div>
           <div className="min-w-0">
             <h2 className="text-3xl font-black tracking-tighter text-main uppercase italic leading-none">
-              Seguridad <span className="text-accent">IAM</span>
+              Identidad <span className="text-accent">y Accesos</span>
             </h2>
             <p className="text-sec text-[11px] font-bold uppercase tracking-[0.2em] mt-1">
-              Usuarios, roles y personas vinculadas
+              {pageDescription}
             </p>
           </div>
         </div>
@@ -235,7 +238,7 @@ export function AdminUserManagement() {
             className="h-10 bg-accent hover:bg-accent/90 text-white px-4 rounded-lg font-black uppercase tracking-widest text-[10px] shadow-lg shadow-accent/20 transition-all active:scale-95 flex items-center gap-2"
           >
             <UserPlus size={15} />
-            Nuevo registro
+            {newButtonLabel}
           </button>
         </div>
       </header>

@@ -29,9 +29,8 @@ import { GlobalSearchModal } from '../components/GlobalSearchModal';
 const adminNavItems = [
   { id: 'overview', label: 'Resumen', icon: LayoutDashboard },
   { id: 'infra', label: 'Infraestructura', icon: Network },
-  { id: 'users', label: 'Seguridad', icon: UserCog },
+  { id: 'identity', label: 'Identidad', icon: UserCog },
   { id: 'academic', label: 'Academico', icon: BookOpen },
-  { id: 'people', label: 'Personas', icon: Users },
   { id: 'operations', label: 'Operaciones', icon: GraduationCap },
   { id: 'finance', label: 'Finanzas', icon: CreditCard },
   { id: 'audit', label: 'Auditoria', icon: Command },
