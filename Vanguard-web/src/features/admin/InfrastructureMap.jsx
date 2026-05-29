@@ -5,6 +5,11 @@ import { useAuth } from '../../auth/AuthContext';
 
 const BASE = 'https://api.wissegt.com/api';
 
+const taskChipBase = 'infra-task-chip px-5 py-3 rounded-xl border-2 flex items-center gap-3 transition-all font-black';
+const taskChipSystem = 'infra-task-chip--system ring-2 ring-accent/10';
+const taskChipService = 'infra-task-chip--service';
+const taskChipLabel = 'text-sm xl:text-base font-mono tracking-tight leading-tight';
+
 function formatNodeName(hostname = '') {
   const name = hostname.toLowerCase();
   if (name.includes('vps') && !name.includes('4') && !name.includes('5')) return 'NODO 1 (MANAGER)';
@@ -131,13 +136,20 @@ export function InfrastructureMap() {
       </header>
 
       <section className="relative">
-        <div className="flex items-center gap-3 mb-10 px-2 text-sec border-l-8 border-accent pl-6 uppercase font-black text-2xl tracking-tighter">
-          Capa de Computo (Swarm Cluster)
+        <div className="flex items-center gap-3 mb-10 px-2 text-accent border-l-8 border-accent pl-6 uppercase font-black text-2xl tracking-tighter">
+          Capa de Entrada (Frontend / API)
         </div>
         {swarmError && <StatusError message={swarmError} />}
 
         <div className="flex flex-col items-center gap-16">
+          <EntryNode />
+
+          <div className="w-full flex items-center gap-3 px-2 text-sec border-l-8 border-accent/70 pl-6 uppercase font-black text-2xl tracking-tighter">
+            Capa de Computo (Swarm Cluster)
+          </div>
+
           <div className="relative z-20 w-full max-w-md">
+            <div className="absolute -top-16 left-1/2 -translate-x-1/2 h-16 w-1 bg-accent/30" />
             <NodeCard
               node={managerNode}
               onAction={handleNodeAction}
@@ -145,7 +157,6 @@ export function InfrastructureMap() {
               isLoading={isActionLoading}
               isMaster
             />
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 h-12 w-1 bg-accent/30" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full relative z-20">
@@ -157,7 +168,7 @@ export function InfrastructureMap() {
             ))}
           </div>
 
-          <svg className="absolute top-48 left-0 w-full h-[350px] pointer-events-none opacity-20 hidden md:block" style={{ zIndex: 10 }} viewBox="0 0 1000 350" preserveAspectRatio="none">
+          <svg className="absolute top-[26rem] left-0 w-full h-[350px] pointer-events-none opacity-20 hidden md:block" style={{ zIndex: 10 }} viewBox="0 0 1000 350" preserveAspectRatio="none">
             <line x1="500" y1="0" x2="166" y2="350" stroke="var(--accent)" strokeWidth="4" strokeDasharray="10,5" />
             <line x1="500" y1="0" x2="500" y2="350" stroke="var(--accent)" strokeWidth="4" strokeDasharray="10,5" />
             <line x1="500" y1="0" x2="833" y2="350" stroke="var(--accent)" strokeWidth="4" strokeDasharray="10,5" />
@@ -236,6 +247,27 @@ export function InfrastructureMap() {
   );
 }
 
+function EntryNode() {
+  return (
+    <div className="relative z-20 w-full max-w-lg">
+      <div className="cyber-panel border-4 border-accent/50 bg-accent/10 p-8 shadow-2xl">
+        <p className="text-[11px] font-black uppercase mb-2 tracking-[0.3em] text-accent">
+          NODO DE ENTRADA
+        </p>
+        <h4 className="text-3xl font-black tracking-tighter uppercase italic text-main">
+          API / FRONT
+        </h4>
+        <div className="mt-6">
+          <div className="infra-task-chip infra-task-chip--service px-5 py-3 rounded-xl border-2 flex items-center gap-3 font-black">
+            <ExternalLink size={16} />
+            <span className="text-sm xl:text-base font-mono tracking-tight leading-tight">VANGUARD.WISSEGT.COM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NodeCard({ node, onAction, onRebalance, isLoading, isMaster }) {
   if (!node) {
     return <div className="cyber-panel border-4 border-dashed border-border/20 p-16 text-center text-sec/20 italic font-black uppercase tracking-[0.4em] text-xl animate-pulse">Sin datos</div>;
@@ -270,15 +302,15 @@ function NodeCard({ node, onAction, onRebalance, isLoading, isMaster }) {
         )}
         <div className="flex items-center gap-3 mt-6 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-border/20">
           <div className={`w-3 h-3 rounded-full ${isReady ? 'bg-success animate-pulse' : 'bg-warning'} shadow-[0_0_15px_currentColor]`} />
-          <span className="text-xs font-black uppercase tracking-widest text-main">{node.status}</span>
+          <span className="text-xs font-black uppercase tracking-widest text-white">{node.status}</span>
         </div>
       </div>
       <div className="p-8 space-y-5 bg-black/30 min-h-[180px]">
         <div className="flex flex-wrap gap-3">
           {tasks.map((task) => (
-            <div key={task.id} className={`px-4 py-2.5 rounded-xl border-2 flex items-center gap-3 transition-all ${task.type === 'system' ? 'bg-accent/20 border-accent text-white font-black ring-2 ring-accent/10 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'bg-black/60 border-border/40 text-accent font-black'}`}>
-              <Zap size={14} fill="currentColor" className={task.type === 'system' ? 'animate-bounce text-white' : ''} />
-              <span className="text-[12px] font-mono tracking-tighter">{task.name.toUpperCase()}</span>
+            <div key={task.id} className={`${taskChipBase} ${task.type === 'system' ? taskChipSystem : taskChipService}`}>
+              <Zap size={16} fill="currentColor" className={`shrink-0 ${task.type === 'system' ? 'animate-bounce' : ''}`} />
+              <span className={taskChipLabel}>{task.name.toUpperCase()}</span>
             </div>
           ))}
           {tasks.length === 0 && (

@@ -196,9 +196,9 @@ export function AdminResourcePage({ group }) {
         ))}
       </div>
 
-      <div className="glass-panel rounded-3xl overflow-hidden premium-border shadow-[0_20px_60px_rgba(0,0,0,0.3)] relative bg-black/40">
+      <div className="glass-panel rounded-2xl overflow-hidden premium-border shadow-[0_20px_60px_rgba(15,23,42,0.12)] relative bg-card/70">
         {isLoading && <div className="absolute inset-0 z-20 bg-base/60 backdrop-blur-sm flex items-center justify-center"><Loader2 size={48} className="text-accent animate-spin" /></div>}
-        <div className="bg-black/10">
+        <div className="bg-card/30">
           <DataTable columns={activeResource.columns} rows={rows} actions={resourceActions} references={references} />
         </div>
       </div>

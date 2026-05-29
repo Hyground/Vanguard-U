@@ -332,8 +332,16 @@ export function AdminUserManagement() {
               <div className="flex items-center gap-4 text-accent font-black uppercase tracking-[0.6em] text-xs">
                  <Zap size={24} className="animate-pulse" /> Sentinel Transaction Protocol
               </div>
-              <h4 className="text-7xl font-black text-main uppercase italic tracking-tighter leading-none">
-                {editingItem ? 'Indexar <br/> Cambios' : 'Generar <br/> Credencial'}
+              <h4 className="text-5xl sm:text-6xl font-black text-main uppercase italic tracking-tighter leading-none">
+                {editingItem ? (
+                  <>
+                    Indexar <br /> Cambios
+                  </>
+                ) : (
+                  <>
+                    Generar <br /> Credencial
+                  </>
+                )}
               </h4>
             </header>
 

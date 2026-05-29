@@ -40,11 +40,11 @@ export function DataTable({ columns, rows, actions, references }) {
         <thead>
           <tr className="text-sec text-[10px] uppercase tracking-[0.2em] font-black">
             {columns.map((column) => (
-              <th key={column.key} className="px-6 py-5 border-b border-border/30 bg-black/40 sticky top-0 z-10">
+              <th key={column.key} className="px-6 py-5 border-b border-border/30 bg-card/95 sticky top-0 z-10">
                 {column.label}
               </th>
             ))}
-            {actions && <th className="px-6 py-5 border-b border-border/30 bg-black/40 sticky top-0 z-10 text-right">Comandos</th>}
+            {actions && <th className="px-6 py-5 border-b border-border/30 bg-card/95 sticky top-0 z-10 text-right">Comandos</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-border/20 bg-card/10">
