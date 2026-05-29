@@ -123,22 +123,22 @@ public class SecurityIdentityService {
             return Mono.just(page);
         }
 
-        List<Mono<UserAccess>> requests = userIds.stream()
-                .map(userId -> fetch(usersMsUrl + "/api/v1/users/" + userId, token)
-                        .map(user -> new UserAccess(
-                                userId,
+        String ids = String.join(",", userIds.stream().map(String::valueOf).toList());
+        return fetch(usersMsUrl + "/api/v1/users/batch?ids=" + ids, token)
+                .map(users -> {
+            Map<Integer, UserAccess> usersById = new HashMap<>();
+            if (users.isArray()) {
+                users.forEach(user -> {
+                    Integer id = user.path("id").isInt() ? user.path("id").asInt() : null;
+                    if (id != null) {
+                        usersById.put(id, new UserAccess(
+                                id,
                                 textValue(user, "username"),
                                 textValue(user, "role"),
                                 user.path("status").isBoolean() ? user.path("status").asBoolean() : null
-                        ))
-                        .onErrorReturn(new UserAccess(userId, null, null, null)))
-                .toList();
-
-        return Mono.zip(requests, results -> {
-            Map<Integer, UserAccess> usersById = new HashMap<>();
-            for (Object result : results) {
-                UserAccess access = (UserAccess) result;
-                usersById.put(access.userId(), access);
+                        ));
+                    }
+                });
             }
 
             content.forEach(item -> {

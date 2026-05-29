@@ -440,8 +440,11 @@ function PersonRow({ person, onEdit }) {
   const identifierDetail = person._category === 'students'
     ? `Codigo ${person.personalCode || '-'}`
     : person.email || 'Documento de identidad';
+  const hasUserId = Boolean(person.userId);
   const hasUser = Boolean(person.username);
-  const accessLabel = !hasUser ? 'Sin usuario' : person.status === false ? 'Inhabilitado' : 'Con acceso';
+  const accessLabel = !hasUser
+    ? hasUserId ? 'Usuario no resuelto' : 'Sin usuario'
+    : person.status === false ? 'Inhabilitado' : 'Con acceso';
 
   return (
     <tr className="group border-b border-border/45 hover:bg-base/60 transition-colors">
@@ -450,8 +453,8 @@ function PersonRow({ person, onEdit }) {
         <p className="text-[11px] text-sec font-medium mt-1 truncate">{supportingText}</p>
       </td>
       <td className="px-5 py-3.5">
-        <p className="text-sm font-bold text-main leading-none max-w-[14rem] truncate">{person.username || 'Sin usuario'}</p>
-        <p className="text-[11px] text-sec font-medium mt-1">{person.role ? roleLabels[person.role] || person.role : 'Acceso no asignado'}</p>
+        <p className="text-sm font-bold text-main leading-none max-w-[14rem] truncate">{person.username || (hasUserId ? `ID ${person.userId}` : 'Sin usuario')}</p>
+        <p className="text-[11px] text-sec font-medium mt-1">{person.role ? roleLabels[person.role] || person.role : hasUserId ? 'Pendiente de resolver' : 'Acceso no asignado'}</p>
       </td>
       <td className="px-5 py-3.5">
         <span className="text-sm font-semibold text-main">{profileTitle}</span>

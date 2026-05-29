@@ -43,6 +43,12 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    public List<UserResponse> getUsersByIds(List<Integer> ids) {
+        return userRepository.findAllById(ids).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Transactional
     public UserResponse updateUser(Integer id, UpdateUserRequest request) {
         var user = userRepository.findById(id)
