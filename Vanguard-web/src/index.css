@@ -89,6 +89,12 @@
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
+  .form-input.has-leading-icon {
+    padding-left: 2.9rem;
+  }
+  .form-input.has-trailing-action {
+    padding-right: 3rem;
+  }
   .form-input:focus {
     border-color: var(--color-accent);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 12%, transparent);

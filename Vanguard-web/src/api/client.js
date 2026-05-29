@@ -19,10 +19,17 @@ export async function apiRequest(endpoint, { token, headers, ...options } = {}) 
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(payload?.message || payload?.msg || `Error ${response.status}`);
+    throw new Error(payload?.message || payload?.msg || payload?.error || formatFieldErrors(payload) || `Error ${response.status}`);
   }
 
   return payload;
+}
+
+function formatFieldErrors(payload) {
+  if (!payload || Array.isArray(payload) || typeof payload !== 'object') return null;
+  const entries = Object.entries(payload);
+  if (entries.length === 0) return null;
+  return entries.map(([field, message]) => `${field}: ${message}`).join(', ');
 }
 
 async function fetchWithRetry(url, options) {

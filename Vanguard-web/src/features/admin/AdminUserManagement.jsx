@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  CheckCircle2,
   Contact2,
   Edit3,
   KeyRound,
-  Link as LinkIcon,
+  Eye,
+  EyeOff,
   Loader2,
   Mail,
   RefreshCw,
@@ -71,6 +71,7 @@ export function AdminUserManagement() {
   const [activeTab, setActiveTab] = useState('users');
   const [activeRequest, setActiveRequest] = useState(null);
   const [showTableLoader, setShowTableLoader] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -135,16 +136,6 @@ export function AdminUserManagement() {
     activeTab === 'users' ? [] : (people[activeTab] || []).map((person) => ({ ...person, _category: activeTab }))
   ), [people, activeTab]);
 
-  const peopleByUserId = useMemo(() => {
-    const index = new Map();
-    peopleRows.forEach((person) => {
-      if (person.userId !== null && person.userId !== undefined) {
-        index.set(Number(person.userId), person);
-      }
-    });
-    return index;
-  }, [peopleRows]);
-
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const searchHint = activeTab === 'users'
     ? 'Buscar en esta pagina por usuario, rol o estado'
@@ -152,21 +143,23 @@ export function AdminUserManagement() {
 
   const filteredUsers = useMemo(() => (
     users.filter((user) => {
-      const relation = peopleByUserId.get(Number(user.id));
       const statusText = user.status ? 'autorizado activo' : 'inhabilitado inactivo';
-      const text = `${user.username} ${user.role} ${statusText} ${relation?.firstName || ''} ${relation?.lastName || ''}`.toLowerCase();
+      const text = `${user.username} ${user.role} ${statusText}`.toLowerCase();
       return text.includes(normalizedSearch);
     })
-  ), [users, peopleByUserId, normalizedSearch]);
+  ), [users, normalizedSearch]);
 
   const filteredPeople = useMemo(() => (
     peopleRows.filter((person) => {
-      const text = `${person.firstName} ${person.lastName} ${person.email || ''} ${person.cui || ''} ${person.userId || ''} ${person._category || ''}`.toLowerCase();
+      const text = `${person.firstName} ${person.lastName} ${person.email || ''} ${person.cui || ''} ${person.personalCode || ''} ${person.username || ''} ${person.role || ''} ${person._category || ''}`.toLowerCase();
       return text.includes(normalizedSearch);
     })
   ), [peopleRows, normalizedSearch]);
 
   const visibleRows = activeTab === 'users' ? filteredUsers : filteredPeople;
+  const tableHeaders = activeTab === 'users'
+    ? ['Usuario', 'Rol', 'Estado', 'Acciones']
+    : ['Persona', 'Usuario', 'Perfil', 'Identificacion', 'Estado', 'Acciones'];
 
   const handleOpenModal = (item = null, type = 'user') => {
     if (item) {
@@ -197,6 +190,7 @@ export function AdminUserManagement() {
         userId: '',
       });
     }
+    setShowPassword(false);
     setIsModalOpen(true);
   };
 
@@ -219,14 +213,9 @@ export function AdminUserManagement() {
     return base;
   };
 
-  const getUserRelationLabel = (userId) => {
-    const relation = peopleByUserId.get(Number(userId));
-    if (!relation) return null;
-    return `${relation._category} #${relation.id} - ${relation.firstName} ${relation.lastName}`;
-  };
-
   const handleSave = async (event) => {
     event.preventDefault();
+    let saveStage = editingItem ? 'update' : 'user';
     try {
       if (editingItem) {
         if (editingItem._type === 'user') {
@@ -235,6 +224,7 @@ export function AdminUserManagement() {
           await updatePerson(editingItem._category, editingItem.id, buildPersonPayload(editingItem._category, formData.userId));
         }
       } else {
+        saveStage = 'user';
         const userRes = await createUser({
           username: formData.username,
           role: formData.role,
@@ -243,14 +233,16 @@ export function AdminUserManagement() {
         const userId = userRes.idUser || userRes.id || userRes.data?.idUser;
 
         if (!userId) throw new Error('Usuario creado sin idUser en la respuesta');
+        saveStage = 'profile';
         await addPerson(formData.personType, buildPersonPayload(formData.personType, userId));
       }
 
       setIsModalOpen(false);
       addLog('ADMIN', 'Operacion de identidad exitosa', 'success');
       loadIdentitySection({ userPage, peoplePage, section: activeTab, force: true });
+      alert(editingItem ? 'Cambios guardados correctamente.' : `${capitalize(singularLabels[formData.personType] || 'registro')} creado correctamente.`);
     } catch (err) {
-      alert('No se pudo guardar: ' + err.message);
+      alert(formatIdentityError(err, saveStage));
     }
   };
 
@@ -345,20 +337,18 @@ export function AdminUserManagement() {
         )}
 
         <div className="h-full overflow-auto">
-          <table className="w-full min-w-[54rem] text-left border-separate border-spacing-0">
-            <thead className="sticky top-0 z-30 bg-base shadow-[0_8px_24px_rgba(15,23,42,0.12)]">
-              <tr className="bg-base border-b border-border">
-                <TableHead>Registro</TableHead>
-                <TableHead>Usuario</TableHead>
-                <TableHead>Rol</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead align="right">Acciones</TableHead>
+          <table className="w-full min-w-[54rem] text-left border-collapse">
+            <thead className="sticky top-0 z-30 bg-card shadow-[0_8px_18px_rgba(15,23,42,0.08)]">
+              <tr className="border-b border-border">
+                {tableHeaders.map((header) => (
+                  <TableHead key={header} align={header === 'Acciones' ? 'right' : 'left'}>{header}</TableHead>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/20">
+            <tbody>
               {activeTab === 'users'
                 ? visibleRows.map((user) => (
-                    <UserRow key={user.id} user={user} relation={getUserRelationLabel(user.id)} onEdit={() => handleOpenModal(user, 'user')} />
+                    <UserRow key={user.id} user={user} onEdit={() => handleOpenModal(user, 'user')} />
                   ))
                 : visibleRows.map((person) => (
                     <PersonRow key={`${person._category}-${person.id}`} person={person} onEdit={() => handleOpenModal(person, 'people')} />
@@ -400,6 +390,8 @@ export function AdminUserManagement() {
           editingItem={editingItem}
           formData={formData}
           setFormData={setFormData}
+          showPassword={showPassword}
+          setShowPassword={setShowPassword}
           onClose={() => setIsModalOpen(false)}
           onSave={handleSave}
         />
@@ -410,39 +402,26 @@ export function AdminUserManagement() {
 
 function TableHead({ children, align = 'left' }) {
   return (
-    <th className={`px-5 py-3 border-b border-border bg-base text-[10px] font-black text-sec uppercase tracking-[0.18em] ${align === 'right' ? 'text-right' : ''}`}>
+    <th className={`px-5 py-3 bg-card text-[10px] font-black text-sec uppercase tracking-[0.16em] ${align === 'right' ? 'text-right' : ''}`}>
       {children}
     </th>
   );
 }
 
-function UserRow({ user, relation, onEdit }) {
+function UserRow({ user, onEdit }) {
   return (
-    <tr className="group hover:bg-accent/[0.04] transition-colors">
-      <td className="px-5 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-base premium-border flex items-center justify-center font-black text-sm text-main">
-            {user.username?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <div>
-            <p className="text-sm font-black text-main uppercase leading-none">Cuenta institucional</p>
-            <p className="text-[10px] text-sec font-bold mt-1 flex items-center gap-1.5">
-              <LinkIcon size={11} className="text-accent" /> {relation}
-            </p>
-          </div>
-        </div>
+    <tr className="group border-b border-border/45 hover:bg-base/60 transition-colors">
+      <td className="px-5 py-3.5">
+        <p className="text-sm font-bold text-main leading-none max-w-[18rem] truncate">{user.username}</p>
+        <p className="text-[11px] text-sec font-medium mt-1">Cuenta de acceso</p>
       </td>
-      <td className="px-5 py-4">
-        <p className="text-sm font-black text-main uppercase leading-none">{user.username}</p>
-        <p className="text-[10px] text-sec font-bold mt-1">Usuario de acceso</p>
-      </td>
-      <td className="px-5 py-4">
+      <td className="px-5 py-3.5">
         <RoleBadge role={user.role} />
       </td>
-      <td className="px-5 py-4">
+      <td className="px-5 py-3.5">
         <StatusBadge active={user.status} />
       </td>
-      <td className="px-5 py-4 text-right">
+      <td className="px-5 py-3.5 text-right">
         <button type="button" onClick={onEdit} className="p-2 rounded-lg bg-card border border-border/80 text-sec hover:text-accent hover:border-accent/50 transition-all">
           <Edit3 size={16} />
         </button>
@@ -452,34 +431,39 @@ function UserRow({ user, relation, onEdit }) {
 }
 
 function PersonRow({ person, onEdit }) {
+  const profileLabel = singularLabels[person._category] || 'perfil';
+  const profileTitle = capitalize(profileLabel);
+  const supportingText = person._category === 'students'
+    ? person.personalCode || person.cui
+    : person.email || person.cui;
+  const identifierMain = person.cui || 'Sin CUI';
+  const identifierDetail = person._category === 'students'
+    ? `Codigo ${person.personalCode || '-'}`
+    : person.email || 'Documento de identidad';
+  const hasUser = Boolean(person.username);
+  const accessLabel = !hasUser ? 'Sin usuario' : person.status === false ? 'Inhabilitado' : 'Con acceso';
+
   return (
-    <tr className="group hover:bg-success/[0.04] transition-colors">
-      <td className="px-5 py-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-base premium-border flex items-center justify-center font-black text-sm text-main">
-            {(person.firstName?.[0] || 'P').toUpperCase()}
-          </div>
-          <div>
-            <p className="text-sm font-black text-main uppercase leading-none">{person.firstName} {person.lastName}</p>
-            <p className="text-[10px] text-sec font-bold mt-1">{person.email || person.cui}</p>
-          </div>
-        </div>
+    <tr className="group border-b border-border/45 hover:bg-base/60 transition-colors">
+      <td className="px-5 py-3.5">
+        <p className="text-sm font-bold text-main leading-none max-w-[18rem] truncate">{person.firstName} {person.lastName}</p>
+        <p className="text-[11px] text-sec font-medium mt-1 truncate">{supportingText}</p>
       </td>
-      <td className="px-5 py-4">
-        <p className="text-sm font-black text-main uppercase leading-none">User {person.userId || '-'}</p>
-        <p className="text-[10px] text-sec font-bold mt-1">Cuenta vinculada</p>
+      <td className="px-5 py-3.5">
+        <p className="text-sm font-bold text-main leading-none max-w-[14rem] truncate">{person.username || 'Sin usuario'}</p>
+        <p className="text-[11px] text-sec font-medium mt-1">{person.role ? roleLabels[person.role] || person.role : 'Acceso no asignado'}</p>
       </td>
-      <td className="px-5 py-4">
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/10 text-success border border-success/20 text-[10px] font-black uppercase tracking-widest">
-          {person._category}
-        </span>
+      <td className="px-5 py-3.5">
+        <span className="text-sm font-semibold text-main">{profileTitle}</span>
       </td>
-      <td className="px-5 py-4">
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-success/10 text-success border border-success/20">
-          <CheckCircle2 size={17} />
-        </div>
+      <td className="px-5 py-3.5">
+        <p className="text-sm font-bold text-main leading-none">{identifierMain}</p>
+        <p className="text-[11px] text-sec font-medium mt-1">{identifierDetail}</p>
       </td>
-      <td className="px-5 py-4 text-right">
+      <td className="px-5 py-3.5">
+        <span className={`text-sm font-semibold ${hasUser && person.status !== false ? 'text-success' : 'text-sec'}`}>{accessLabel}</span>
+      </td>
+      <td className="px-5 py-3.5 text-right">
         <button type="button" onClick={onEdit} className="p-2 rounded-lg bg-card border border-border/80 text-sec hover:text-success hover:border-success/50 transition-all">
           <Edit3 size={16} />
         </button>
@@ -489,29 +473,58 @@ function PersonRow({ person, onEdit }) {
 }
 
 function RoleBadge({ role }) {
-  const classes = role === 'ADMIN'
-    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
-    : role === 'TEACHER'
-      ? 'bg-success/10 text-success border-success/20'
-      : 'bg-accent/10 text-accent border-accent/20';
-
   return (
-    <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${classes}`}>
-      {role}
+    <span className="text-sm font-semibold text-main">
+      {roleLabels[role] || role}
     </span>
   );
 }
 
 function StatusBadge({ active }) {
   return (
-    <span className={`inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${active ? 'text-success' : 'text-sec'}`}>
-      <span className={`w-2 h-2 rounded-full ${active ? 'bg-success shadow-[0_0_10px_currentColor]' : 'bg-sec/30'}`} />
+    <span className={`text-sm font-semibold ${active ? 'text-success' : 'text-sec'}`}>
       {active ? 'Autorizado' : 'Inhabilitado'}
     </span>
   );
 }
 
-function EditModal({ activeTab, editingItem, formData, setFormData, onClose, onSave }) {
+function capitalize(value) {
+  const text = String(value || '');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function formatIdentityError(error, saveStage) {
+  const message = String(error?.message || '').toLowerCase();
+
+  if (message.includes('users_username_key') || message.includes('duplicate key') && message.includes('username')) {
+    return 'Ese usuario ya existe. Usa otro nombre de usuario.';
+  }
+  if (message.includes('role not found')) {
+    return 'No se encontro el rol seleccionado. Actualiza la pagina e intenta de nuevo.';
+  }
+  if (message.includes('username')) {
+    return 'El usuario es obligatorio o no tiene un formato valido.';
+  }
+  if (message.includes('password')) {
+    return 'La clave temporal es obligatoria.';
+  }
+  if (message.includes('cui') || message.includes('uk_tutor_cui') || message.includes('uk_students_cui')) {
+    return saveStage === 'profile'
+      ? 'La cuenta fue creada, pero el CUI ya existe en otro perfil. Revisa el perfil antes de intentar de nuevo.'
+      : 'Ese CUI ya existe en otro registro.';
+  }
+  if (message.includes('personal_code') || message.includes('personalcode')) {
+    return saveStage === 'profile'
+      ? 'La cuenta fue creada, pero el codigo personal ya existe. Revisa el perfil antes de intentar de nuevo.'
+      : 'Ese codigo personal ya existe.';
+  }
+  if (saveStage === 'profile') {
+    return 'La cuenta fue creada, pero no se pudo crear el perfil vinculado. Revisa CUI, codigo personal y datos requeridos.';
+  }
+  return 'No se pudo guardar el registro. Revisa los datos e intenta de nuevo.';
+}
+
+function EditModal({ activeTab, editingItem, formData, setFormData, showPassword, setShowPassword, onClose, onSave }) {
   const showUserFields = !editingItem || editingItem._type === 'user';
   const showPersonFields = !editingItem || editingItem._type === 'people';
   const isFixedProfileCreation = !editingItem && activeTab !== 'users';
@@ -570,8 +583,28 @@ function EditModal({ activeTab, editingItem, formData, setFormData, onClose, onS
                   </Field>
                 )}
                 {!editingItem && (
-                  <Field label="Clave temporal" icon={KeyRound}>
-                    <input required type="password" className="form-input" value={formData.password} onChange={(event) => setFormData({ ...formData, password: event.target.value })} />
+                  <Field
+                    label="Clave temporal"
+                    icon={KeyRound}
+                    action={(
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-sec hover:text-accent transition-colors"
+                        aria-label={showPassword ? 'Ocultar clave temporal' : 'Mostrar clave temporal'}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    )}
+                  >
+                    <input
+                      required
+                      type={showPassword ? 'text' : 'password'}
+                      className="form-input has-trailing-action"
+                      value={formData.password}
+                      onChange={(event) => setFormData({ ...formData, password: event.target.value })}
+                      autoComplete="new-password"
+                    />
                   </Field>
                 )}
                 {editingItem?._type === 'user' && (
@@ -643,15 +676,16 @@ function SectionTitle({ icon: Icon, title }) {
   );
 }
 
-function Field({ label, icon: Icon, children }) {
+function Field({ label, icon: Icon, action, children }) {
   return (
     <label className="space-y-2 block">
       <span className="text-[10px] font-black text-sec uppercase tracking-widest">{label}</span>
       <div className="relative">
-        {Icon && <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-sec" />}
+        {Icon && <Icon size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sec" />}
         {React.cloneElement(children, {
-          className: `${children.props.className || ''} ${Icon ? 'pl-9' : ''}`,
+          className: `${children.props.className || ''} ${Icon ? 'has-leading-icon' : ''}`,
         })}
+        {action}
       </div>
     </label>
   );

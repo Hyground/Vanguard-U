@@ -13,6 +13,9 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -42,20 +45,24 @@ public class SecurityIdentityService {
 
     public Mono<Map<String, JsonNode>> getIdentityPage(String token, int userPage, int peoplePage, int size, String section) {
         String normalizedSection = String.valueOf(section).toLowerCase(Locale.ROOT);
+        int normalizedSize = Math.min(Math.max(size, 1), 50);
         Mono<JsonNode> users = shouldFetch(normalizedSection, "users")
-                ? fetch(usersMsUrl + pagePath("/api/v1/users", userPage, size), token)
+                ? fetch(usersMsUrl + pagePath("/api/v1/users", userPage, normalizedSize), token)
                 : Mono.just(emptyPage(userPage));
         Mono<JsonNode> roles = shouldFetch(normalizedSection, "users")
                 ? fetch(usersMsUrl + pagePath("/api/v1/roles", 0, 100), token)
                 : Mono.just(objectMapper.createArrayNode());
         Mono<JsonNode> students = shouldFetch(normalizedSection, "students")
-                ? fetch(studentMsUrl + pagePath("/api/v1/students", peoplePage, size), token)
+                ? fetch(studentMsUrl + pagePath("/api/v1/students", peoplePage, normalizedSize), token)
+                .flatMap(page -> enrichPeoplePageWithUsers(page, token))
                 : Mono.just(emptyPage(peoplePage));
         Mono<JsonNode> teachers = shouldFetch(normalizedSection, "teachers")
-                ? fetch(academicMsUrl + pagePath("/api/v1/teachers", peoplePage, size), token)
+                ? fetch(academicMsUrl + pagePath("/api/v1/teachers", peoplePage, normalizedSize), token)
+                .flatMap(page -> enrichPeoplePageWithUsers(page, token))
                 : Mono.just(emptyPage(peoplePage));
         Mono<JsonNode> tutors = shouldFetch(normalizedSection, "tutors")
-                ? fetch(studentMsUrl + pagePath("/api/v1/tutors", peoplePage, size), token)
+                ? fetch(studentMsUrl + pagePath("/api/v1/tutors", peoplePage, normalizedSize), token)
+                .flatMap(page -> enrichPeoplePageWithUsers(page, token))
                 : Mono.just(emptyPage(peoplePage));
 
         return Mono.zip(users, roles, students, teachers, tutors)
@@ -97,7 +104,79 @@ public class SecurityIdentityService {
                         new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Security identity downstream unavailable"));
     }
 
+    private Mono<JsonNode> enrichPeoplePageWithUsers(JsonNode page, String token) {
+        JsonNode content = page.path("content");
+        if (!content.isArray() || content.isEmpty()) {
+            return Mono.just(page);
+        }
+
+        List<Integer> userIds = new ArrayList<>();
+        content.forEach(item -> {
+            JsonNode userId = item.path("userId");
+            if (userId.isInt() && !userIds.contains(userId.asInt())) {
+                userIds.add(userId.asInt());
+            }
+        });
+
+        if (userIds.isEmpty()) {
+            addEmptyAccessFields(content);
+            return Mono.just(page);
+        }
+
+        List<Mono<UserAccess>> requests = userIds.stream()
+                .map(userId -> fetch(usersMsUrl + "/api/v1/users/" + userId, token)
+                        .map(user -> new UserAccess(
+                                userId,
+                                textValue(user, "username"),
+                                textValue(user, "role"),
+                                user.path("status").isBoolean() ? user.path("status").asBoolean() : null
+                        ))
+                        .onErrorReturn(new UserAccess(userId, null, null, null)))
+                .toList();
+
+        return Mono.zip(requests, results -> {
+            Map<Integer, UserAccess> usersById = new HashMap<>();
+            for (Object result : results) {
+                UserAccess access = (UserAccess) result;
+                usersById.put(access.userId(), access);
+            }
+
+            content.forEach(item -> {
+                if (!(item instanceof ObjectNode objectNode)) return;
+                Integer userId = item.path("userId").isInt() ? item.path("userId").asInt() : null;
+                UserAccess access = userId == null ? null : usersById.get(userId);
+                objectNode.put("username", access == null ? null : access.username());
+                objectNode.put("role", access == null ? null : access.role());
+                if (access == null || access.status() == null) {
+                    objectNode.putNull("status");
+                } else {
+                    objectNode.put("status", access.status());
+                }
+            });
+
+            return page;
+        });
+    }
+
+    private void addEmptyAccessFields(JsonNode content) {
+        content.forEach(item -> {
+            if (item instanceof ObjectNode objectNode) {
+                objectNode.putNull("username");
+                objectNode.putNull("role");
+                objectNode.putNull("status");
+            }
+        });
+    }
+
+    private String textValue(JsonNode node, String field) {
+        JsonNode value = node.path(field);
+        return value.isTextual() ? value.asText() : null;
+    }
+
     private String pagePath(String endpoint, int page, int size) {
         return "%s?page=%d&size=%d&sort=id,desc".formatted(endpoint, Math.max(page, 0), Math.max(size, 1));
+    }
+
+    private record UserAccess(Integer userId, String username, String role, Boolean status) {
     }
 }
