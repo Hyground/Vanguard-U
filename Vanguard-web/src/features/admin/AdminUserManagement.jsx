@@ -25,6 +25,34 @@ const tabs = [
 ];
 
 const defaultPagination = { page: 0, totalPages: 1, totalElements: 0 };
+const createLabels = {
+  users: 'Nuevo usuario',
+  students: 'Nuevo estudiante',
+  teachers: 'Nuevo docente',
+  tutors: 'Nuevo tutor',
+};
+const singularLabels = {
+  users: 'usuario',
+  students: 'estudiante',
+  teachers: 'docente',
+  tutors: 'tutor',
+};
+const roleByTab = {
+  students: 'STUDENT',
+  teachers: 'TEACHER',
+  tutors: 'TUTOR',
+};
+const personTypeByRole = {
+  STUDENT: 'students',
+  TEACHER: 'teachers',
+  TUTOR: 'tutors',
+};
+const roleLabels = {
+  STUDENT: 'Estudiante',
+  TEACHER: 'Docente',
+  TUTOR: 'Tutor',
+  ADMIN: 'Administrador',
+};
 
 export function AdminUserManagement() {
   const {
@@ -61,8 +89,8 @@ export function AdminUserManagement() {
     userId: '',
   });
 
-  const pageDescription = 'Cuentas de acceso y expedientes institucionales vinculados';
-  const newButtonLabel = activeTab === 'users' ? 'Nuevo usuario' : 'Nueva persona';
+  const pageDescription = 'Usuarios, roles y perfiles vinculados al sistema';
+  const newButtonLabel = createLabels[activeTab] || 'Nuevo registro';
 
   const activePagination = securityPagination[activeTab] || defaultPagination;
   const usersPagination = securityPagination.users || defaultPagination;
@@ -156,7 +184,7 @@ export function AdminUserManagement() {
       setEditingItem(null);
       setFormData({
         username: '',
-        role: activeTab === 'teachers' ? 'TEACHER' : 'STUDENT',
+        role: roleByTab[activeTab] || 'STUDENT',
         password: '',
         firstName: '',
         lastName: '',
@@ -235,7 +263,7 @@ export function AdminUserManagement() {
           </div>
           <div className="min-w-0">
             <h2 className="text-3xl font-black tracking-tighter text-main uppercase italic leading-none">
-              Identidad <span className="text-accent">y Accesos</span>
+              Accesos <span className="text-accent">y Perfiles</span>
             </h2>
             <p className="text-sec text-[11px] font-bold uppercase tracking-[0.2em] mt-1">
               {pageDescription}
@@ -320,7 +348,7 @@ export function AdminUserManagement() {
           <table className="w-full min-w-[54rem] text-left border-separate border-spacing-0">
             <thead className="sticky top-0 z-30 bg-base shadow-[0_8px_24px_rgba(15,23,42,0.12)]">
               <tr className="bg-base border-b border-border">
-                <TableHead>Identidad</TableHead>
+                <TableHead>Registro</TableHead>
                 <TableHead>Usuario</TableHead>
                 <TableHead>Rol</TableHead>
                 <TableHead>Estado</TableHead>
@@ -368,6 +396,7 @@ export function AdminUserManagement() {
 
       {isModalOpen && (
         <EditModal
+          activeTab={activeTab}
           editingItem={editingItem}
           formData={formData}
           setFormData={setFormData}
@@ -482,18 +511,25 @@ function StatusBadge({ active }) {
   );
 }
 
-function EditModal({ editingItem, formData, setFormData, onClose, onSave }) {
+function EditModal({ activeTab, editingItem, formData, setFormData, onClose, onSave }) {
   const showUserFields = !editingItem || editingItem._type === 'user';
   const showPersonFields = !editingItem || editingItem._type === 'people';
+  const isFixedProfileCreation = !editingItem && activeTab !== 'users';
+  const recordLabel = editingItem?._type === 'user'
+    ? 'usuario'
+    : singularLabels[formData.personType] || singularLabels[activeTab] || 'registro';
+  const currentPersonType = formData.personType || activeTab;
+  const needsEmail = currentPersonType === 'teachers';
+  const needsPersonalCode = currentPersonType === 'students';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
       <div className="glass-panel w-full max-w-3xl max-h-[90vh] rounded-2xl premium-border shadow-2xl overflow-hidden">
         <header className="h-16 px-6 border-b border-border/50 flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-accent">Gestion de identidad</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-accent">Accesos y perfiles</p>
             <h4 className="text-xl font-black text-main uppercase italic leading-none">
-              {editingItem ? 'Editar registro' : 'Nuevo registro'}
+              {editingItem ? `Editar ${recordLabel}` : `Nuevo ${recordLabel}`}
             </h4>
           </div>
           <button type="button" onClick={onClose} className="p-2 rounded-lg bg-base border border-border text-sec hover:text-main transition-all">
@@ -504,26 +540,35 @@ function EditModal({ editingItem, formData, setFormData, onClose, onSave }) {
         <form onSubmit={onSave} className="max-h-[calc(90vh-4rem)] overflow-y-auto p-6 space-y-6">
           {showUserFields && (
             <section className="space-y-4">
-              <SectionTitle icon={UserCog} title="Cuenta de acceso" />
+              <SectionTitle icon={UserCog} title={`Acceso del ${recordLabel}`} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field label="Usuario" icon={UserCog}>
                   <input required className="form-input" value={formData.username} onChange={(event) => setFormData({ ...formData, username: event.target.value })} />
                 </Field>
-                <Field label="Rol">
-                  <select
-                    className="form-input"
-                    value={formData.role}
-                    onChange={(event) => setFormData({
-                      ...formData,
-                      role: event.target.value,
-                      personType: event.target.value === 'TEACHER' ? 'teachers' : event.target.value === 'STUDENT' ? 'students' : formData.personType,
-                    })}
-                  >
-                    <option value="STUDENT">Estudiante</option>
-                    <option value="TEACHER">Docente</option>
-                    <option value="ADMIN">Administrador</option>
-                  </select>
-                </Field>
+                {isFixedProfileCreation ? (
+                  <Field label="Rol">
+                    <div className="form-input flex items-center text-sm font-black uppercase tracking-widest text-main">
+                      {roleLabels[formData.role] || formData.role}
+                    </div>
+                  </Field>
+                ) : (
+                  <Field label="Rol">
+                    <select
+                      className="form-input"
+                      value={formData.role}
+                      onChange={(event) => setFormData({
+                        ...formData,
+                        role: event.target.value,
+                        personType: personTypeByRole[event.target.value] || formData.personType,
+                      })}
+                    >
+                      <option value="STUDENT">Estudiante</option>
+                      <option value="TEACHER">Docente</option>
+                      <option value="TUTOR">Tutor</option>
+                      <option value="ADMIN">Administrador</option>
+                    </select>
+                  </Field>
+                )}
                 {!editingItem && (
                   <Field label="Clave temporal" icon={KeyRound}>
                     <input required type="password" className="form-input" value={formData.password} onChange={(event) => setFormData({ ...formData, password: event.target.value })} />
@@ -541,8 +586,8 @@ function EditModal({ editingItem, formData, setFormData, onClose, onSave }) {
 
           {showPersonFields && (
             <section className="space-y-4">
-              <SectionTitle icon={Contact2} title="Datos de persona" />
-              {!editingItem && (
+              <SectionTitle icon={Contact2} title={`Datos de ${recordLabel}`} />
+              {!editingItem && activeTab === 'users' && (
                 <Field label="Tipo de persona">
                   <select className="form-input" value={formData.personType} onChange={(event) => setFormData({ ...formData, personType: event.target.value })}>
                     <option value="students">Estudiante</option>
@@ -555,7 +600,7 @@ function EditModal({ editingItem, formData, setFormData, onClose, onSave }) {
                 <Field label="CUI / DPI">
                   <input required minLength={13} maxLength={13} className="form-input" value={formData.cui} onChange={(event) => setFormData({ ...formData, cui: event.target.value })} />
                 </Field>
-                {formData.personType === 'students' && (
+                {needsPersonalCode && (
                   <Field label="Codigo personal">
                     <input className="form-input" value={formData.personalCode} onChange={(event) => setFormData({ ...formData, personalCode: event.target.value })} />
                   </Field>
@@ -567,9 +612,11 @@ function EditModal({ editingItem, formData, setFormData, onClose, onSave }) {
                   <input required className="form-input" value={formData.lastName} onChange={(event) => setFormData({ ...formData, lastName: event.target.value })} />
                 </Field>
               </div>
-              <Field label="Correo electronico" icon={Mail}>
-                <input required type="email" className="form-input" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} />
-              </Field>
+              {needsEmail && (
+                <Field label="Correo electronico" icon={Mail}>
+                  <input type="email" className="form-input" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} />
+                </Field>
+              )}
             </section>
           )}
 

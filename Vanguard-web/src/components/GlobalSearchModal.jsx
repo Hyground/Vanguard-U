@@ -7,7 +7,7 @@ export function GlobalSearchModal({ isOpen, onClose, onNavigate }) {
   const suggestions = [
     { id: 'overview', label: 'Resumen del Sistema', category: 'Navegación' },
     { id: 'infra', label: 'Mapa de Infraestructura', category: 'Core' },
-    { id: 'identity', label: 'Identidad y Accesos', category: 'Administracion' },
+    { id: 'identity', label: 'Accesos y Perfiles', category: 'Administracion' },
     { id: 'courses', label: 'Mis Cursos Inscritos', category: 'Académico' },
     { id: 'calendar', label: 'Calendario Académico', category: 'Académico' },
   ];
