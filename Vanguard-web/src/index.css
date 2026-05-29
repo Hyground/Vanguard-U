@@ -77,6 +77,37 @@
     border-color: var(--color-accent);
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
   }
+  .form-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--color-base) 75%, transparent);
+    padding: 0.75rem 1rem;
+    color: var(--color-main);
+    font-size: 0.875rem;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .form-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+  .security-search-input {
+    background-color: var(--color-card);
+    border-color: var(--color-border);
+    color: var(--color-main) !important;
+    -webkit-text-fill-color: var(--color-main);
+  }
+  .security-search-input::placeholder {
+    color: var(--color-sec);
+    -webkit-text-fill-color: var(--color-sec);
+    opacity: 0.75;
+  }
+  .security-search-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

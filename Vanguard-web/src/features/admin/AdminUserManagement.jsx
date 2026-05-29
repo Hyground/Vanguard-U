@@ -1,8 +1,30 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { 
-  UserCog, Users, Plus, Edit3, Trash2, ShieldCheck, Mail, KeyRound, Contact2, Search, Filter, ChevronRight, X, CheckCircle2, UserPlus, Info, Loader2, Link as LinkIcon, Zap
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  CheckCircle2,
+  Contact2,
+  Edit3,
+  KeyRound,
+  Link as LinkIcon,
+  Loader2,
+  Mail,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  UserCog,
+  UserPlus,
+  Users,
+  X,
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+
+const tabs = [
+  { id: 'users', label: 'Usuarios' },
+  { id: 'students', label: 'Estudiantes' },
+  { id: 'teachers', label: 'Docentes' },
+  { id: 'tutors', label: 'Tutores' },
+];
+
+const defaultPagination = { page: 0, totalPages: 1, totalElements: 0 };
 
 export function AdminUserManagement() {
   const {
@@ -17,20 +39,30 @@ export function AdminUserManagement() {
     securityPagination,
     refreshSecurityData,
   } = useData();
-  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'students' | 'teachers' | 'tutors'
+
+  const [activeTab, setActiveTab] = useState('users');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const activePagination = securityPagination[activeTab] || { page: 0, totalPages: 1, totalElements: 0 };
-  const userPage = securityPagination.users.page;
-  const peoplePage = activeTab === 'users' ? 0 : activePagination.page;
-
-  // Form State
   const [formData, setFormData] = useState({
-    username: '', role: 'STUDENT', password: '', 
-    firstName: '', lastName: '', email: '', personType: 'students',
-    cui: '', personalCode: '', status: true, personId: '', userId: ''
+    username: '',
+    role: 'STUDENT',
+    password: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    personType: 'students',
+    cui: '',
+    personalCode: '',
+    status: true,
+    personId: '',
+    userId: '',
   });
+
+  const activePagination = securityPagination[activeTab] || defaultPagination;
+  const usersPagination = securityPagination.users || defaultPagination;
+  const userPage = usersPagination.page;
+  const peoplePage = activeTab === 'users' ? 0 : activePagination.page;
 
   useEffect(() => {
     refreshSecurityData({ userPage: 0, peoplePage: 0, section: activeTab });
@@ -48,10 +80,9 @@ export function AdminUserManagement() {
     refreshSecurityData({ userPage: 0, peoplePage: nextPage, section: activeTab });
   };
 
-  const peopleRows = useMemo(() => activeTab === 'users'
-    ? []
-    : (people[activeTab] || []).map((person) => ({ ...person, _category: activeTab }))
-  , [people, activeTab]);
+  const peopleRows = useMemo(() => (
+    activeTab === 'users' ? [] : (people[activeTab] || []).map((person) => ({ ...person, _category: activeTab }))
+  ), [people, activeTab]);
 
   const peopleByUserId = useMemo(() => {
     const index = new Map();
@@ -63,27 +94,41 @@ export function AdminUserManagement() {
     return index;
   }, [peopleRows]);
 
-  const filteredUsers = useMemo(() => 
-    users.filter(u => {
-      const relation = peopleByUserId.get(Number(u.id));
-      const text = `${u.username} ${u.role} ${relation?.firstName || ''} ${relation?.lastName || ''}`.toLowerCase();
-      return text.includes(searchQuery.toLowerCase());
-    }), 
-    [users, peopleByUserId, searchQuery]
-  );
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const searchHint = activeTab === 'users'
+    ? 'Filtra por usuario, rol o estado'
+    : 'Filtra por nombre, correo, CUI o usuario vinculado';
+
+  const filteredUsers = useMemo(() => (
+    users.filter((user) => {
+      const relation = peopleByUserId.get(Number(user.id));
+      const statusText = user.status ? 'autorizado activo' : 'inhabilitado inactivo';
+      const text = `${user.username} ${user.role} ${statusText} ${relation?.firstName || ''} ${relation?.lastName || ''}`.toLowerCase();
+      return text.includes(normalizedSearch);
+    })
+  ), [users, peopleByUserId, normalizedSearch]);
+
+  const filteredPeople = useMemo(() => (
+    peopleRows.filter((person) => {
+      const text = `${person.firstName} ${person.lastName} ${person.email || ''} ${person.cui || ''} ${person.userId || ''} ${person._category || ''}`.toLowerCase();
+      return text.includes(normalizedSearch);
+    })
+  ), [peopleRows, normalizedSearch]);
+
+  const visibleRows = activeTab === 'users' ? filteredUsers : filteredPeople;
 
   const handleOpenModal = (item = null, type = 'user') => {
     if (item) {
       setEditingItem({ ...item, _type: type });
-      setFormData({
-        ...formData,
+      setFormData((current) => ({
+        ...current,
         ...item,
-        personType: type === 'people' ? item._category : formData.personType,
+        personType: type === 'people' ? item._category : current.personType,
         personId: item.personId || '',
         cui: item.cui || '',
         personalCode: item.personalCode || '',
-        userId: item.userId || ''
-      });
+        userId: item.userId || '',
+      }));
     } else {
       setEditingItem(null);
       setFormData({
@@ -98,7 +143,7 @@ export function AdminUserManagement() {
         personId: '',
         cui: '',
         personalCode: '',
-        userId: ''
+        userId: '',
       });
     }
     setIsModalOpen(true);
@@ -112,10 +157,7 @@ export function AdminUserManagement() {
       userId: Number(userId),
     };
 
-    if (type === 'teachers') {
-      return { ...base, email: formData.email };
-    }
-
+    if (type === 'teachers') return { ...base, email: formData.email };
     if (type === 'students') {
       return {
         ...base,
@@ -123,7 +165,6 @@ export function AdminUserManagement() {
         tutorId: formData.tutorId || null,
       };
     }
-
     return base;
   };
 
@@ -133,8 +174,8 @@ export function AdminUserManagement() {
     return `${relation._category} #${relation.id} - ${relation.firstName} ${relation.lastName}`;
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const handleSave = async (event) => {
+    event.preventDefault();
     try {
       if (editingItem) {
         if (editingItem._type === 'user') {
@@ -146,295 +187,397 @@ export function AdminUserManagement() {
         const userRes = await createUser({
           username: formData.username,
           role: formData.role,
-          password: formData.password
+          password: formData.password,
         });
         const userId = userRes.idUser || userRes.id || userRes.data?.idUser;
 
-        if (!userId) {
-          throw new Error('Usuario creado sin idUser en la respuesta');
-        }
-
+        if (!userId) throw new Error('Usuario creado sin idUser en la respuesta');
         await addPerson(formData.personType, buildPersonPayload(formData.personType, userId));
       }
+
       setIsModalOpen(false);
-      addLog('ADMIN', `OPERACIÓN DE IDENTIDAD EXITOSA`, 'success');
+      addLog('ADMIN', 'Operacion de identidad exitosa', 'success');
+      reloadCurrentPage();
     } catch (err) {
-      alert('Fallo en el protocolo: ' + err.message);
+      alert('No se pudo guardar: ' + err.message);
     }
   };
 
   return (
-    <div className="space-y-12 page-transition">
-      
-      <header className="flex flex-col xl:flex-row xl:items-center justify-between gap-10 border-b border-border/50 pb-12">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <div className="w-14 h-14 rounded-[1.5rem] bg-accent/10 text-accent flex items-center justify-center border border-accent/20 shadow-2xl shadow-accent/5">
-                <ShieldCheck size={32} strokeWidth={2.5} />
-             </div>
-             <div>
-                <h2 className="text-6xl font-black tracking-tighter text-main uppercase italic leading-none">
-                  Gestión <span className="text-accent">Sentinel</span>
-                </h2>
-                <p className="text-sec text-sm font-bold uppercase tracking-[0.4em] mt-2 opacity-60 italic">Identity & Access Management Protocol</p>
-             </div>
+    <div className="page-transition h-[calc(100vh-8rem)] min-h-[42rem] flex flex-col gap-5 overflow-hidden">
+      <header className="shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-border/50 pb-5">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-11 h-11 rounded-xl bg-accent/10 text-accent flex items-center justify-center border border-accent/20">
+            <ShieldCheck size={24} strokeWidth={2.4} />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-3xl font-black tracking-tighter text-main uppercase italic leading-none">
+              Seguridad <span className="text-accent">IAM</span>
+            </h2>
+            <p className="text-sec text-[11px] font-bold uppercase tracking-[0.2em] mt-1">
+              Usuarios, roles y personas vinculadas
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-           <button onClick={reloadCurrentPage} className="p-5 rounded-2xl bg-card border border-border/60 text-sec hover:text-accent transition-all active:scale-95 shadow-xl">
-              <Info size={24} className={isLoading ? 'animate-spin' : ''} />
-           </button>
-           <button 
-             onClick={() => handleOpenModal(null, activeTab === 'users' ? 'user' : 'people')}
-             className="bg-accent hover:bg-accent/90 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-accent/20 transition-all active:scale-95 flex items-center gap-4 group"
-           >
-             <UserPlus size={20} className="group-hover:scale-110 transition-transform" />
-             Nuevo Registro Maestro
-           </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={reloadCurrentPage}
+            className="h-10 w-10 rounded-lg bg-card border border-border/60 text-sec hover:text-accent transition-all active:scale-95 flex items-center justify-center"
+            title="Actualizar datos"
+          >
+            <RefreshCw size={17} className={isLoading ? 'animate-spin' : ''} />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenModal(null, activeTab === 'users' ? 'user' : 'people')}
+            className="h-10 bg-accent hover:bg-accent/90 text-white px-4 rounded-lg font-black uppercase tracking-widest text-[10px] shadow-lg shadow-accent/20 transition-all active:scale-95 flex items-center gap-2"
+          >
+            <UserPlus size={15} />
+            Nuevo registro
+          </button>
         </div>
       </header>
 
-      {/* Tabs Premium */}
-      <div className="flex flex-wrap p-2 bg-card/40 backdrop-blur-xl premium-border rounded-[2.5rem] w-fit shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
-        <button onClick={() => setActiveTab('users')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'users' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Capa de Usuarios</button>
-        <button onClick={() => setActiveTab('students')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'students' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Estudiantes</button>
-        <button onClick={() => setActiveTab('teachers')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'teachers' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Docentes</button>
-        <button onClick={() => setActiveTab('tutors')} className={`px-12 py-5 rounded-[1.8rem] text-xs font-black uppercase tracking-[0.3em] transition-all duration-500 ${activeTab === 'tutors' ? 'bg-accent text-white shadow-2xl shadow-accent/30' : 'text-sec hover:text-main hover:bg-white/5'}`}>Tutores</button>
-      </div>
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-        <div className="text-[10px] font-black text-sec uppercase tracking-[0.25em]">
-          {`${activePagination.totalElements} ${activeTab} - pagina ${activePagination.page + 1} de ${activePagination.totalPages}`}
+      <section className="shrink-0 grid grid-cols-1 xl:grid-cols-[auto_1fr_auto] gap-3 items-center">
+        <div className="flex flex-wrap gap-2 bg-card/60 premium-border rounded-xl p-1 w-fit">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                activeTab === tab.id ? 'bg-accent text-white shadow-md' : 'text-sec hover:text-main hover:bg-base/70'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center gap-3">
-          {activeTab === 'users' ? (
-            <>
-              <button disabled={userPage === 0 || isLoading} onClick={() => goUserPage(userPage - 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Anterior</button>
-              <button disabled={userPage >= securityPagination.users.totalPages - 1 || isLoading} onClick={() => goUserPage(userPage + 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Siguiente</button>
-            </>
-          ) : (
-            <>
-              <button disabled={peoplePage === 0 || isLoading} onClick={() => goPeoplePage(peoplePage - 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Anterior</button>
-              <button disabled={peoplePage >= activePagination.totalPages - 1 || isLoading} onClick={() => goPeoplePage(peoplePage + 1)} className="px-5 py-3 rounded-xl bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent">Siguiente</button>
-            </>
-          )}
-        </div>
-      </div>
 
-      {/* Main Table HD */}
-      <div className="glass-panel rounded-[3.5rem] overflow-hidden premium-border shadow-[0_40px_120px_rgba(0,0,0,0.5)] relative bg-black/40">
-        {isLoading && <div className="absolute inset-0 z-30 bg-base/60 backdrop-blur-md flex items-center justify-center"><Loader2 size={64} className="text-accent animate-spin" /></div>}
-        <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left border-separate border-spacing-0">
-            <thead>
-              <tr className="bg-black/60 border-b border-border/50">
-                <th className="p-12 text-[11px] font-black text-sec uppercase tracking-[0.5em]">Identificador Único</th>
-                <th className="p-12 text-[11px] font-black text-sec uppercase tracking-[0.5em]">Metadata de Identidad</th>
-                <th className="p-12 text-[11px] font-black text-sec uppercase tracking-[0.5em]">Protocolo de Acceso</th>
-                <th className="p-12 text-[11px] font-black text-sec uppercase tracking-[0.5em]">Status</th>
-                <th className="p-12 text-[11px] font-black text-accent uppercase tracking-[0.5em] text-right">Comandos</th>
+        <div className="min-w-0">
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-sec" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder={searchHint}
+              className="security-search-input w-full h-10 border rounded-lg pl-9 pr-3 text-sm outline-none transition-all"
+            />
+          </div>
+          <p className="mt-1 text-[10px] font-bold text-sec uppercase tracking-widest">
+            {searchHint}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between xl:justify-end gap-3 text-[10px] font-black text-sec uppercase tracking-widest">
+          <span className="px-3 py-2 rounded-lg bg-card border border-border/60 whitespace-nowrap">
+            {activePagination.totalElements} registros
+          </span>
+          <span className="px-3 py-2 rounded-lg bg-card border border-border/60 whitespace-nowrap">
+            Pagina {activePagination.page + 1} / {activePagination.totalPages}
+          </span>
+        </div>
+      </section>
+
+      <section className="min-h-0 flex-1 glass-panel rounded-2xl overflow-hidden premium-border relative bg-card/60">
+        {isLoading && (
+          <div className="absolute inset-0 z-30 bg-base/60 backdrop-blur-md flex items-center justify-center">
+            <Loader2 size={42} className="text-accent animate-spin" />
+          </div>
+        )}
+
+        <div className="h-full overflow-auto">
+          <table className="w-full min-w-[54rem] text-left border-separate border-spacing-0">
+            <thead className="sticky top-0 z-30 bg-base shadow-[0_8px_24px_rgba(15,23,42,0.12)]">
+              <tr className="bg-base border-b border-border">
+                <TableHead>Identidad</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead align="right">Acciones</TableHead>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/10">
-              {activeTab === 'users' ? (
-                filteredUsers.map(u => (
-                  <tr key={u.id} className="group hover:bg-accent/[0.04] transition-all duration-500">
-                    <td className="p-12 font-mono text-xs text-accent font-black tracking-tighter italic opacity-40">UUID-USR-{u.id}</td>
-                    <td className="p-12">
-                      <div className="flex items-center gap-8">
-                        <div className="w-20 h-20 rounded-[1.8rem] bg-base premium-border flex items-center justify-center font-black text-2xl text-main shadow-inner group-hover:scale-110 group-hover:rotate-2 transition-all duration-700">
-                          {u.username[0].toUpperCase()}
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-2xl font-black text-main uppercase italic tracking-tighter leading-none group-hover:text-accent transition-colors duration-500">{u.username}</p>
-                          <p className="text-[10px] font-mono text-sec font-bold mt-2 opacity-50 uppercase tracking-widest flex items-center gap-2">
-                             <LinkIcon size={12} className="text-accent" /> {getUserRelationLabel(u.id)}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-12">
-                      <span className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border shadow-2xl ${
-                        u.role === 'ADMIN' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' :
-                        u.role === 'TEACHER' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-                        'bg-accent/10 text-accent border-accent/30 shadow-accent/5'
-                      }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="p-12">
-                      <div className="flex items-center gap-4">
-                         <div className={`w-3 h-3 rounded-full ${u.status ? 'bg-emerald-500 shadow-[0_0_20px_#10B981]' : 'bg-sec/20'}`} />
-                         <span className={`text-[11px] font-black uppercase tracking-widest ${u.status ? 'text-emerald-400' : 'text-sec opacity-30'}`}>{u.status ? 'Autorizado' : 'Inhabilitado'}</span>
-                      </div>
-                    </td>
-                    <td className="p-12 text-right">
-                      <div className="flex justify-end gap-5 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
-                        <button onClick={() => handleOpenModal(u, 'user')} className="p-5 rounded-2xl bg-card border border-border/80 text-sec hover:text-accent hover:border-accent/50 transition-all shadow-2xl active:scale-90"><Edit3 size={20} strokeWidth={2.5}/></button>
-                        <button className="p-5 rounded-2xl bg-card border border-border/80 text-sec hover:text-rose-500 hover:border-rose-500/50 transition-all shadow-2xl active:scale-90"><Trash2 size={20} strokeWidth={2.5}/></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                peopleRows.map(p => (
-                  <tr key={`${p._category}-${p.id}`} className="group hover:bg-emerald-500/[0.03] transition-all duration-500">
-                    <td className="p-12 font-mono text-xs text-emerald-500 font-black tracking-tighter italic opacity-40 uppercase">#{p._category.slice(0,2)}-UUID-{p.id}</td>
-                    <td className="p-12">
-                       <div className="space-y-1">
-                          <p className="text-2xl font-black text-main uppercase italic tracking-tighter leading-none group-hover:text-emerald-400 transition-colors duration-500">{p.firstName} {p.lastName}</p>
-                          <p className="text-sm font-bold text-sec uppercase tracking-widest opacity-60 mt-2">{p.email || p.cui}</p>
-                          <p className="text-[10px] font-mono text-sec font-bold mt-2 opacity-50 uppercase tracking-widest flex items-center gap-2">
-                            <LinkIcon size={12} className="text-emerald-400" /> User: {p.userId}
-                          </p>
-                       </div>
-                    </td>
-                    <td className="p-12">
-                       <div className="flex items-center gap-4">
-                          <div className="w-3 h-3 rounded-full bg-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
-                          <span className="text-xs font-black text-sec uppercase tracking-[0.3em] italic">{p._category}</span>
-                       </div>
-                    </td>
-                    <td className="p-12">
-                       <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-xl">
-                          <CheckCircle2 size={28} strokeWidth={3} />
-                       </div>
-                    </td>
-                    <td className="p-12 text-right">
-                       <button onClick={() => handleOpenModal(p, 'people')} className="p-5 rounded-2xl bg-card border border-border/80 text-sec hover:text-emerald-400 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 shadow-2xl active:scale-90 translate-x-4 group-hover:translate-x-0 duration-500"><Edit3 size={20} strokeWidth={2.5}/></button>
-                    </td>
-                  </tr>
-                ))
-              )}
+            <tbody className="divide-y divide-border/20">
+              {activeTab === 'users'
+                ? visibleRows.map((user) => (
+                    <UserRow key={user.id} user={user} relation={getUserRelationLabel(user.id)} onEdit={() => handleOpenModal(user, 'user')} />
+                  ))
+                : visibleRows.map((person) => (
+                    <PersonRow key={`${person._category}-${person.id}`} person={person} onEdit={() => handleOpenModal(person, 'people')} />
+                  ))}
             </tbody>
           </table>
-          {((activeTab === 'users' && users.length === 0) || (activeTab !== 'users' && peopleRows.length === 0)) && !isLoading && (
-            <div className="p-40 text-center space-y-6 opacity-20">
-               <ShieldCheck size={100} className="mx-auto" />
-               <p className="text-2xl font-black uppercase tracking-[1em] italic">Database Empty</p>
+
+          {visibleRows.length === 0 && !isLoading && (
+            <div className="h-full min-h-[20rem] flex flex-col items-center justify-center text-center text-sec/50 gap-3">
+              <ShieldCheck size={48} />
+              <p className="text-sm font-black uppercase tracking-widest">Sin registros para mostrar</p>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Modal CRUD Refactorizado HD */}
+      <footer className="shrink-0 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          disabled={(activeTab === 'users' ? userPage : peoplePage) === 0 || isLoading}
+          onClick={() => (activeTab === 'users' ? goUserPage(userPage - 1) : goPeoplePage(peoplePage - 1))}
+          className="px-4 py-2 rounded-lg bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent"
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          disabled={(activeTab === 'users' ? userPage >= usersPagination.totalPages - 1 : peoplePage >= activePagination.totalPages - 1) || isLoading}
+          onClick={() => (activeTab === 'users' ? goUserPage(userPage + 1) : goPeoplePage(peoplePage + 1))}
+          className="px-4 py-2 rounded-lg bg-card border border-border/60 text-xs font-black text-sec disabled:opacity-30 hover:text-accent"
+        >
+          Siguiente
+        </button>
+      </footer>
+
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-3xl animate-in fade-in duration-500">
-          <div className="glass-panel w-full max-w-4xl rounded-[4rem] premium-border p-20 relative animate-in zoom-in-95 duration-700 shadow-[0_80px_200px_rgba(0,0,0,0.9)] overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-accent via-indigo-600 to-transparent shadow-[0_0_20px_#6366F1]" />
-            
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-12 right-12 p-5 rounded-[2rem] bg-base border border-border text-sec hover:text-main hover:rotate-90 transition-all duration-700 shadow-2xl">
-              <X size={32} strokeWidth={3} />
-            </button>
+        <EditModal
+          editingItem={editingItem}
+          formData={formData}
+          setFormData={setFormData}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSave}
+        />
+      )}
+    </div>
+  );
+}
 
-            <header className="mb-16 space-y-4">
-              <div className="flex items-center gap-4 text-accent font-black uppercase tracking-[0.6em] text-xs">
-                 <Zap size={24} className="animate-pulse" /> Sentinel Transaction Protocol
-              </div>
-              <h4 className="text-5xl sm:text-6xl font-black text-main uppercase italic tracking-tighter leading-none">
-                {editingItem ? (
-                  <>
-                    Indexar <br /> Cambios
-                  </>
-                ) : (
-                  <>
-                    Generar <br /> Credencial
-                  </>
-                )}
-              </h4>
-            </header>
+function TableHead({ children, align = 'left' }) {
+  return (
+    <th className={`px-5 py-3 border-b border-border bg-base text-[10px] font-black text-sec uppercase tracking-[0.18em] ${align === 'right' ? 'text-right' : ''}`}>
+      {children}
+    </th>
+  );
+}
 
-            <form onSubmit={handleSave} className="space-y-12">
-               {(!editingItem || editingItem._type === 'user') && (
-                 <div className="grid grid-cols-2 gap-12">
-                    <div className="space-y-4">
-                       <label className="text-xs font-black text-sec uppercase tracking-[0.3em] ml-4">Identificador Global (User)</label>
-                       <div className="relative group">
-                          <UserCog size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-sec group-focus-within:text-accent transition-colors" />
-                          <input 
-                            type="text" required
-                            className="w-full bg-base/50 border border-border/60 rounded-[2rem] py-6 pl-16 pr-8 text-xl font-black text-main outline-none focus:border-accent focus:ring-[12px] focus:ring-accent/5 transition-all shadow-inner"
-                            value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})}
-                          />
-                       </div>
-                    </div>
-                    <div className="space-y-4">
-                       <label className="text-xs font-black text-sec uppercase tracking-[0.3em] ml-4">Capa de Autorización (Rol)</label>
-                       <select 
-                         className="w-full bg-base/50 border border-border/60 rounded-[2rem] py-6 px-10 text-xl font-black text-main outline-none focus:border-accent appearance-none cursor-pointer shadow-inner"
-                         value={formData.role} onChange={e => setFormData({...formData, role: e.target.value, personType: e.target.value === 'TEACHER' ? 'teachers' : e.target.value === 'STUDENT' ? 'students' : formData.personType})}
-                       >
-                          <option value="STUDENT">Estudiante Regular</option>
-                          <option value="TEACHER">Personal Docente</option>
-                          <option value="ADMIN">Administrador de Sistema</option>
-                       </select>
-                    </div>
-                    {!editingItem && (
-                      <div className="space-y-4">
-                         <label className="text-xs font-black text-sec uppercase tracking-[0.3em] ml-4">Clave Temporal</label>
-                         <div className="relative group">
-                            <KeyRound size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-sec group-focus-within:text-accent transition-colors" />
-                            <input 
-                              type="password" required
-                              className="w-full bg-base/50 border border-border/60 rounded-[2rem] py-6 pl-16 pr-8 text-xl font-black text-main outline-none focus:border-accent focus:ring-[12px] focus:ring-accent/5 transition-all shadow-inner"
-                              value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
-                            />
-                         </div>
-                      </div>
-                    )}
-                    {editingItem?._type === 'user' && (
-                      <label className="flex items-center gap-4 text-xs font-black text-sec uppercase tracking-[0.3em]">
-                        <input type="checkbox" checked={Boolean(formData.status)} onChange={e => setFormData({...formData, status: e.target.checked})} />
-                        Usuario autorizado
-                      </label>
-                    )}
-                 </div>
-               )}
-
-               {(!editingItem || editingItem._type === 'people') && (
-                 <div className="p-12 rounded-[3.5rem] bg-accent/[0.03] border border-accent/20 space-y-10 animate-in slide-in-from-bottom-8 duration-1000 relative overflow-hidden group/box shadow-inner">
-                    <div className="absolute top-0 right-0 p-12 text-accent/5 -rotate-12 transition-transform duration-[5s] group-hover/box:rotate-45"><Users size={300} /></div>
-                    <div className="flex items-center gap-6 text-accent border-b border-accent/10 pb-8 relative z-10">
-                       <Contact2 size={32} strokeWidth={2.5} />
-                       <h5 className="text-xl font-black uppercase italic tracking-widest">Metadata de Persona Física</h5>
-                    </div>
-                    {!editingItem && (
-                      <select
-                        className="relative z-10 w-full bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl"
-                        value={formData.personType}
-                        onChange={e => setFormData({...formData, personType: e.target.value})}
-                      >
-                        <option value="students">Estudiante</option>
-                        <option value="teachers">Docente</option>
-                        <option value="tutors">Tutor</option>
-                      </select>
-                    )}
-                    <div className="grid grid-cols-2 gap-10 relative z-10">
-                       <input type="text" placeholder="CUI / DPI" required minLength={13} maxLength={13} className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.cui} onChange={e => setFormData({...formData, cui: e.target.value})}/>
-                       {formData.personType === 'students' && (
-                         <input type="text" placeholder="Codigo personal" className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.personalCode} onChange={e => setFormData({...formData, personalCode: e.target.value})}/>
-                       )}
-                       <input type="text" placeholder="Nombres Civiles" required className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})}/>
-                       <input type="text" placeholder="Apellidos Reales" required className="bg-base border border-border/60 rounded-[1.5rem] py-5 px-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})}/>
-                    </div>
-                    <div className="relative z-10 group">
-                       <Mail size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-sec" />
-                       <input type="email" placeholder="Canal de Comunicación (Email)" required className="w-full bg-base border border-border/60 rounded-[1.5rem] py-5 pl-16 pr-8 text-lg font-black text-main outline-none focus:border-accent transition-all shadow-xl" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}/>
-                    </div>
-                 </div>
-               )}
-
-               <button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white py-8 rounded-[2.5rem] font-black uppercase tracking-[0.5em] text-sm shadow-[0_30px_70px_rgba(99,102,241,0.5)] transition-all active:scale-[0.98] flex items-center justify-center gap-6 group relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                  {editingItem ? <ShieldCheck size={28} /> : <Zap size={28} className="group-hover:scale-125 transition-transform duration-500 animate-pulse" />}
-                  <span className="relative z-10">Confirmar Operación en Caliente</span>
-               </button>
-            </form>
+function UserRow({ user, relation, onEdit }) {
+  return (
+    <tr className="group hover:bg-accent/[0.04] transition-colors">
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-base premium-border flex items-center justify-center font-black text-sm text-main">
+            {user.username?.[0]?.toUpperCase() || 'U'}
+          </div>
+          <div>
+            <p className="text-sm font-black text-main uppercase leading-none">Cuenta institucional</p>
+            <p className="text-[10px] text-sec font-bold mt-1 flex items-center gap-1.5">
+              <LinkIcon size={11} className="text-accent" /> {relation}
+            </p>
           </div>
         </div>
-      )}
+      </td>
+      <td className="px-5 py-4">
+        <p className="text-sm font-black text-main uppercase leading-none">{user.username}</p>
+        <p className="text-[10px] text-sec font-bold mt-1">Usuario de acceso</p>
+      </td>
+      <td className="px-5 py-4">
+        <RoleBadge role={user.role} />
+      </td>
+      <td className="px-5 py-4">
+        <StatusBadge active={user.status} />
+      </td>
+      <td className="px-5 py-4 text-right">
+        <button type="button" onClick={onEdit} className="p-2 rounded-lg bg-card border border-border/80 text-sec hover:text-accent hover:border-accent/50 transition-all">
+          <Edit3 size={16} />
+        </button>
+      </td>
+    </tr>
+  );
+}
 
+function PersonRow({ person, onEdit }) {
+  return (
+    <tr className="group hover:bg-success/[0.04] transition-colors">
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-base premium-border flex items-center justify-center font-black text-sm text-main">
+            {(person.firstName?.[0] || 'P').toUpperCase()}
+          </div>
+          <div>
+            <p className="text-sm font-black text-main uppercase leading-none">{person.firstName} {person.lastName}</p>
+            <p className="text-[10px] text-sec font-bold mt-1">{person.email || person.cui}</p>
+          </div>
+        </div>
+      </td>
+      <td className="px-5 py-4">
+        <p className="text-sm font-black text-main uppercase leading-none">User {person.userId || '-'}</p>
+        <p className="text-[10px] text-sec font-bold mt-1">Cuenta vinculada</p>
+      </td>
+      <td className="px-5 py-4">
+        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/10 text-success border border-success/20 text-[10px] font-black uppercase tracking-widest">
+          {person._category}
+        </span>
+      </td>
+      <td className="px-5 py-4">
+        <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-success/10 text-success border border-success/20">
+          <CheckCircle2 size={17} />
+        </div>
+      </td>
+      <td className="px-5 py-4 text-right">
+        <button type="button" onClick={onEdit} className="p-2 rounded-lg bg-card border border-border/80 text-sec hover:text-success hover:border-success/50 transition-all">
+          <Edit3 size={16} />
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+function RoleBadge({ role }) {
+  const classes = role === 'ADMIN'
+    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+    : role === 'TEACHER'
+      ? 'bg-success/10 text-success border-success/20'
+      : 'bg-accent/10 text-accent border-accent/20';
+
+  return (
+    <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${classes}`}>
+      {role}
+    </span>
+  );
+}
+
+function StatusBadge({ active }) {
+  return (
+    <span className={`inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${active ? 'text-success' : 'text-sec'}`}>
+      <span className={`w-2 h-2 rounded-full ${active ? 'bg-success shadow-[0_0_10px_currentColor]' : 'bg-sec/30'}`} />
+      {active ? 'Autorizado' : 'Inhabilitado'}
+    </span>
+  );
+}
+
+function EditModal({ editingItem, formData, setFormData, onClose, onSave }) {
+  const showUserFields = !editingItem || editingItem._type === 'user';
+  const showPersonFields = !editingItem || editingItem._type === 'people';
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
+      <div className="glass-panel w-full max-w-3xl max-h-[90vh] rounded-2xl premium-border shadow-2xl overflow-hidden">
+        <header className="h-16 px-6 border-b border-border/50 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-accent">Gestion de identidad</p>
+            <h4 className="text-xl font-black text-main uppercase italic leading-none">
+              {editingItem ? 'Editar registro' : 'Nuevo registro'}
+            </h4>
+          </div>
+          <button type="button" onClick={onClose} className="p-2 rounded-lg bg-base border border-border text-sec hover:text-main transition-all">
+            <X size={18} />
+          </button>
+        </header>
+
+        <form onSubmit={onSave} className="max-h-[calc(90vh-4rem)] overflow-y-auto p-6 space-y-6">
+          {showUserFields && (
+            <section className="space-y-4">
+              <SectionTitle icon={UserCog} title="Cuenta de acceso" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="Usuario" icon={UserCog}>
+                  <input required className="form-input" value={formData.username} onChange={(event) => setFormData({ ...formData, username: event.target.value })} />
+                </Field>
+                <Field label="Rol">
+                  <select
+                    className="form-input"
+                    value={formData.role}
+                    onChange={(event) => setFormData({
+                      ...formData,
+                      role: event.target.value,
+                      personType: event.target.value === 'TEACHER' ? 'teachers' : event.target.value === 'STUDENT' ? 'students' : formData.personType,
+                    })}
+                  >
+                    <option value="STUDENT">Estudiante</option>
+                    <option value="TEACHER">Docente</option>
+                    <option value="ADMIN">Administrador</option>
+                  </select>
+                </Field>
+                {!editingItem && (
+                  <Field label="Clave temporal" icon={KeyRound}>
+                    <input required type="password" className="form-input" value={formData.password} onChange={(event) => setFormData({ ...formData, password: event.target.value })} />
+                  </Field>
+                )}
+                {editingItem?._type === 'user' && (
+                  <label className="flex items-center gap-3 rounded-xl border border-border/60 bg-base/40 px-4 py-3 text-xs font-black text-sec uppercase tracking-widest">
+                    <input type="checkbox" checked={Boolean(formData.status)} onChange={(event) => setFormData({ ...formData, status: event.target.checked })} />
+                    Usuario autorizado
+                  </label>
+                )}
+              </div>
+            </section>
+          )}
+
+          {showPersonFields && (
+            <section className="space-y-4">
+              <SectionTitle icon={Contact2} title="Datos de persona" />
+              {!editingItem && (
+                <Field label="Tipo de persona">
+                  <select className="form-input" value={formData.personType} onChange={(event) => setFormData({ ...formData, personType: event.target.value })}>
+                    <option value="students">Estudiante</option>
+                    <option value="teachers">Docente</option>
+                    <option value="tutors">Tutor</option>
+                  </select>
+                </Field>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="CUI / DPI">
+                  <input required minLength={13} maxLength={13} className="form-input" value={formData.cui} onChange={(event) => setFormData({ ...formData, cui: event.target.value })} />
+                </Field>
+                {formData.personType === 'students' && (
+                  <Field label="Codigo personal">
+                    <input className="form-input" value={formData.personalCode} onChange={(event) => setFormData({ ...formData, personalCode: event.target.value })} />
+                  </Field>
+                )}
+                <Field label="Nombres">
+                  <input required className="form-input" value={formData.firstName} onChange={(event) => setFormData({ ...formData, firstName: event.target.value })} />
+                </Field>
+                <Field label="Apellidos">
+                  <input required className="form-input" value={formData.lastName} onChange={(event) => setFormData({ ...formData, lastName: event.target.value })} />
+                </Field>
+              </div>
+              <Field label="Correo electronico" icon={Mail}>
+                <input required type="email" className="form-input" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} />
+              </Field>
+            </section>
+          )}
+
+          <div className="flex justify-end gap-3 border-t border-border/50 pt-5">
+            <button type="button" onClick={onClose} className="px-5 py-3 rounded-lg bg-card border border-border/60 text-xs font-black uppercase tracking-widest text-sec hover:text-main">
+              Cancelar
+            </button>
+            <button type="submit" className="px-5 py-3 rounded-lg bg-accent text-white text-xs font-black uppercase tracking-widest hover:bg-accent/90">
+              Guardar cambios
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  );
+}
+
+function SectionTitle({ icon: Icon, title }) {
+  return (
+    <div className="flex items-center gap-2 text-accent">
+      <Icon size={17} />
+      <h5 className="text-xs font-black uppercase tracking-widest">{title}</h5>
+    </div>
+  );
+}
+
+function Field({ label, icon: Icon, children }) {
+  return (
+    <label className="space-y-2 block">
+      <span className="text-[10px] font-black text-sec uppercase tracking-widest">{label}</span>
+      <div className="relative">
+        {Icon && <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-sec" />}
+        {React.cloneElement(children, {
+          className: `${children.props.className || ''} ${Icon ? 'pl-9' : ''}`,
+        })}
+      </div>
+    </label>
   );
 }
