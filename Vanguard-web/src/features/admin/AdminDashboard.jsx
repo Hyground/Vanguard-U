@@ -1,180 +1,179 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { 
-  BookOpen, GraduationCap, UserCog, Users, Activity, ShieldCheck, Database, Server, Cpu, Globe, Zap, ArrowUpRight, TrendingUp, AlertTriangle
+import React, { useEffect, useState } from 'react';
+import {
+  Activity,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  CreditCard,
+  GraduationCap,
+  Network,
+  RefreshCw,
+  ShieldCheck,
+  Users,
 } from 'lucide-react';
 import { getAdminOverview } from '../../api/adminApi';
-import { getErrorMessage } from '../../api/client';
-import { StatCard } from '../../components/StatCard';
 import { useAuth } from '../../auth/AuthContext';
 
-export function AdminDashboard() {
+const metricConfig = [
+  { id: 'users', label: 'Usuarios', description: 'Cuentas de acceso', icon: ShieldCheck, color: 'accent' },
+  { id: 'students', label: 'Estudiantes', description: 'Expedientes activos', icon: GraduationCap, color: 'success' },
+  { id: 'teachers', label: 'Docentes', description: 'Personal academico', icon: Users, color: 'accent' },
+  { id: 'enrollments', label: 'Inscripciones', description: 'Matricula registrada', icon: Activity, color: 'warning' },
+  { id: 'courses', label: 'Cursos', description: 'Oferta academica', icon: BookOpen, color: 'success' },
+  { id: 'school-cycles', label: 'Ciclos activos', description: 'Periodos vigentes', icon: CheckCircle2, color: 'accent' },
+];
+
+const quickActions = [
+  { id: 'identity', label: 'Identidad', description: 'Usuarios, estudiantes, docentes y tutores', icon: ShieldCheck },
+  { id: 'academic', label: 'Academico', description: 'Cursos, grados, aulas, ciclos y catalogos', icon: BookOpen },
+  { id: 'operations', label: 'Operaciones', description: 'Inscripciones, horarios, asignaciones y notas', icon: Activity },
+  { id: 'finance', label: 'Finanzas', description: 'Metodos de pago y registros financieros', icon: CreditCard },
+  { id: 'infra', label: 'Infraestructura', description: 'Mapa de nodos, servicios y base de datos', icon: Network },
+];
+
+const colorClasses = {
+  accent: 'bg-accent/10 text-accent border-accent/25',
+  success: 'bg-success/10 text-success border-success/25',
+  warning: 'bg-warning/10 text-warning border-warning/25',
+};
+
+export function AdminDashboard({ onNavigate }) {
   const { token } = useAuth();
   const [stats, setStats] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadedAt, setLoadedAt] = useState(null);
 
-  // Mapeo premium de iconos y colores
-  const config = {
-    users: { icon: UserCog, color: 'accent' },
-    students: { icon: GraduationCap, color: 'success' },
-    teachers: { icon: Users, color: 'accent' },
-    enrollments: { icon: BookOpen, color: 'warning' },
-    courses: { icon: BookOpen, color: 'success' },
-    'school-cycles': { icon: Activity, color: 'accent' },
+  const loadStats = () => {
+    setIsLoading(true);
+    getAdminOverview(token)
+      .then((nextStats) => {
+        setStats(nextStats);
+        setLoadedAt(new Date());
+      })
+      .finally(() => setIsLoading(false));
   };
 
   useEffect(() => {
-    setIsLoading(true);
-    getAdminOverview(token)
-      .then(setStats)
-      .finally(() => setIsLoading(false));
+    loadStats();
   }, [token]);
 
   return (
-    <div className="space-y-8 page-transition">
-      
-      {/* Header Central de Inteligencia */}
-      <header className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 border-b border-border/50 pb-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2.5">
-             <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center border border-accent/20 shadow-xl shadow-accent/5">
-                <Cpu size={24} strokeWidth={2.5} />
-             </div>
-             <div>
-                <h2 className="text-4xl font-black tracking-tighter text-main uppercase italic leading-none">
-                  Vanguard <span className="text-accent">Central</span>
-                </h2>
-                <p className="text-sec text-xs font-bold uppercase tracking-[0.3em] mt-1 opacity-60 italic">Panel de Supervisión</p>
-             </div>
-          </div>
-        </div>
+    <div className="page-transition space-y-5">
+      <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_20rem]">
+          <div className="relative p-6 lg:p-8">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-success to-warning" />
+            <div className="max-w-3xl">
+              <div className="mb-7 inline-flex items-center gap-2 rounded-lg border border-accent/25 bg-accent/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-accent">
+                <ShieldCheck size={14} />
+                Panel administrativo
+              </div>
 
-        <div className="flex items-center gap-4">
-           <div className="glass-panel px-6 py-3 rounded-xl premium-border flex items-center gap-4 bg-emerald-500/[0.02]">
-              <div className="relative">
-                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping absolute inset-0" />
-                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 relative shadow-[0_0_10px_#10B981]" />
-              </div>
-              <div>
-                 <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none">Nodes Online</p>
-                 <p className="text-lg font-black text-main uppercase italic tracking-tighter mt-0.5">Sincronizado</p>
-              </div>
-           </div>
-           <div className="glass-panel p-3 rounded-xl premium-border text-accent bg-accent/[0.02]">
-              <Globe size={18} className="animate-spin-slow" />
-           </div>
-        </div>
-      </header>
-
-      {/* Grid de Métricas de Alto Impacto */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {isLoading 
-          ? [1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="glass-panel h-40 rounded-[2rem] premium-border animate-pulse bg-card/20" />
-            ))
-          : stats.map((stat) => {
-              const item = config[stat.id] || { icon: Activity, color: 'accent' };
-              return (
-                <div key={stat.id} className="glass-panel p-8 rounded-[2rem] premium-border group hover:border-accent/40 transition-all duration-500 relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-6 text-accent/5 -rotate-12 group-hover:scale-110 transition-transform duration-700">
-                      <item.icon size={100} strokeWidth={3} />
-                   </div>
-                   <div className="relative z-10 space-y-4">
-                      <div className="flex justify-between items-start">
-                         <div className="space-y-0.5">
-                            <p className="text-[9px] font-black text-sec uppercase tracking-[0.2em]">{stat.label}</p>
-                            <p className="text-4xl font-black text-main tracking-tighter italic">{stat.value}</p>
-                         </div>
-                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-lg ${
-                           item.color === 'accent' ? 'bg-accent/10 text-accent border-accent/20' : 
-                           item.color === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                           'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                         }`}>
-                            <item.icon size={22} />
-                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-[8px] font-black text-sec uppercase tracking-widest bg-base/60 px-2 py-1.5 rounded-lg w-fit border border-border/40">
-                         <TrendingUp size={10} className="text-emerald-400" /> +2.1% Global Traffic
-                      </div>
-                   </div>
-                </div>
-              );
-            })
-        }
-      </div>
-
-      {/* Secciones de Infraestructura y Alertas */}
-      <section className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        
-        {/* Layer de Seguridad */}
-        <div className="glass-panel p-8 rounded-[2.5rem] space-y-6 bg-card/30 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-transparent to-transparent opacity-30" />
-          <h3 className="text-xl font-black text-main flex items-center gap-3 uppercase italic tracking-tighter">
-            <ShieldCheck size={24} className="text-accent" />
-            Estatus de Red Cifrada
-          </h3>
-          
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-5 rounded-2xl bg-base/40 border border-border/40 group/item hover:border-accent/40 transition-all duration-300">
-              <div className="flex items-center gap-5">
-                <div className="w-10 h-10 rounded-xl bg-card premium-border flex items-center justify-center text-sec group-hover/item:text-accent transition-colors shadow-inner">
-                   <Database size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-black text-main uppercase tracking-widest leading-none italic">Database Cluster</p>
-                  <p className="text-[9px] text-sec uppercase font-bold mt-1.5 opacity-60">Base de Datos: Operativa</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2.5">
-                 <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Synced</span>
-                 <ArrowUpRight size={12} className="text-sec opacity-20" />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-5 rounded-2xl bg-base/40 border border-border/40 group/item hover:border-accent/40 transition-all duration-300">
-              <div className="flex items-center gap-5">
-                <div className="w-10 h-10 rounded-xl bg-card premium-border flex items-center justify-center text-sec group-hover/item:text-accent transition-colors shadow-inner">
-                   <Server size={18} />
-                </div>
-                <div>
-                  <p className="text-xs font-black text-main uppercase tracking-widest leading-none italic">Gateway Balance</p>
-                  <p className="text-[9px] text-sec uppercase font-bold mt-1.5 opacity-60">HAProxy Layer-7 • 12ms Latency</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2.5">
-                 <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Balanced</span>
-                 <ArrowUpRight size={12} className="text-sec opacity-20" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Notificaciones de Sistema */}
-        <div className="glass-panel p-8 rounded-[2.5rem] premium-border space-y-6 bg-amber-500/[0.01] border-amber-500/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-5 -rotate-12">
-             <AlertTriangle size={120} />
-          </div>
-          <h3 className="text-xl font-black text-amber-500 flex items-center gap-3 uppercase italic tracking-tighter">
-            <Zap size={24} className="animate-pulse" />
-            Alertas de Transmisión
-          </h3>
-          
-          <div className="space-y-4">
-            <div className="p-6 rounded-[2rem] bg-base/50 border border-amber-500/20 relative">
-              <div className="flex items-center gap-2 mb-2">
-                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                 <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest italic">Anomalía Detectada</p>
-              </div>
-              <p className="text-xs text-sec leading-relaxed font-medium">
-                Se ha detectado una discrepancia en el protocolo de inscripción para el usuario #5591. Resolución de conflictos activada.
+              <h2 className="text-4xl font-black uppercase italic leading-none tracking-tighter text-main lg:text-5xl">
+                Resumen del sistema
+              </h2>
+              <p className="mt-5 max-w-2xl text-base font-medium leading-relaxed text-sec">
+                Vista inicial para revisar el estado general de la institucion y entrar rapido a las areas de gestion.
               </p>
             </div>
-            <button className="w-full py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[9px] font-black text-amber-500 uppercase tracking-[0.3em] hover:bg-amber-500/20 transition-all">
-               Protocolo de Reparación
-            </button>
           </div>
+
+          <aside className="border-t border-border bg-base/45 p-6 xl:border-l xl:border-t-0 lg:p-8">
+            <div className="flex h-full flex-col justify-between gap-6">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-sec">Estado general</p>
+                <p className="mt-2 text-sm font-black text-main">Informacion sincronizada</p>
+                <p className="mt-2 text-xs font-medium leading-relaxed text-sec">
+                  Los indicadores muestran los registros administrativos disponibles para consulta y gestion.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={loadStats}
+                  disabled={isLoading}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-accent/90 disabled:opacity-60"
+                >
+                  <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
+                  Actualizar datos
+                </button>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-sec">
+                  {loadedAt ? `Actualizado ${loadedAt.toLocaleTimeString()}` : 'Sin sincronizar'}
+                </p>
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
 
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {isLoading && stats.length === 0
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="h-36 animate-pulse rounded-lg border border-border bg-card" />
+            ))
+          : metricConfig.map((item) => (
+              <Metric key={item.id} item={item} value={findValue(stats, item.id)} />
+            ))}
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-5">
+        <div className="flex flex-col gap-1 border-b border-border/60 pb-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-main">Areas de trabajo</h3>
+          <p className="text-xs font-medium text-sec">Accesos directos a las vistas donde el administrador gestiona informacion.</p>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {quickActions.map((action) => (
+            <QuickAction key={action.id} action={action} onNavigate={onNavigate} />
+          ))}
+        </div>
+      </section>
     </div>
   );
+}
+
+function Metric({ item, value }) {
+  const Icon = item.icon;
+
+  return (
+    <article className="rounded-lg border border-border bg-card p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-sec">{item.label}</p>
+          <p className="mt-3 text-5xl font-black tracking-tighter text-main">{value}</p>
+        </div>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-lg border ${colorClasses[item.color] || colorClasses.accent}`}>
+          <Icon size={22} />
+        </div>
+      </div>
+      <p className="mt-4 text-xs font-semibold text-sec">{item.description}</p>
+    </article>
+  );
+}
+
+function QuickAction({ action, onNavigate }) {
+  const Icon = action.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onNavigate?.(action.id)}
+      className="group flex min-h-32 flex-col justify-between rounded-lg border border-border bg-base/45 p-4 text-left transition hover:border-accent/45 hover:bg-accent/5"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-sec group-hover:text-accent">
+          <Icon size={18} />
+        </div>
+        <ArrowRight size={16} className="text-sec transition group-hover:translate-x-1 group-hover:text-accent" />
+      </div>
+      <div>
+        <p className="text-xs font-black uppercase tracking-widest text-main">{action.label}</p>
+        <p className="mt-2 text-xs font-medium leading-relaxed text-sec">{action.description}</p>
+      </div>
+    </button>
+  );
+}
+
+function findValue(stats, id) {
+  return Number(stats.find((stat) => stat.id === id)?.value || 0);
 }

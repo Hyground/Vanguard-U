@@ -26,3 +26,6 @@ k6-lab/runs/*.json
 
 # Maven local config
 **/maven.config
+
+# Local planning notes
+ADMIN_DASHBOARD_PLAN.md

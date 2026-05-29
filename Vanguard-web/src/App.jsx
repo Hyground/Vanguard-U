@@ -55,7 +55,7 @@ function AppContent() {
         case 'operations': return <AdminResourcePage group="Operaciones" />;
         case 'finance': return <AdminResourcePage group="Finanzas" />;
         case 'audit': return <AuditPanel />;
-        default: return <AdminDashboard />;
+        default: return <AdminDashboard onNavigate={setCurrentView} />;
       }
     }
 
